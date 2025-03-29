@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Widget Settings">
+        <EditTextPreference
+            android:key="widget_title"
+            android:title="Widget Title"
+            android:defaultValue="My Widget" />
+        <ListPreference
+            android:key="widget_style"
+            android:title="Widget Style"
+            android:entries="@array/widget_styles"
+            android:entryValues="@array/widget_style_values"
+            android:defaultValue="style1" />
+    </PreferenceCategory>
+</PreferenceScreen>

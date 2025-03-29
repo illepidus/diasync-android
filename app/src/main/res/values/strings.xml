@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Diasync</string>
+    <string-array name="widget_styles">
+        <item>Style 1</item>
+        <item>Style 2</item>
+        <item>Style 3</item>
+    </string-array>
+    <string-array name="widget_style_values">
+        <item>style1</item>
+        <item>style2</item>
+        <item>style3</item>
+    </string-array>
 </resources>
