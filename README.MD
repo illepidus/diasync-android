@@ -1,4 +1,4 @@
-# Diasync server
+# Diasync android client
 
 Клиентская часть системы мониторинга глюкозы Diasync.
 
