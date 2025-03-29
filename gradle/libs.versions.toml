@@ -1,5 +1,6 @@
 [versions]
 agp = "8.9.0"
+core = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
@@ -7,8 +8,11 @@ appcompat = "1.6.1"
 material = "1.10.0"
 preference = "1.2.1"
 playServicesWearable = "18.0.0"
+wear = "1.3.0"
+watchface = "1.2.1"
 
 [libraries]
+core = { module = "androidx.core:core", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -16,6 +20,8 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
+wear = { module = "androidx.wear:wear", version.ref = "wear" }
+watchface = { group = "androidx.wear.watchface", name = "watchface", version.ref = "watchface" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WatchFace>
+    <Scene backgroundColor="#FF0000">
+        <Time>
+            <Hours x="center" y="center - 20" fontSize="80" fontColor="#FFFFFF" />
+            <Minutes x="center" y="center + 60" fontSize="80" fontColor="#FFFFFF" />
+        </Time>
+    </Scene>
+</WatchFace>
