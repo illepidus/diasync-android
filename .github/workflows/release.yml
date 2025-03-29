@@ -1,7 +1,7 @@
-name: Release
+name: Android CI
 
 on:
-  workflow_dispatch: # Запуск только вручную
+  workflow_dispatch:
 
 jobs:
   test:
@@ -40,14 +40,36 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      # Декодируем keystore в корень проекта
+      - name: Decode Keystore
+        run: echo "${{ secrets.RELEASE_STORE_FILE_BASE64 }}" | base64 -d > diasync.jks
+
+      # Задаем переменные окружения для подписи
+      - name: Configure signing
+        env:
+          RELEASE_STORE_FILE: ../diasync.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          echo "Using signing config from environment variables"
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
-      # Добавим отладочный шаг для проверки файлов
-      - name: List APK files
-        run: ls -la app/build/outputs/apk/debug/ || echo "Debug APK directory not found"
+      - name: Build Release APK
+        env:
+          RELEASE_STORE_FILE: ../diasync.jks
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
 
-      # Генерируем уникальный тег для релиза на основе даты и времени
+      # Проверяем созданные файлы
+      - name: List APK files
+        run: ls -la app/build/outputs/apk/debug/ && ls -la app/build/outputs/apk/release/ || echo "APK directories not found"
+
+      # Генерируем уникальный тег для релиза
       - name: Generate release tag
         id: tag
         run: echo "RELEASE_TAG=v$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
@@ -73,4 +95,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: app/build/outputs/apk/debug/app-debug.apk
           asset_name: app-debug.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Release APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_name: app-release.apk
           asset_content_type: application/vnd.android.package-archive
