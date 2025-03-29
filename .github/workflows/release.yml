@@ -1,7 +1,7 @@
 name: Android CI
 
 on:
-  workflow_dispatch: # Запуск только вручную
+  workflow_dispatch:
 
 jobs:
   test:
@@ -46,12 +46,10 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      # Генерируем уникальный тег для релиза на основе даты и времени
       - name: Generate release tag
         id: tag
         run: echo "RELEASE_TAG=v$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
 
-      # Создаем релиз на GitHub
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -63,7 +61,6 @@ jobs:
           draft: false
           prerelease: false
 
-      # Загружаем Debug APK в релиз
       - name: Upload Debug APK to Release
         uses: actions/upload-release-asset@v1
         env:
@@ -74,7 +71,6 @@ jobs:
           asset_name: app-debug.apk
           asset_content_type: application/vnd.android.package-archive
 
-      # Загружаем Release APK в релиз
       - name: Upload Release APK to Release
         uses: actions/upload-release-asset@v1
         env:
