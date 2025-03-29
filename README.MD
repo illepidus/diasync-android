@@ -1,6 +1,6 @@
 # Diasync server
 
-Клиентская часть системы мониторинга глюкозы [Diasync](https://github.com/illepidus/diasync).
+Клиентская часть системы мониторинга глюкозы Diasync.
 
 ## Пример схемы
 
