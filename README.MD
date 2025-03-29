@@ -38,12 +38,12 @@ flowchart LR
     xdrip_master -.-> aaps_master <-.-> nightscout <-.-> aaps_slave
     xdrip_master <-.-> firebase <-.-> xdrip_slave
     aaps_master -.-> pump
-    style ds_master,ds_slave color: #FF8800
+    style ds_master color: #FF8800
+    style ds_slave color: #FF8800
     click ds_srv "https://github.com/illepidus/diasync-server"
     click juglucco href "https://www.juggluco.nl/"
     click firebase href "https://firebase.google.com/"
     click xdrip_master,xdrip_slave href "https://github.com/NightscoutFoundation/xDrip"
     click aaps_master,aaps_slave href "https://github.com/nightscout/AndroidAPS"
-    click ds_master,ds_slave href "https://github.com/illepidus/diasync"
     click nightscout href "https://github.com/nightscout/cgm-remote-monitor"
 ```
