@@ -39,7 +39,8 @@ android {
         }
     }
 }
-
 dependencies {
     implementation libs.core
+    implementation libs.watchface
+    implementation libs.watchface.client
 }
