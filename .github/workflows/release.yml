@@ -64,7 +64,9 @@ jobs:
 
       - name: Generate release tag
         id: tag
-        run: echo "RELEASE_TAG=v$(TZ='Europe/Moscow' date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
+        run: |
+          RELEASE_TAG="v$(TZ='Europe/Moscow' date +'%Y.%m.%d-%H%M')"
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
