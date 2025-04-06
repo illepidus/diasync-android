@@ -7,10 +7,13 @@ espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
 preference = "1.2.1"
+retrofit = "2.9.0"
+roomRuntime = "2.6.1"
 watchfaceVersion = "1.2.1"
 watchface = "1.2.1"
 
 [libraries]
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 core = { module = "androidx.core:core", version.ref = "core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -18,9 +21,13 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 watchface-client = { module = "androidx.wear.watchface:watchface-client", version.ref = "watchfaceVersion" }
 watchface = { group = "androidx.wear.watchface", name = "watchface", version.ref = "watchface" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 

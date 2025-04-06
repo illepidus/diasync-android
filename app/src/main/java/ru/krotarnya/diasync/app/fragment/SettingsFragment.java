@@ -1,7 +1,10 @@
-package ru.krotarnya.diasync.app;
+package ru.krotarnya.diasync.app.fragment;
 
 import android.os.Bundle;
+
 import androidx.preference.PreferenceFragmentCompat;
+
+import ru.krotarnya.diasync.app.R;
 
 public class SettingsFragment extends PreferenceFragmentCompat {
     @Override

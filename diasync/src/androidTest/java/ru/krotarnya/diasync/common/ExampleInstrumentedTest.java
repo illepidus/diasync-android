@@ -1,14 +1,14 @@
-package ru.krotarnya.diasync.app;
-
-import static org.junit.Assert.assertEquals;
+package ru.krotarnya.diasync.common;
 
 import android.content.Context;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static org.junit.Assert.*;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("ru.krotarnya.diasync.app", appContext.getPackageName());
+        assertEquals("ru.krotarnya.diasync.common.test", appContext.getPackageName());
     }
 }

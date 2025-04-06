@@ -1,8 +1,8 @@
-package ru.krotarnya.diasync.app;
-
-import static org.junit.Assert.assertEquals;
+package ru.krotarnya.diasync.common;
 
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
