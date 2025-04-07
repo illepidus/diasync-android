@@ -5,10 +5,14 @@ import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
 import com.google.gson.Gson;
 
+import java.time.Instant;
+
 @Entity(indices = {@Index(value = {"userId", "timestamp"}, unique = true)})
+@TypeConverters(DateConverters.class)
 public class DataPoint {
     private static final Gson gson = new Gson();
 
@@ -16,7 +20,7 @@ public class DataPoint {
     public long id;
 
     public String userId;
-    public String timestamp;
+    public Instant timestamp;
 
     @Embedded(prefix = "sensor_")
     public SensorGlucose sensorGlucose;

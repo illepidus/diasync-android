@@ -13,7 +13,7 @@ import ru.krotarnya.diasync.app.model.DataPoint;
 @Dao
 public interface DataPointDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertAll(List<DataPoint> points);
+    void upsert(List<DataPoint> points);
 
     /** @noinspection unused*/
     @Query("SELECT * FROM DataPoint " +
