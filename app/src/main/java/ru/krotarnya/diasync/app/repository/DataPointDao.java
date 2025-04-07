@@ -14,6 +14,11 @@ public interface DataPointDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(List<DataPoint> points);
 
-    @Query("SELECT * FROM DataPoint ORDER BY timestamp DESC")
-    List<DataPoint> getAll();
+    /** @noinspection unused*/
+    @Query("SELECT * FROM DataPoint " +
+            "WHERE userId = :userId " +
+            "AND timestamp >= :fromInclusive " +
+            "AND timestamp < :toExclusive " +
+            "ORDER BY timestamp DESC")
+    List<DataPoint> getSince(String userId, String fromInclusive, String toExclusive);
 }

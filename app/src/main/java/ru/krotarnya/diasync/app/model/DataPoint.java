@@ -1,11 +1,17 @@
 package ru.krotarnya.diasync.app.model;
 
+import androidx.annotation.NonNull;
 import androidx.room.Embedded;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity
+import com.google.gson.Gson;
+
+@Entity(indices = {@Index(value = {"userId", "timestamp"}, unique = true)})
 public class DataPoint {
+    private static final Gson gson = new Gson();
+
     @PrimaryKey
     public long id;
 
@@ -41,5 +47,11 @@ public class DataPoint {
     public static class Calibration {
         public Double slope;
         public Double intercept;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return gson.toJson(this);
     }
 }

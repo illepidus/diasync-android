@@ -10,6 +10,8 @@ import android.util.Log;
 
 import androidx.room.Room;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,7 +27,9 @@ import ru.krotarnya.diasync.app.api.ApiService;
 import ru.krotarnya.diasync.app.model.DataPoint;
 import ru.krotarnya.diasync.app.repository.AppDatabase;
 
-/** @noinspection NullableProblems*/
+/**
+ * @noinspection NullableProblems
+ */
 public class SyncService extends Service {
     private AppDatabase db;
     private ApiService api;
@@ -56,11 +60,15 @@ public class SyncService extends Service {
     private void startSync() {
         executorService.scheduleWithFixedDelay(() -> {
             Log.d("SyncService", "Running");
-            api.getDataPoints("demo").enqueue(new Callback<>() {
+            api.getDataPoints(
+                    "demo",
+                    Instant.now().minus(Duration.ofMinutes(10)),
+                    Instant.now()
+            ).enqueue(new Callback<>() {
                 @Override
                 public void onResponse(Call<List<DataPoint>> call, Response<List<DataPoint>> response) {
                     if (response.isSuccessful() && response.body() != null) {
-                        Log.d("SyncService", "Body = " + response.body());
+                        Log.d("SyncService", "Got " + response.body().size() + " points");
                         Executors.newSingleThreadExecutor().execute(() ->
                                 db.dataPointDao().insertAll(response.body()));
                     }
