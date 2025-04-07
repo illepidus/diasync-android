@@ -29,6 +29,7 @@ class DiasyncCanvasRenderer extends CanvasRenderer {
             int canvasType,
             long interactiveDrawModeUpdateDelayMillis) {
         super(surfaceHolder, currentUserStyleRepository, watchState, canvasType, interactiveDrawModeUpdateDelayMillis);
+
         hourMinutePaint = new Paint();
         hourMinutePaint.setColor(Color.CYAN);
         hourMinutePaint.setTextSize(60f);
