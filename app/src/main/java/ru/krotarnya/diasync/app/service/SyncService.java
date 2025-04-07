@@ -25,9 +25,6 @@ import ru.krotarnya.diasync.app.api.ApiService;
 import ru.krotarnya.diasync.app.api.InstantTypeAdapter;
 import ru.krotarnya.diasync.app.repository.AppDatabase;
 
-/**
- * @noinspection NullableProblems
- */
 public class SyncService extends Service {
     private AppDatabase db;
     private ApiService api;
