@@ -1,11 +1,16 @@
 package ru.krotarnya.diasync.common.service;
 
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import ru.krotarnya.diasync.common.Diasync;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.repository.AppDatabase;
 import ru.krotarnya.diasync.common.model.DataPoint;
@@ -18,11 +23,13 @@ public class DataSyncTask implements Runnable {
     private final String userId;
     private final AppDatabase db;
     private final DiasyncApiService api;
+    private final Context context;
 
-    public DataSyncTask(String userId, AppDatabase db, DiasyncApiService api) {
+    public DataSyncTask(String userId, AppDatabase db, DiasyncApiService api, Context context) {
         this.userId = userId;
         this.db = db;
         this.api = api;
+        this.context = context;
     }
 
     @Override
@@ -63,5 +70,10 @@ public class DataSyncTask implements Runnable {
 
         Log.d("SyncService", "Got " + response.size() + " points");
         db.dataPointDao().upsert(response);
+        broadcast(Diasync.Intent.NEW_DATA);
+    }
+
+    private void broadcast(String action) {
+        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(action));
     }
 }

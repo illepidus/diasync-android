@@ -58,7 +58,7 @@ public class SyncService extends Service {
 
     private void startSync() {
         executorService.scheduleWithFixedDelay(
-                new DataSyncTask("demo", db, api),
+                new DataSyncTask("demo", db, api, this),
                 0,
                 10,
                 TimeUnit.SECONDS);
