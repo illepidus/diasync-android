@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync.app.api;
+package ru.krotarnya.diasync.common.api;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

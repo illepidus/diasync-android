@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync.app.repository;
+package ru.krotarnya.diasync.common.repository;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
@@ -8,7 +8,7 @@ import androidx.room.Query;
 import java.util.List;
 import java.util.Optional;
 
-import ru.krotarnya.diasync.app.model.DataPoint;
+import ru.krotarnya.diasync.common.model.DataPoint;
 
 @Dao
 public interface DataPointDao {

@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import ru.krotarnya.diasync.app.R;
 import ru.krotarnya.diasync.app.fragment.SettingsFragment;
-import ru.krotarnya.diasync.app.service.SyncService;
+import ru.krotarnya.diasync.common.service.SyncService;
 
 public class MainActivity extends AppCompatActivity {
     @Override

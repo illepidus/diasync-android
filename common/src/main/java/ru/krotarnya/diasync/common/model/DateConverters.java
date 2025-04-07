@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync.app.model;
+package ru.krotarnya.diasync.common.model;
 
 import androidx.room.TypeConverter;
 

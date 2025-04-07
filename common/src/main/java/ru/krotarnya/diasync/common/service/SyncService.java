@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync.app.service;
+package ru.krotarnya.diasync.common.service;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -20,14 +20,13 @@ import java.util.concurrent.TimeUnit;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import ru.krotarnya.diasync.app.R;
-import ru.krotarnya.diasync.app.api.ApiService;
-import ru.krotarnya.diasync.app.api.InstantTypeAdapter;
-import ru.krotarnya.diasync.app.repository.AppDatabase;
+import ru.krotarnya.diasync.common.api.DiasyncApiService;
+import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
+import ru.krotarnya.diasync.common.repository.AppDatabase;
 
 public class SyncService extends Service {
     private AppDatabase db;
-    private ApiService api;
+    private DiasyncApiService api;
     private ScheduledExecutorService executorService;
 
     @Override
@@ -48,7 +47,7 @@ public class SyncService extends Service {
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
 
-        api = retrofit.create(ApiService.class);
+        api = retrofit.create(DiasyncApiService.class);
 
         startForeground(1, buildNotification());
         Log.d("SyncService", "Foreground service started with notification");
@@ -77,7 +76,6 @@ public class SyncService extends Service {
         Notification.Builder builder = new Notification.Builder(this, channelId)
                 .setContentTitle("Diasync sync service")
                 .setContentText("Synchronizing...")
-                .setSmallIcon(R.mipmap.ic_launcher)
                 .setOngoing(true);
 
         return builder.build();

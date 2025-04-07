@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync.app.service;
+package ru.krotarnya.diasync.common.service;
 
 import android.util.Log;
 
@@ -6,9 +6,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-import ru.krotarnya.diasync.app.api.ApiService;
-import ru.krotarnya.diasync.app.model.DataPoint;
-import ru.krotarnya.diasync.app.repository.AppDatabase;
+import ru.krotarnya.diasync.common.api.DiasyncApiService;
+import ru.krotarnya.diasync.common.repository.AppDatabase;
+import ru.krotarnya.diasync.common.model.DataPoint;
 
 public class DataSyncTask implements Runnable {
     private static final String TAG = DataSyncTask.class.getSimpleName();
@@ -17,9 +17,9 @@ public class DataSyncTask implements Runnable {
 
     private final String userId;
     private final AppDatabase db;
-    private final ApiService api;
+    private final DiasyncApiService api;
 
-    public DataSyncTask(String userId, AppDatabase db, ApiService api) {
+    public DataSyncTask(String userId, AppDatabase db, DiasyncApiService api) {
         this.userId = userId;
         this.db = db;
         this.api = api;
