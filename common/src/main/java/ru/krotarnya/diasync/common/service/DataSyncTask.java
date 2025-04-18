@@ -9,24 +9,26 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Supplier;
 
-import ru.krotarnya.diasync.common.Diasync;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
-import ru.krotarnya.diasync.common.repository.AppDatabase;
+import ru.krotarnya.diasync.common.intent.NewDataIntent;
+import ru.krotarnya.diasync.common.intent.NoDataIntent;
 import ru.krotarnya.diasync.common.model.DataPoint;
+import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
 public class DataSyncTask implements Runnable {
     private static final String TAG = DataSyncTask.class.getSimpleName();
     private static final Duration MAX_SYNC_PERIOD = Duration.ofDays(1);
     private static final Duration OVERTIME_PERIOD = Duration.ofMinutes(1);
 
-    private final String userId;
-    private final AppDatabase db;
+    private final Supplier<String> userIdSupplier;
+    private final DiasyncDatabase db;
     private final DiasyncApiService api;
     private final Context context;
 
-    public DataSyncTask(String userId, AppDatabase db, DiasyncApiService api, Context context) {
-        this.userId = userId;
+    public DataSyncTask(Supplier<String> userIdSupplier, DiasyncDatabase db, DiasyncApiService api, Context context) {
+        this.userIdSupplier = userIdSupplier;
         this.db = db;
         this.api = api;
         this.context = context;
@@ -34,19 +36,21 @@ public class DataSyncTask implements Runnable {
 
     @Override
     public void run() {
+        String userId = userIdSupplier.get();
         try {
-            runSafe();
+            runSafe(userId);
         } catch (Exception e) {
-            Log.e(TAG, "Got exception while retrieving api response", e);
+            Log.e(TAG, "Got exception while retrieving api response for " + userId, e);
+            broadcast(NoDataIntent.build(userId));
         }
     }
 
-    private void runSafe() throws Exception {
+    private void runSafe(String userId) throws Exception {
         Instant to = Instant.now().plus(OVERTIME_PERIOD);
         Instant fallbackFrom = to.minus(MAX_SYNC_PERIOD);
 
         Instant from = db.dataPointDao()
-                .getLast(userId)
+                .findLast(userId)
                 .map(p -> p.timestamp)
                 .map(t -> t.plus(Duration.ofMillis(1)))
                 .map(t -> Instant.ofEpochMilli(Math.max(t.toEpochMilli(), fallbackFrom.toEpochMilli())))
@@ -56,24 +60,25 @@ public class DataSyncTask implements Runnable {
 
         if (response == null) {
             Log.e(TAG, "Was not able to get api response");
+            broadcast(NoDataIntent.build(userId));
             return;
         }
-
-        processResponse(response);
+        processResponse(response, userId);
     }
 
-    private void processResponse(List<DataPoint> response) {
+    private void processResponse(List<DataPoint> response, String userId) {
         if (response.isEmpty()) {
             Log.d(TAG, "No new data");
+            broadcast(NoDataIntent.build(userId));
             return;
         }
 
         Log.d("SyncService", "Got " + response.size() + " points");
         db.dataPointDao().upsert(response);
-        broadcast(Diasync.Intent.NEW_DATA);
+        broadcast(NewDataIntent.build(userId));
     }
 
-    private void broadcast(String action) {
-        LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(action));
+    private void broadcast(Intent intent) {
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }

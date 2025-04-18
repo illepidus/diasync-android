@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.room.Room;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -22,10 +20,10 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
-import ru.krotarnya.diasync.common.repository.AppDatabase;
+import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
 public class SyncService extends Service {
-    private AppDatabase db;
+    private DiasyncDatabase db;
     private DiasyncApiService api;
     private ScheduledExecutorService executorService;
 
@@ -34,9 +32,7 @@ public class SyncService extends Service {
         super.onCreate();
         Log.d("SyncService", "Service created");
 
-        db = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "diasync-db")
-                .fallbackToDestructiveMigration()
-                .build();
+        db = DiasyncDatabase.cons(getApplicationContext());
 
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
@@ -58,7 +54,7 @@ public class SyncService extends Service {
 
     private void startSync() {
         executorService.scheduleWithFixedDelay(
-                new DataSyncTask("demo", db, api, this),
+                new DataSyncTask(() -> "demo", db, api, this),
                 0,
                 10,
                 TimeUnit.SECONDS);
