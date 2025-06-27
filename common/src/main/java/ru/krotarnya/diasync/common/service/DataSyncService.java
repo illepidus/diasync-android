@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.preference.PreferenceManager;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -15,6 +17,7 @@ import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -22,7 +25,7 @@ import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
-public class SyncService extends Service {
+public class DataSyncService extends Service {
     private DiasyncDatabase db;
     private DiasyncApiService api;
     private ScheduledExecutorService executorService;
@@ -31,7 +34,6 @@ public class SyncService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d("SyncService", "Service created");
-
         db = DiasyncDatabase.cons(getApplicationContext());
 
         Gson gson = new GsonBuilder()
@@ -49,12 +51,17 @@ public class SyncService extends Service {
         Log.d("SyncService", "Foreground service started with notification");
 
         executorService = Executors.newSingleThreadScheduledExecutor();
-        startSync();
+        startSync(this::getUserId);
     }
 
-    private void startSync() {
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    private void startSync(Supplier<String> userIdSupplier) {
         executorService.scheduleWithFixedDelay(
-                new DataSyncTask(() -> "demo", db, api, this),
+                new DataSyncTask(userIdSupplier, db, api, this),
                 0,
                 10,
                 TimeUnit.SECONDS);
@@ -88,5 +95,9 @@ public class SyncService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    public String getUserId() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "demo");
     }
 }

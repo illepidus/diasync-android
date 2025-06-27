@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import ru.krotarnya.diasync.app.R;
 import ru.krotarnya.diasync.app.fragment.SettingsFragment;
-import ru.krotarnya.diasync.common.service.SyncService;
+import ru.krotarnya.diasync.common.service.DataSyncService;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
             transaction.commit();
         }
 
-        Intent serviceIntent = new Intent(this, SyncService.class);
+        Intent serviceIntent = new Intent(this, DataSyncService.class);
         ContextCompat.startForegroundService(this, serviceIntent);
     }
 }

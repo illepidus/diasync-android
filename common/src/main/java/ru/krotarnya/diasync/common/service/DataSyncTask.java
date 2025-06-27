@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.function.Supplier;
 
+import retrofit2.Response;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.intent.NewDataIntent;
 import ru.krotarnya.diasync.common.intent.NoDataIntent;
@@ -38,14 +39,14 @@ public class DataSyncTask implements Runnable {
     public void run() {
         String userId = userIdSupplier.get();
         try {
-            runSafe(userId);
+            runOnce(userId);
         } catch (Exception e) {
             Log.e(TAG, "Got exception while retrieving api response for " + userId, e);
             broadcast(NoDataIntent.build(userId));
         }
     }
 
-    private void runSafe(String userId) throws Exception {
+    private void runOnce(String userId) throws Exception {
         Instant to = Instant.now().plus(OVERTIME_PERIOD);
         Instant fallbackFrom = to.minus(MAX_SYNC_PERIOD);
 
@@ -56,14 +57,15 @@ public class DataSyncTask implements Runnable {
                 .map(t -> Instant.ofEpochMilli(Math.max(t.toEpochMilli(), fallbackFrom.toEpochMilli())))
                 .orElse(fallbackFrom);
 
-        List<DataPoint> response = api.getDataPoints(userId, from, to).execute().body();
+        Response<List<DataPoint>> call = api.getDataPoints(userId, from, to).execute();
 
-        if (response == null) {
-            Log.e(TAG, "Was not able to get api response");
+        if (!call.isSuccessful() || call.body() == null) {
+            Log.e(TAG, "API call failed: " + call.code());
             broadcast(NoDataIntent.build(userId));
             return;
         }
-        processResponse(response, userId);
+
+        processResponse(call.body(), userId);
     }
 
     private void processResponse(List<DataPoint> response, String userId) {

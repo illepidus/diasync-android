@@ -18,7 +18,7 @@ import androidx.wear.watchface.style.CurrentUserStyleRepository;
 import kotlin.coroutines.Continuation;
 import ru.krotarnya.diasync.common.receiver.NewDataReceiver;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
-import ru.krotarnya.diasync.common.service.SyncService;
+import ru.krotarnya.diasync.common.service.DataSyncService;
 
 @SuppressLint("Deprecated")
 public class DiasyncFaceService extends WatchFaceService {
@@ -45,6 +45,6 @@ public class DiasyncFaceService extends WatchFaceService {
 
     @Override
     public void onCreate() {
-        ContextCompat.startForegroundService(this, new Intent(this, SyncService.class));
+        ContextCompat.startForegroundService(this, new Intent(this, DataSyncService.class));
     }
 }
