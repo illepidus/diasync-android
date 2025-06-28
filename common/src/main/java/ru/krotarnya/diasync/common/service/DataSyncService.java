@@ -63,7 +63,7 @@ public class DataSyncService extends Service {
         executorService.scheduleWithFixedDelay(
                 new DataSyncTask(userIdSupplier, db, api, this),
                 0,
-                10,
+                5,
                 TimeUnit.SECONDS);
     }
 
