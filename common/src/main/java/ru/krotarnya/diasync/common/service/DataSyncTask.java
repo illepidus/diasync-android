@@ -1,10 +1,6 @@
 package ru.krotarnya.diasync.common.service;
 
-import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,10 +9,10 @@ import java.util.function.Supplier;
 
 import retrofit2.Response;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
-import ru.krotarnya.diasync.common.intent.NewDataIntent;
-import ru.krotarnya.diasync.common.intent.NoDataIntent;
-import ru.krotarnya.diasync.common.model.DataPoint;
-import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
+import ru.krotarnya.diasync.common.events.NewDataEvent;
+import ru.krotarnya.diasync.common.events.NoDataEvent;
+import ru.krotarnya.diasync.common.repository.DataPoint;
+import ru.krotarnya.diasync.common.repository.Database;
 
 public class DataSyncTask implements Runnable {
     private static final String TAG = DataSyncTask.class.getSimpleName();
@@ -24,15 +20,13 @@ public class DataSyncTask implements Runnable {
     private static final Duration OVERTIME_PERIOD = Duration.ofMinutes(1);
 
     private final Supplier<String> userIdSupplier;
-    private final DiasyncDatabase db;
+    private final Database db;
     private final DiasyncApiService api;
-    private final Context context;
 
-    public DataSyncTask(Supplier<String> userIdSupplier, DiasyncDatabase db, DiasyncApiService api, Context context) {
+    public DataSyncTask(Supplier<String> userIdSupplier, Database db, DiasyncApiService api) {
         this.userIdSupplier = userIdSupplier;
         this.db = db;
         this.api = api;
-        this.context = context;
     }
 
     @Override
@@ -41,8 +35,8 @@ public class DataSyncTask implements Runnable {
         try {
             runOnce(userId);
         } catch (Exception e) {
-            Log.e(TAG, "Got exception while retrieving api response for " + userId, e);
-            broadcast(NoDataIntent.build(userId));
+            Log.e(TAG, "Got exception while retrieving api response for " + userId + e, e);
+            new NoDataEvent(userId).post();
         }
     }
 
@@ -61,7 +55,7 @@ public class DataSyncTask implements Runnable {
 
         if (!call.isSuccessful() || call.body() == null) {
             Log.e(TAG, "API call failed: " + call.code());
-            broadcast(NoDataIntent.build(userId));
+            new NoDataEvent(userId).post();
             return;
         }
 
@@ -71,16 +65,11 @@ public class DataSyncTask implements Runnable {
     private void processResponse(List<DataPoint> response, String userId) {
         if (response.isEmpty()) {
             Log.d(TAG, "No new data");
-            broadcast(NoDataIntent.build(userId));
+            new NoDataEvent(userId).post();
             return;
         }
-
         Log.d("SyncService", "Got " + response.size() + " points");
         db.dataPointDao().upsert(response);
-        broadcast(NewDataIntent.build(userId));
-    }
-
-    private void broadcast(Intent intent) {
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        new NewDataEvent(response).post();
     }
 }

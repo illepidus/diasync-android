@@ -6,7 +6,7 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
-import ru.krotarnya.diasync.common.model.DataPoint;
+import ru.krotarnya.diasync.common.repository.DataPoint;
 
 public interface DiasyncApiService {
     @GET("/api/v1/getDataPoints")

@@ -1,21 +1,23 @@
-package ru.krotarnya.diasync.common.model;
+package ru.krotarnya.diasync.common.repository;
 
-import androidx.annotation.NonNull;
 import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.room.TypeConverters;
 
-import com.google.gson.Gson;
-
 import java.time.Instant;
 
-@Entity(indices = {@Index(value = {"userId", "timestamp"}, unique = true)})
+import lombok.Data;
+import ru.krotarnya.diasync.common.model.DateConverters;
+
+@Data
+@Entity(
+        tableName = "data",
+        indices = {@Index(value = {"userId", "timestamp"}, unique = true)}
+)
 @TypeConverters(DateConverters.class)
 public class DataPoint {
-    private static final Gson gson = new Gson();
-
     @PrimaryKey
     public long id;
 
@@ -51,11 +53,5 @@ public class DataPoint {
     public static class Calibration {
         public Double slope;
         public Double intercept;
-    }
-
-    @NonNull
-    @Override
-    public String toString() {
-        return gson.toJson(this);
     }
 }

@@ -1,11 +1,13 @@
 [versions]
 agp = "8.9.1"
 core = "1.16.0"
+eventbus = "3.3.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 localbroadcastmanager = "1.1.0"
+lombok = "1.18.36"
 material = "1.12.0"
 preference = "1.2.1"
 retrofit = "2.9.0"
@@ -16,11 +18,13 @@ watchface = "1.2.1"
 [libraries]
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 core = { module = "androidx.core:core", version.ref = "core" }
+eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbus" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 localbroadcastmanager = { module = "androidx.localbroadcastmanager:localbroadcastmanager", version.ref = "localbroadcastmanager" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

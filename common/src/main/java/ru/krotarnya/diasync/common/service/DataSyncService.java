@@ -23,18 +23,19 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
-import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
+import ru.krotarnya.diasync.common.repository.Database;
 
 public class DataSyncService extends Service {
-    private DiasyncDatabase db;
+    private static final String TAG = "DataSyncService";
+    private Database db;
     private DiasyncApiService api;
     private ScheduledExecutorService executorService;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("SyncService", "Service created");
-        db = DiasyncDatabase.cons(getApplicationContext());
+        Log.d(TAG, "Service created");
+        db = Database.cons(getApplicationContext());
 
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
@@ -48,7 +49,7 @@ public class DataSyncService extends Service {
         api = retrofit.create(DiasyncApiService.class);
 
         startForeground(1, buildNotification());
-        Log.d("SyncService", "Foreground service started with notification");
+        Log.d(TAG, "Foreground service started with notification");
 
         executorService = Executors.newSingleThreadScheduledExecutor();
         startSync(this::getUserId);
@@ -61,7 +62,7 @@ public class DataSyncService extends Service {
 
     private void startSync(Supplier<String> userIdSupplier) {
         executorService.scheduleWithFixedDelay(
-                new DataSyncTask(userIdSupplier, db, api, this),
+                new DataSyncTask(userIdSupplier, db, api),
                 0,
                 5,
                 TimeUnit.SECONDS);
@@ -98,6 +99,6 @@ public class DataSyncService extends Service {
     }
 
     public String getUserId() {
-        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "demo");
+        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "krotarino");
     }
 }

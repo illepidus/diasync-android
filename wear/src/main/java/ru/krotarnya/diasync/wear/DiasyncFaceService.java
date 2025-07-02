@@ -6,7 +6,6 @@ import android.view.SurfaceHolder;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.wear.watchface.CanvasType;
 import androidx.wear.watchface.ComplicationSlotsManager;
 import androidx.wear.watchface.WatchFace;
@@ -16,9 +15,9 @@ import androidx.wear.watchface.WatchState;
 import androidx.wear.watchface.style.CurrentUserStyleRepository;
 
 import kotlin.coroutines.Continuation;
-import ru.krotarnya.diasync.common.receiver.NewDataReceiver;
-import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
+import ru.krotarnya.diasync.common.repository.Database;
 import ru.krotarnya.diasync.common.service.DataSyncService;
+import ru.krotarnya.diasync.common.service.WidgetDataProviderImpl;
 
 @SuppressLint("Deprecated")
 public class DiasyncFaceService extends WatchFaceService {
@@ -29,16 +28,16 @@ public class DiasyncFaceService extends WatchFaceService {
             @NonNull ComplicationSlotsManager complicationSlotsManager,
             @NonNull CurrentUserStyleRepository currentUserStyleRepository,
             @NonNull Continuation<? super WatchFace> continuation) {
+
+        Database db = Database.cons(getApplicationContext());
+
         DiasyncCanvasRenderer renderer = new DiasyncCanvasRenderer(
+                new WidgetDataProviderImpl(db),
                 surfaceHolder,
                 currentUserStyleRepository,
                 watchState,
                 CanvasType.HARDWARE,
                 1000L);
-
-        DiasyncDatabase db = DiasyncDatabase.cons(getApplicationContext());
-        NewDataReceiver receiver = new NewDataReceiver(db, renderer::update);
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, receiver.intentFilter());
 
         return new WatchFace(WatchFaceType.DIGITAL, renderer);
     }
