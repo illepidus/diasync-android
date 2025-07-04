@@ -1,7 +1,9 @@
-package ru.krotarnya.diasync.wear;
+package ru.krotarnya.diasync.wear.service;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.os.BatteryManager;
 import android.view.SurfaceHolder;
 
 import androidx.annotation.NonNull;
@@ -15,24 +17,29 @@ import androidx.wear.watchface.WatchState;
 import androidx.wear.watchface.style.CurrentUserStyleRepository;
 
 import kotlin.coroutines.Continuation;
+import ru.krotarnya.diasync.common.receiver.BatteryStatusReceiver;
 import ru.krotarnya.diasync.common.repository.Database;
 import ru.krotarnya.diasync.common.service.DataSyncService;
-import ru.krotarnya.diasync.common.service.WidgetDataProviderImpl;
+import ru.krotarnya.diasync.common.service.WatchDataProvider;
+import ru.krotarnya.diasync.wear.render.DiasyncRenderer;
 
 @SuppressLint("Deprecated")
-public class DiasyncFaceService extends WatchFaceService {
+public final class DiasyncFaceService extends WatchFaceService {
+    private BatteryStatusReceiver batteryStatusReceiver;
+
     @Override
     public WatchFace createWatchFace(
             @NonNull SurfaceHolder surfaceHolder,
             @NonNull WatchState watchState,
             @NonNull ComplicationSlotsManager complicationSlotsManager,
             @NonNull CurrentUserStyleRepository currentUserStyleRepository,
-            @NonNull Continuation<? super WatchFace> continuation) {
-
+            @NonNull Continuation<? super WatchFace> continuation)
+    {
         Database db = Database.cons(getApplicationContext());
+        BatteryManager batteryManager = (BatteryManager) getApplicationContext().getSystemService(Context.BATTERY_SERVICE);
 
-        DiasyncCanvasRenderer renderer = new DiasyncCanvasRenderer(
-                new WidgetDataProviderImpl(db),
+        DiasyncRenderer renderer = new DiasyncRenderer(
+                new WatchDataProvider(db, batteryManager),
                 surfaceHolder,
                 currentUserStyleRepository,
                 watchState,
@@ -45,5 +52,13 @@ public class DiasyncFaceService extends WatchFaceService {
     @Override
     public void onCreate() {
         ContextCompat.startForegroundService(this, new Intent(this, DataSyncService.class));
+        batteryStatusReceiver = new BatteryStatusReceiver();
+        batteryStatusReceiver.register(getApplicationContext());
+    }
+
+
+    @Override
+    public void onDestroy() {
+        batteryStatusReceiver.unregister(getApplicationContext());
     }
 }

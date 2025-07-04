@@ -18,4 +18,5 @@ public class WidgetData {
     private final GlucoseUnit glucoseUnit;
     private final BloodColor bloodColor;
     private final BloodColor textColor;
+    private final BatteryStatus batteryStatus;
 }

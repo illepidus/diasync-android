@@ -1,13 +1,8 @@
 package ru.krotarnya.diasync.common.events;
 
+import lombok.Data;
+
+@Data
 public class NoDataEvent implements Event<NoDataEvent> {
     private final String userId;
-
-    public NoDataEvent(String userId) {
-        this.userId = userId;
-    }
-
-    public String userId() {
-        return userId;
-    }
 }
