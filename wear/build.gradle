@@ -42,6 +42,9 @@ android {
 dependencies {
     implementation project(':common')
 
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    
     implementation libs.core
     implementation libs.watchface
     implementation libs.watchface.client

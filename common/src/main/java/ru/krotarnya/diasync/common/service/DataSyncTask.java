@@ -68,7 +68,7 @@ public class DataSyncTask implements Runnable {
             new NoDataEvent(userId).post();
             return;
         }
-        Log.d("SyncService", "Got " + response.size() + " points");
+        Log.d(TAG, "Got " + response.size() + " points");
         db.dataPointDao().upsert(response);
         new NewDataEvent(response).post();
     }
