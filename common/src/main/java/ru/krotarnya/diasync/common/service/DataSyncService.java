@@ -26,7 +26,8 @@ import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
 import ru.krotarnya.diasync.common.repository.Database;
 
 public class DataSyncService extends Service {
-    private static final String TAG = "DataSyncService";
+    private static final String TAG = DataSyncService.class.getSimpleName();
+    
     private Database db;
     private DiasyncApiService api;
     private ScheduledExecutorService executorService;

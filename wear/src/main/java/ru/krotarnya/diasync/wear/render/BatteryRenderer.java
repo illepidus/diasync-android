@@ -1,15 +1,12 @@
 package ru.krotarnya.diasync.wear.render;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import ru.krotarnya.diasync.common.model.BatteryStatus;
-import ru.krotarnya.diasync.common.model.WidgetData;
+import ru.krotarnya.diasync.wear.model.WatchFace;
 
 final class BatteryRenderer implements ComponentRenderer {
     private static final int BATTERY_NORMAL_COLOR = Color.WHITE;
@@ -25,17 +22,17 @@ final class BatteryRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(Canvas canvas, Rect bounds, ZonedDateTime zonedDateTime, WidgetData widgetData) {
-        Optional.ofNullable(widgetData.getBatteryStatus())
+    public void render(WatchFace watchFace) {
+        Optional.ofNullable(watchFace.getBatteryStatus())
                 .ifPresent(batteryStatus -> {
                     paint.setColor(getColor(batteryStatus));
                     paint.setTextAlign(Paint.Align.LEFT);
-                    paint.setTextSize(bounds.height() / 15f);
+                    paint.setTextSize(watchFace.getBounds().height() / 15f);
 
-                    canvas.drawText(
+                    watchFace.getCanvas().drawText(
                             batteryStatus.chargePercentRounded() + "%",
-                            (int) (bounds.width() * 0.1),
-                            bounds.height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
+                            (int) (watchFace.getBounds().width() * 0.1),
+                            watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                             paint);
                 });
     }

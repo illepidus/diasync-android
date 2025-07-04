@@ -10,9 +10,11 @@ import ru.krotarnya.diasync.common.events.BatteryStatusEvent;
 import ru.krotarnya.diasync.common.model.BatteryStatus;
 
 public class BatteryStatusReceiver extends BroadcastReceiver {
+    public static final String TAG = BatteryStatusReceiver.class.getSimpleName();
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("BatteryStatusReceiver", "BATTERY");
+        Log.d(TAG, "BATTERY STATUS UPDATED");
         if (Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())) {
             new BatteryStatusEvent(new BatteryStatus(intent)).post();
         }

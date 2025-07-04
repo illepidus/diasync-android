@@ -1,14 +1,11 @@
 package ru.krotarnya.diasync.wear.render;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import ru.krotarnya.diasync.common.model.WidgetData;
+import ru.krotarnya.diasync.wear.model.WatchFace;
 
 final class DateTimeRenderer implements ComponentRenderer {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -24,20 +21,21 @@ final class DateTimeRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(Canvas canvas, Rect bounds, ZonedDateTime zonedDateTime, WidgetData widgetData) {
-        paint.setTextSize(bounds.height() / 5f);
+    public void render(WatchFace watchFace) {
+        paint.setTextSize(watchFace.getBounds().height() / 5f);
 
-        canvas.drawText(
-                zonedDateTime.format(TIME_FORMATTER),
-                bounds.centerX(),
-                bounds.height() * 0.15f - (paint.descent() + paint.ascent()) / 2,
+        watchFace.getCanvas().drawText(
+                watchFace.getZonedDateTime().format(TIME_FORMATTER),
+                watchFace.getBounds().centerX(),
+                watchFace.getBounds().height() * 0.15f - (paint.descent() + paint.ascent()) / 2,
                 paint);
 
-        paint.setTextSize(bounds.height() / 15f);
-        canvas.drawText(
-                zonedDateTime.format(DATE_FORMATTER),
-                bounds.centerX(),
-                bounds.height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
+        paint.setTextSize(watchFace.getBounds().height() / 15f);
+
+        watchFace.getCanvas().drawText(
+                watchFace.getZonedDateTime().format(DATE_FORMATTER),
+                watchFace.getBounds().centerX(),
+                watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                 paint);
     }
 }

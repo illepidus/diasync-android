@@ -10,17 +10,11 @@ import androidx.wear.watchface.Renderer;
 import androidx.wear.watchface.WatchState;
 import androidx.wear.watchface.style.CurrentUserStyleRepository;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import ru.krotarnya.diasync.common.events.BatteryStatusEvent;
-import ru.krotarnya.diasync.common.events.NewDataEvent;
-import ru.krotarnya.diasync.common.model.WidgetData;
-import ru.krotarnya.diasync.common.service.WidgetDataProvider;
+import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.service.WatchDataHolder;
 
 /**
  * @noinspection deprecation
@@ -28,12 +22,11 @@ import ru.krotarnya.diasync.common.service.WidgetDataProvider;
 public final class DiasyncRenderer extends Renderer.CanvasRenderer {
     private static final int BACKGROUND_COLOR = Color.BLACK;
 
-    private final WidgetDataProvider dataProvider;
+    private final WatchDataHolder dataProvider;
     private final List<ComponentRenderer> componentRenderers;
-    private WidgetData widgetData;
 
     public DiasyncRenderer(
-            @NonNull WidgetDataProvider dataProvider,
+            @NonNull WatchDataHolder dataHolder,
             @NonNull SurfaceHolder surfaceHolder,
             @NonNull CurrentUserStyleRepository currentUserStyleRepository,
             @NonNull WatchState watchState,
@@ -47,36 +40,27 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
                 canvasType,
                 interactiveDrawModeUpdateDelayMillis);
 
-        this.dataProvider = dataProvider;
+        this.dataProvider = dataHolder;
 
         this.componentRenderers = List.of(
                 new DateTimeRenderer(),
                 new BatteryRenderer(),
                 new StaleRenderer());
 
-        updateWidgetData();
-        EventBus.getDefault().register(this);
+        //EventBus.getDefault().register(this);
     }
 
 
     @Override
     public void render(@NonNull Canvas canvas, @NonNull Rect bounds, @NonNull ZonedDateTime zonedDateTime) {
         canvas.drawColor(BACKGROUND_COLOR);
-        componentRenderers.forEach(renderer -> renderer.render(canvas, bounds, zonedDateTime, widgetData));
-    }
 
-    @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onNewData(NewDataEvent event) {
-        updateWidgetData();
-    }
+        WatchFace data = dataProvider.get();
+        data.setCanvas(canvas);
+        data.setBounds(bounds);
+        data.setZonedDateTime(zonedDateTime);
 
-    @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onBatteryChange(BatteryStatusEvent event) {
-        updateWidgetData();
-    }
-
-    private void updateWidgetData() {
-        widgetData = dataProvider.get();
+        componentRenderers.forEach(renderer -> renderer.render(data));
     }
 
     @Override
@@ -90,6 +74,6 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
 
     @Override
     public void onDestroy() {
-        EventBus.getDefault().unregister(this);
+        //EventBus.getDefault().unregister(this);
     }
 }
