@@ -22,7 +22,7 @@ public class Settings {
             .lowThreshold(70)
             .highThreshold(200)
             .userId("demo")
-            .timeWindow(Duration.ofMinutes(30))
+            .watchFaceTimeWindow(Duration.ofMinutes(30))
             .unit(GlucoseUnit.MMOL)
             .build();
 
@@ -34,7 +34,7 @@ public class Settings {
 
     public String userId;
 
-    public Duration timeWindow;
+    public Duration watchFaceTimeWindow;
     public GlucoseUnit unit;
     public boolean useCalibrations;
 

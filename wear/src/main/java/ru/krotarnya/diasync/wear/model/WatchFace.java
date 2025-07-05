@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.Builder;
 import lombok.Data;
@@ -28,4 +29,8 @@ public class WatchFace {
     private Canvas canvas;
     private Rect bounds;
     private ZonedDateTime now;
+
+    public Settings getSettings() {
+        return Optional.ofNullable(settings).orElse(Settings.getDefault());
+    }
 }

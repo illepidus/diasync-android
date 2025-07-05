@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.Objects;
@@ -26,21 +27,29 @@ import ru.krotarnya.diasync.wear.model.WatchFace;
 
 public class ChartRenderer implements ComponentRenderer {
     private static final String TAG = ChartRenderer.class.getSimpleName();
+
+    private static final Duration STALE_INTERVAL = Duration.ofMinutes(10);
+
     private static final int GRID_COLOR = Color.GRAY;
-    private static final int TEXT_COLOR = Color.GRAY;
-    private static final int LOW_COLOR = Color.RED;
-    private static final int HIGH_COLOR = Color.YELLOW;
+    private static final int OUTLINE_COLOR = Color.BLACK;
+    private static final int SECONDARY_TEXT_COLOR = GRID_COLOR;
+
+    private static final int SENSOR_COLOR_LOW = Color.parseColor("#FFFF3333");
+    private static final int SENSOR_COLOR_NORMAL = Color.parseColor("#FF00BFFF");
+    private static final int SENSOR_COLOR_HIGH = Color.parseColor("#FFFFBB33");
+
+    private static final int PRIMARY_TEXT_COLOR_LOW = SENSOR_COLOR_LOW;
+    private static final int PRIMARY_TEXT_COLOR_NORMAL = Color.WHITE;
+    private static final int PRIMARY_TEXT_COLOR_HIGH = SENSOR_COLOR_HIGH;
+
+    private static final int PRIMARY_TEXT_COLOR_STALE = Color.MAGENTA;
+
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     @Override
     public void render(WatchFace watchFace) {
         if (watchFace.getDataPoints() == null) {
             Log.w(TAG, "No data points to render");
-            return;
-        }
-
-        if (watchFace.getSettings() == null) {
-            Log.w(TAG, "No settings");
             return;
         }
 
@@ -58,7 +67,7 @@ public class ChartRenderer implements ComponentRenderer {
         Function<Instant, Integer> toX = instant -> {
             long t = instant.toEpochMilli();
             long maxT = watchFace.getNow().toInstant().toEpochMilli();
-            long minT = maxT - watchFace.getSettings().getTimeWindow().toMillis();
+            long minT = maxT - watchFace.getSettings().getWatchFaceTimeWindow().toMillis();
             int minX = rect.left;
             int maxX = rect.right;
             return Math.toIntExact(minX + (maxX - minX) * (t - minT) / (maxT - minT));
@@ -86,18 +95,20 @@ public class ChartRenderer implements ComponentRenderer {
             return (int) (minY + (maxY - minY) * (v - minV) / (maxV - minV));
         };
 
-        Function<DataPoint, Optional<ColoredPoint>> sensorGlucoseToPoint = point ->
+        Function<DataPoint, Optional<ColorPoint>> sensorGlucoseToPoint = point ->
                 Optional.ofNullable(point.getSensorGlucose())
-                        .map(glucose -> new ColoredPoint(
-                                toX.apply(point.getTimestamp()),
-                                toY.apply(glucose.getMgdl(settings.isUseCalibrations())),
-                                Color.WHITE));
-
+                        .map(glucose -> {
+                            double mgdl = glucose.getMgdl(settings.isUseCalibrations());
+                            return new ColorPoint(
+                                    toX.apply(point.getTimestamp()),
+                                    toY.apply(mgdl),
+                                    pickSensorGlucoseColor(settings, mgdl));
+                        });
 
         renderTimeLines(canvas, rect, settings, now, toX);
         renderThresholdLines(canvas, rect, settings, toY);
         renderSensorGlucose(canvas, rect, settings, dataPoints, sensorGlucoseToPoint);
-        //renderText(canvas, rect, settings, dataPoints);
+        renderText(canvas, rect, settings, dataPoints, now);
     }
 
     private void renderTimeLines(
@@ -107,25 +118,21 @@ public class ChartRenderer implements ComponentRenderer {
             ZonedDateTime now,
             Function<Instant, Integer> toX)
     {
-        Duration timeWindow = settings.getTimeWindow();
+        Duration timeWindow = settings.getWatchFaceTimeWindow();
         ZonedDateTime from = now.minus(timeWindow);
 
         Paint linePaint = new Paint();
         linePaint.setColor(GRID_COLOR);
         Paint textPaint = new Paint();
         float textSize = rect.height() / 10f;
-        textPaint.setColor(TEXT_COLOR);
+        textPaint.setColor(SECONDARY_TEXT_COLOR);
         textPaint.setTextSize(textSize);
         textPaint.setTextAlign(Paint.Align.CENTER);
 
         int minutesPerLine;
-        if (timeWindow.compareTo(Duration.ofMinutes(60)) > 0) {
-            minutesPerLine = 60;
-        } else if (timeWindow.compareTo(Duration.ofMinutes(30)) > 0) {
-            minutesPerLine = 30;
-        } else {
-            minutesPerLine = 15;
-        }
+        if (timeWindow.compareTo(Duration.ofMinutes(60)) > 0) minutesPerLine = 60;
+        else if (timeWindow.compareTo(Duration.ofMinutes(30)) > 0) minutesPerLine = 30;
+        else minutesPerLine = 15;
 
         for (ZonedDateTime t = DateTimeUtils.toStartOfNMinutes(from, minutesPerLine);
              t.isBefore(now); t = t.plus(Duration.ofMinutes(minutesPerLine))) {
@@ -148,11 +155,11 @@ public class ChartRenderer implements ComponentRenderer {
         Paint paint = new Paint();
         paint.setStrokeWidth(rect.height() / 100f);
 
-        paint.setColor(LOW_COLOR);
+        paint.setColor(SENSOR_COLOR_LOW);
         int yLow = toY.apply(settings.lowThreshold);
         canvas.drawLine(x1, yLow, x2, yLow, paint);
 
-        paint.setColor(HIGH_COLOR);
+        paint.setColor(SENSOR_COLOR_HIGH);
         int yHigh = toY.apply(settings.highThreshold);
         canvas.drawLine(x1, yHigh, x2, yHigh, paint);
     }
@@ -162,10 +169,10 @@ public class ChartRenderer implements ComponentRenderer {
             Rect rect,
             Settings settings,
             List<DataPoint> dataPoints,
-            Function<DataPoint, Optional<ColoredPoint>> toPoint)
+            Function<DataPoint, Optional<ColorPoint>> toPoint)
     {
         Paint paint = new Paint();
-        float r = rect.width() * 20f / settings.getTimeWindow().getSeconds();
+        float r = rect.width() * 20f / settings.getWatchFaceTimeWindow().getSeconds();
 
         dataPoints.forEach(dataPoint -> toPoint
                 .apply(dataPoint)
@@ -177,8 +184,61 @@ public class ChartRenderer implements ComponentRenderer {
                 }));
     }
 
+    private void renderText(
+            Canvas canvas,
+            Rect rect,
+            Settings settings,
+            List<DataPoint> dataPoints,
+            ZonedDateTime now)
+    {
+        Paint paint = new Paint();
+        Optional<DataPoint> lastSensorPoint = dataPoints.stream()
+                .filter(point -> point.getSensorGlucose() != null)
+                .max(Comparator.comparing(DataPoint::getTimestamp))
+                .filter(point -> Duration.between(point.getTimestamp(), now).compareTo(STALE_INTERVAL) < 0);
+
+        String text = lastSensorPoint
+                .map(point -> point.sensorGlucose)
+                .map(glucose -> settings.getUnit().format(glucose.getMgdl(settings.isUseCalibrations())))
+                .orElse("???");
+
+        float textHeight = rect.height() / 2.5f;
+        float strokeWidth = textHeight / 15f;
+        float textX = rect.left;
+        float textY = rect.centerY();
+
+        paint.setFakeBoldText(true);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTextSize(textHeight);
+
+        paint.setColor(OUTLINE_COLOR);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(strokeWidth);
+        canvas.drawText(text, textX, textY - (paint.descent() + paint.ascent()) / 2, paint);
+
+        lastSensorPoint.map(point -> point.sensorGlucose).ifPresentOrElse(
+                glucose -> paint.setColor(
+                        pickSensorGlucoseTextColor(settings, glucose.getMgdl(settings.isUseCalibrations()))),
+                () -> paint.setColor(PRIMARY_TEXT_COLOR_STALE));
+
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawText(text, textX, textY - (paint.descent() + paint.ascent()) / 2, paint);
+    }
+
+    private int pickSensorGlucoseColor(Settings settings, double mgdl) {
+        if (mgdl < settings.getLowThreshold()) return SENSOR_COLOR_LOW;
+        if (mgdl > settings.getHighThreshold()) return SENSOR_COLOR_HIGH;
+        return SENSOR_COLOR_NORMAL;
+    }
+
+    private int pickSensorGlucoseTextColor(Settings settings, double mgdl) {
+        if (mgdl < settings.getLowThreshold()) return PRIMARY_TEXT_COLOR_LOW;
+        if (mgdl > settings.getHighThreshold()) return PRIMARY_TEXT_COLOR_HIGH;
+        return PRIMARY_TEXT_COLOR_NORMAL;
+    }
+
     @Data
-    private static class ColoredPoint {
+    private static class ColorPoint {
         private final int x;
         private final int y;
         private final int color;

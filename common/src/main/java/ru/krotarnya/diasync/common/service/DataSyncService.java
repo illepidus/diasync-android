@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.preference.PreferenceManager;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -23,12 +21,13 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
-import ru.krotarnya.diasync.common.repository.Database;
+import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
+import ru.krotarnya.diasync.common.repository.Settings;
 
 public class DataSyncService extends Service {
     private static final String TAG = DataSyncService.class.getSimpleName();
-    
-    private Database db;
+
+    private DiasyncDatabase db;
     private DiasyncApiService api;
     private ScheduledExecutorService executorService;
 
@@ -36,7 +35,7 @@ public class DataSyncService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "Service created");
-        db = Database.cons(getApplicationContext());
+        db = DiasyncDatabase.getInstance(getApplicationContext());
 
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
@@ -100,6 +99,6 @@ public class DataSyncService extends Service {
     }
 
     public String getUserId() {
-        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "demo");
+        return db.settingsDao().find().orElse(Settings.getDefault()).getUserId();
     }
 }

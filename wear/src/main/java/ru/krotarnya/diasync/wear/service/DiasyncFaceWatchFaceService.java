@@ -19,16 +19,16 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import kotlin.coroutines.Continuation;
-import ru.krotarnya.diasync.common.events.BatteryStatusEvent;
+import ru.krotarnya.diasync.common.events.NewBatteryStatusEvent;
 import ru.krotarnya.diasync.common.events.NewDataEvent;
-import ru.krotarnya.diasync.common.events.SetingsChangedEvent;
+import ru.krotarnya.diasync.common.events.NewSettingsEvent;
 import ru.krotarnya.diasync.common.receiver.BatteryStatusReceiver;
 import ru.krotarnya.diasync.common.repository.DataPoint;
-import ru.krotarnya.diasync.common.repository.Database;
+import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 import ru.krotarnya.diasync.common.repository.Settings;
 import ru.krotarnya.diasync.common.service.DataSyncService;
 import ru.krotarnya.diasync.wear.render.DiasyncRenderer;
@@ -38,7 +38,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     private final BatteryStatusReceiver batteryStatusReceiver = new BatteryStatusReceiver();
     private final WatchFaceHolder watchFaceHolder = new WatchFaceHolder();
 
-    private Database database;
+    private DiasyncDatabase db;
 
     @Override
     public WatchFace createWatchFace(
@@ -63,13 +63,12 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     public void onCreate() {
         Context context = getApplicationContext();
 
-        database = Database.cons(context);
+        db = DiasyncDatabase.getInstance(context);
         batteryStatusReceiver.register(context);
         ContextCompat.startForegroundService(context, new Intent(this, DataSyncService.class));
 
         EventBus.getDefault().register(this);
 
-        updateBloodData();
         updateSettings();
     }
 
@@ -84,26 +83,28 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onSettings(SetingsChangedEvent event) {
+    public void onSettings(NewSettingsEvent event) {
         watchFaceHolder.mutate().settings(event.getSettings());
     }
 
     private void updateBloodData() {
-        List<DataPoint> dataPoints = database.dataPointDao()
-                .findLast("demo")
-                .stream()
-                .collect(Collectors.toList());
+        Settings settings = watchFaceHolder.get().getSettings();
+
+        Instant to = Instant.now();
+        Instant from = to.minus(settings.getWatchFaceTimeWindow());
+        List<DataPoint> dataPoints = db.dataPointDao().find(settings.getUserId(), from, to);
 
         watchFaceHolder.mutate().dataPoints(dataPoints);
     }
 
     private void updateSettings() {
-        watchFaceHolder.mutate().settings(database.settingsDao().find().orElse(Settings.getDefault()));
+        watchFaceHolder.mutate().settings(db.settingsDao().find().orElse(Settings.getDefault()));
+        updateBloodData();
     }
 
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onBatteryChange(BatteryStatusEvent event) {
+    public void onBatteryChange(NewBatteryStatusEvent event) {
         watchFaceHolder.mutate().batteryStatus(event.getBatteryStatus());
     }
 }

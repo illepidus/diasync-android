@@ -3,6 +3,6 @@ package ru.krotarnya.diasync.common.events;
 import lombok.Data;
 
 @Data
-public class NoDataEvent implements Event<NoDataEvent> {
+public class NoNewDataEvent implements Event<NoNewDataEvent> {
     private final String userId;
 }

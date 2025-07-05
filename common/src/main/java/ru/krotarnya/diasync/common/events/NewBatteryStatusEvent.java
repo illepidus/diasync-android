@@ -4,6 +4,6 @@ import lombok.Data;
 import ru.krotarnya.diasync.common.model.BatteryStatus;
 
 @Data
-public class BatteryStatusEvent implements Event<BatteryStatus> {
+public class NewBatteryStatusEvent implements Event<BatteryStatus> {
     private final BatteryStatus batteryStatus;
 }

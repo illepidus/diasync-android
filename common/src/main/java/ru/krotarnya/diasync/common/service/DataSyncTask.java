@@ -10,9 +10,9 @@ import java.util.function.Supplier;
 import retrofit2.Response;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.events.NewDataEvent;
-import ru.krotarnya.diasync.common.events.NoDataEvent;
+import ru.krotarnya.diasync.common.events.NoNewDataEvent;
 import ru.krotarnya.diasync.common.repository.DataPoint;
-import ru.krotarnya.diasync.common.repository.Database;
+import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
 public class DataSyncTask implements Runnable {
     private static final String TAG = DataSyncTask.class.getSimpleName();
@@ -20,10 +20,10 @@ public class DataSyncTask implements Runnable {
     private static final Duration OVERTIME_PERIOD = Duration.ofMinutes(1);
 
     private final Supplier<String> userIdSupplier;
-    private final Database db;
+    private final DiasyncDatabase db;
     private final DiasyncApiService api;
 
-    public DataSyncTask(Supplier<String> userIdSupplier, Database db, DiasyncApiService api) {
+    public DataSyncTask(Supplier<String> userIdSupplier, DiasyncDatabase db, DiasyncApiService api) {
         this.userIdSupplier = userIdSupplier;
         this.db = db;
         this.api = api;
@@ -36,7 +36,7 @@ public class DataSyncTask implements Runnable {
             runOnce(userId);
         } catch (Exception e) {
             Log.e(TAG, "Got exception while retrieving api response for " + userId + e, e);
-            new NoDataEvent(userId).post();
+            new NoNewDataEvent(userId).post();
         }
     }
 
@@ -55,7 +55,7 @@ public class DataSyncTask implements Runnable {
 
         if (!call.isSuccessful() || call.body() == null) {
             Log.e(TAG, "API call failed: " + call.code());
-            new NoDataEvent(userId).post();
+            new NoNewDataEvent(userId).post();
             return;
         }
 
@@ -65,7 +65,7 @@ public class DataSyncTask implements Runnable {
     private void processResponse(List<DataPoint> response, String userId) {
         if (response.isEmpty()) {
             Log.d(TAG, "No new data");
-            new NoDataEvent(userId).post();
+            new NoNewDataEvent(userId).post();
             return;
         }
         Log.d(TAG, "Got " + response.size() + " points");
