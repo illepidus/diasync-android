@@ -44,6 +44,7 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
         this.componentRenderers = List.of(
                 new DateTimeRenderer(),
                 new BatteryRenderer(),
+                new StepsTodayRenderer(),
                 new StaleRenderer(),
                 new ChartRenderer());
     }

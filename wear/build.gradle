@@ -44,11 +44,12 @@ dependencies {
 
     compileOnly libs.lombok
     annotationProcessor libs.lombok
-    
+
     implementation libs.core
     implementation libs.watchface
     implementation libs.watchface.client
     implementation libs.localbroadcastmanager
+    implementation libs.health.services.client
     implementation libs.eventbus
     implementation libs.room.runtime
 }

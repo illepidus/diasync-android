@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import ru.krotarnya.diasync.common.events.NewBatteryStatusEvent;
+import ru.krotarnya.diasync.common.events.BatteryStatusChanged;
 import ru.krotarnya.diasync.common.model.BatteryStatus;
 
 public class BatteryStatusReceiver extends BroadcastReceiver {
@@ -16,7 +16,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "BATTERY STATUS UPDATED");
         if (Intent.ACTION_BATTERY_CHANGED.equals(intent.getAction())) {
-            new NewBatteryStatusEvent(new BatteryStatus(intent)).post();
+            new BatteryStatusChanged(new BatteryStatus(intent)).post();
         }
     }
 

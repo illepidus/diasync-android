@@ -4,6 +4,6 @@ import lombok.Data;
 import ru.krotarnya.diasync.common.repository.Settings;
 
 @Data
-public class NewSettingsEvent implements Event<NewSettingsEvent> {
+public class SettingsChanged implements Event<SettingsChanged> {
     private final Settings settings;
 }

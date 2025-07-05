@@ -1,17 +1,18 @@
 [versions]
-agp = "8.9.1"
+agp = "8.9.3"
 core = "1.16.0"
 eventbus = "3.3.1"
+healthServicesClient = "1.1.0-alpha05"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-appcompat = "1.7.0"
+appcompat = "1.7.1"
 localbroadcastmanager = "1.1.0"
 lombok = "1.18.36"
 material = "1.12.0"
 preference = "1.2.1"
 retrofit = "2.9.0"
-roomRuntime = "2.7.0"
+roomRuntime = "2.7.2"
 watchfaceVersion = "1.2.1"
 watchface = "1.2.1"
 
@@ -19,6 +20,7 @@ watchface = "1.2.1"
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 core = { module = "androidx.core:core", version.ref = "core" }
 eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbus" }
+health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

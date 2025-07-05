@@ -23,9 +23,10 @@ import java.time.Instant;
 import java.util.List;
 
 import kotlin.coroutines.Continuation;
-import ru.krotarnya.diasync.common.events.NewBatteryStatusEvent;
-import ru.krotarnya.diasync.common.events.NewDataEvent;
-import ru.krotarnya.diasync.common.events.NewSettingsEvent;
+import ru.krotarnya.diasync.common.events.BatteryStatusChanged;
+import ru.krotarnya.diasync.common.events.DailyStepsUpdated;
+import ru.krotarnya.diasync.common.events.NewData;
+import ru.krotarnya.diasync.common.events.SettingsChanged;
 import ru.krotarnya.diasync.common.receiver.BatteryStatusReceiver;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
@@ -65,11 +66,12 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
 
         db = DiasyncDatabase.getInstance(context);
         batteryStatusReceiver.register(context);
+
         ContextCompat.startForegroundService(context, new Intent(this, DataSyncService.class));
-
         EventBus.getDefault().register(this);
-
+        
         updateSettings();
+        new StepListener(context).start();
     }
 
     @Override
@@ -78,13 +80,18 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onNewData(NewDataEvent event) {
+    public void onNewData(NewData event) {
         updateBloodData();
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onSettings(NewSettingsEvent event) {
+    public void onSettings(SettingsChanged event) {
         watchFaceHolder.mutate().settings(event.getSettings());
+    }
+
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onSteps(DailyStepsUpdated event) {
+        watchFaceHolder.mutate().stepsToday(event.getSteps());
     }
 
     private void updateBloodData() {
@@ -104,7 +111,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
 
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    public void onBatteryChange(NewBatteryStatusEvent event) {
+    public void onBatteryChange(BatteryStatusChanged event) {
         watchFaceHolder.mutate().batteryStatus(event.getBatteryStatus());
     }
 }

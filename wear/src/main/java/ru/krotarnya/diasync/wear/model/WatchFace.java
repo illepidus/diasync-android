@@ -24,6 +24,8 @@ public class WatchFace {
     private final BatteryStatus batteryStatus;
     @Nullable
     private final Settings settings;
+    @Nullable
+    private final Long stepsToday;
 
     // never set through builder()
     private Canvas canvas;

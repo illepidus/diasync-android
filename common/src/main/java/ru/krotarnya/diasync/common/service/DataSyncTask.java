@@ -9,8 +9,7 @@ import java.util.function.Supplier;
 
 import retrofit2.Response;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
-import ru.krotarnya.diasync.common.events.NewDataEvent;
-import ru.krotarnya.diasync.common.events.NoNewDataEvent;
+import ru.krotarnya.diasync.common.events.NewData;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
@@ -36,7 +35,6 @@ public class DataSyncTask implements Runnable {
             runOnce(userId);
         } catch (Exception e) {
             Log.e(TAG, "Got exception while retrieving api response for " + userId + e, e);
-            new NoNewDataEvent(userId).post();
         }
     }
 
@@ -55,7 +53,6 @@ public class DataSyncTask implements Runnable {
 
         if (!call.isSuccessful() || call.body() == null) {
             Log.e(TAG, "API call failed: " + call.code());
-            new NoNewDataEvent(userId).post();
             return;
         }
 
@@ -64,12 +61,11 @@ public class DataSyncTask implements Runnable {
 
     private void processResponse(List<DataPoint> response, String userId) {
         if (response.isEmpty()) {
-            Log.d(TAG, "No new data");
-            new NoNewDataEvent(userId).post();
+            Log.d(TAG, "No new data for " + userId);
             return;
         }
         Log.d(TAG, "Got " + response.size() + " points");
         db.dataPointDao().upsert(response);
-        new NewDataEvent(response).post();
+        new NewData(response).post();
     }
 }

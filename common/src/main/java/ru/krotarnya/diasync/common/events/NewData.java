@@ -6,6 +6,6 @@ import lombok.Data;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 
 @Data
-public class NewDataEvent implements Event<NewDataEvent> {
+public class NewData implements Event<NewData> {
     private final List<DataPoint> dataPoints;
 }

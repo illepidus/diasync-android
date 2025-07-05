@@ -25,7 +25,7 @@ import ru.krotarnya.diasync.common.repository.Settings;
 import ru.krotarnya.diasync.common.util.DateTimeUtils;
 import ru.krotarnya.diasync.wear.model.WatchFace;
 
-public class ChartRenderer implements ComponentRenderer {
+public final class ChartRenderer implements ComponentRenderer {
     private static final String TAG = ChartRenderer.class.getSimpleName();
 
     private static final Duration STALE_INTERVAL = Duration.ofMinutes(10);
