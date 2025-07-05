@@ -100,6 +100,6 @@ public class DataSyncService extends Service {
     }
 
     public String getUserId() {
-        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "krotarino");
+        return PreferenceManager.getDefaultSharedPreferences(this).getString("user_id", "demo");
     }
 }

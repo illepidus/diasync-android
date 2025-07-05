@@ -25,16 +25,18 @@ import java.util.stream.Collectors;
 import kotlin.coroutines.Continuation;
 import ru.krotarnya.diasync.common.events.BatteryStatusEvent;
 import ru.krotarnya.diasync.common.events.NewDataEvent;
+import ru.krotarnya.diasync.common.events.SetingsChangedEvent;
 import ru.krotarnya.diasync.common.receiver.BatteryStatusReceiver;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.common.repository.Database;
+import ru.krotarnya.diasync.common.repository.Settings;
 import ru.krotarnya.diasync.common.service.DataSyncService;
 import ru.krotarnya.diasync.wear.render.DiasyncRenderer;
 
 @SuppressLint("Deprecated")
 public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     private final BatteryStatusReceiver batteryStatusReceiver = new BatteryStatusReceiver();
-    private final WatchDataHolder watchDataHolder = new WatchDataHolder();
+    private final WatchFaceHolder watchFaceHolder = new WatchFaceHolder();
 
     private Database database;
 
@@ -47,7 +49,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
             @NonNull Continuation<? super WatchFace> continuation)
     {
         DiasyncRenderer renderer = new DiasyncRenderer(
-                watchDataHolder,
+                watchFaceHolder,
                 surfaceHolder,
                 currentUserStyleRepository,
                 watchState,
@@ -66,6 +68,9 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
         ContextCompat.startForegroundService(context, new Intent(this, DataSyncService.class));
 
         EventBus.getDefault().register(this);
+
+        updateBloodData();
+        updateSettings();
     }
 
     @Override
@@ -78,17 +83,27 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
         updateBloodData();
     }
 
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onSettings(SetingsChangedEvent event) {
+        watchFaceHolder.mutate().settings(event.getSettings());
+    }
+
     private void updateBloodData() {
         List<DataPoint> dataPoints = database.dataPointDao()
-                .findLast("krotarino")
+                .findLast("demo")
                 .stream()
                 .collect(Collectors.toList());
 
-        watchDataHolder.mutate().dataPoints(dataPoints);
+        watchFaceHolder.mutate().dataPoints(dataPoints);
     }
+
+    private void updateSettings() {
+        watchFaceHolder.mutate().settings(database.settingsDao().find().orElse(Settings.getDefault()));
+    }
+
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onBatteryChange(BatteryStatusEvent event) {
-        watchDataHolder.mutate().batteryStatus(event.getBatteryStatus());
+        watchFaceHolder.mutate().batteryStatus(event.getBatteryStatus());
     }
 }

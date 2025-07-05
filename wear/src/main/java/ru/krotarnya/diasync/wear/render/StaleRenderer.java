@@ -37,7 +37,7 @@ final class StaleRenderer implements ComponentRenderer {
                 .map(DataPoint::getTimestamp);
 
         String text = lastPoint
-                .map(p -> Duration.between(p, watchFace.getZonedDateTime()))
+                .map(p -> Duration.between(p, watchFace.getNow()))
                 .map(d -> d.compareTo(STALE_WARNING_THRESHOLD) > 0 ? d.getSeconds() / 60 + "m" : "")
                 .orElse(NO_DATA);
 

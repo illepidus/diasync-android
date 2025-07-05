@@ -25,7 +25,7 @@ final class DateTimeRenderer implements ComponentRenderer {
         paint.setTextSize(watchFace.getBounds().height() / 5f);
 
         watchFace.getCanvas().drawText(
-                watchFace.getZonedDateTime().format(TIME_FORMATTER),
+                watchFace.getNow().format(TIME_FORMATTER),
                 watchFace.getBounds().centerX(),
                 watchFace.getBounds().height() * 0.15f - (paint.descent() + paint.ascent()) / 2,
                 paint);
@@ -33,7 +33,7 @@ final class DateTimeRenderer implements ComponentRenderer {
         paint.setTextSize(watchFace.getBounds().height() / 15f);
 
         watchFace.getCanvas().drawText(
-                watchFace.getZonedDateTime().format(DATE_FORMATTER),
+                watchFace.getNow().format(DATE_FORMATTER),
                 watchFace.getBounds().centerX(),
                 watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                 paint);

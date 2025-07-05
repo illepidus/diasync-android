@@ -10,5 +10,5 @@ public interface SettingsDao {
     @Query("SELECT * FROM settings " +
             "ORDER BY id DESC " +
             "LIMIT 1")
-    Optional<Settings> findLast();
+    Optional<Settings> find();
 }

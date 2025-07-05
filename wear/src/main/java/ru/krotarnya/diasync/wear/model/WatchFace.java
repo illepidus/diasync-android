@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import ru.krotarnya.diasync.common.model.BatteryStatus;
 import ru.krotarnya.diasync.common.repository.DataPoint;
+import ru.krotarnya.diasync.common.repository.Settings;
 
 @Data
 @Builder
@@ -20,11 +21,11 @@ public class WatchFace {
     private final List<DataPoint> dataPoints;
     @Nullable
     private final BatteryStatus batteryStatus;
+    @Nullable
+    private final Settings settings;
 
     // never set through builder()
     private Canvas canvas;
     private Rect bounds;
-    private ZonedDateTime zonedDateTime;
-
-
+    private ZonedDateTime now;
 }

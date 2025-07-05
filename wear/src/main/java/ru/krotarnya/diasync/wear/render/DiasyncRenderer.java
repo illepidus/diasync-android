@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import ru.krotarnya.diasync.wear.model.WatchFace;
-import ru.krotarnya.diasync.wear.service.WatchDataHolder;
+import ru.krotarnya.diasync.wear.service.WatchFaceHolder;
 
 /**
  * @noinspection deprecation
@@ -22,11 +22,11 @@ import ru.krotarnya.diasync.wear.service.WatchDataHolder;
 public final class DiasyncRenderer extends Renderer.CanvasRenderer {
     private static final int BACKGROUND_COLOR = Color.BLACK;
 
-    private final WatchDataHolder dataProvider;
+    private final WatchFaceHolder watchFaceHolder;
     private final List<ComponentRenderer> componentRenderers;
 
     public DiasyncRenderer(
-            @NonNull WatchDataHolder dataHolder,
+            @NonNull WatchFaceHolder watchFaceHolder,
             @NonNull SurfaceHolder surfaceHolder,
             @NonNull CurrentUserStyleRepository currentUserStyleRepository,
             @NonNull WatchState watchState,
@@ -40,14 +40,12 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
                 canvasType,
                 interactiveDrawModeUpdateDelayMillis);
 
-        this.dataProvider = dataHolder;
-
+        this.watchFaceHolder = watchFaceHolder;
         this.componentRenderers = List.of(
                 new DateTimeRenderer(),
                 new BatteryRenderer(),
-                new StaleRenderer());
-
-        //EventBus.getDefault().register(this);
+                new StaleRenderer(),
+                new ChartRenderer());
     }
 
 
@@ -55,10 +53,10 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
     public void render(@NonNull Canvas canvas, @NonNull Rect bounds, @NonNull ZonedDateTime zonedDateTime) {
         canvas.drawColor(BACKGROUND_COLOR);
 
-        WatchFace data = dataProvider.get();
+        WatchFace data = watchFaceHolder.get();
         data.setCanvas(canvas);
         data.setBounds(bounds);
-        data.setZonedDateTime(zonedDateTime);
+        data.setNow(zonedDateTime);
 
         componentRenderers.forEach(renderer -> renderer.render(data));
     }
@@ -70,10 +68,5 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
             @NonNull ZonedDateTime zonedDateTime)
     {
 
-    }
-
-    @Override
-    public void onDestroy() {
-        //EventBus.getDefault().unregister(this);
     }
 }
