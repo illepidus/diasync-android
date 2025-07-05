@@ -98,7 +98,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     }
 
     private void updateSettings() {
-        watchFaceHolder.mutate().settings(db.settingsDao().find().orElse(Settings.getDefault()));
+        watchFaceHolder.mutate().settings(db.settingsDao().get());
         updateBloodData();
     }
 

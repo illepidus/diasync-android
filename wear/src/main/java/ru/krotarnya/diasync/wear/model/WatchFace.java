@@ -31,6 +31,6 @@ public class WatchFace {
     private ZonedDateTime now;
 
     public Settings getSettings() {
-        return Optional.ofNullable(settings).orElse(Settings.getDefault());
+        return Optional.ofNullable(settings).orElseGet(Settings::getDefault);
     }
 }

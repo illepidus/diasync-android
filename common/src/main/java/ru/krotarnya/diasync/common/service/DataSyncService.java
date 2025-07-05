@@ -22,7 +22,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
-import ru.krotarnya.diasync.common.repository.Settings;
 
 public class DataSyncService extends Service {
     private static final String TAG = DataSyncService.class.getSimpleName();
@@ -99,6 +98,6 @@ public class DataSyncService extends Service {
     }
 
     public String getUserId() {
-        return db.settingsDao().find().orElse(Settings.getDefault()).getUserId();
+        return db.settingsDao().get().getUserId();
     }
 }

@@ -11,4 +11,8 @@ public interface SettingsDao {
             "ORDER BY id DESC " +
             "LIMIT 1")
     Optional<Settings> find();
+
+    default Settings get() {
+        return find().orElseGet(Settings::getDefault);
+    }
 }
