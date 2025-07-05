@@ -200,7 +200,7 @@ public class ChartRenderer implements ComponentRenderer {
         String text = lastSensorPoint
                 .map(point -> point.sensorGlucose)
                 .map(glucose -> settings.getUnit().format(glucose.getMgdl(settings.isUseCalibrations())))
-                .orElse("???");
+                .orElse("");
 
         float textHeight = rect.height() / 2.5f;
         float strokeWidth = textHeight / 15f;
