@@ -5,7 +5,7 @@ import android.graphics.Paint;
 
 import java.time.format.DateTimeFormatter;
 
-import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
 
 final class DateTimeRenderer implements ComponentRenderer {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -21,21 +21,21 @@ final class DateTimeRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(WatchFace watchFace) {
-        paint.setTextSize(watchFace.getBounds().height() / 5f);
+    public void render(WatchFaceData watchFaceData) {
+        paint.setTextSize(watchFaceData.getBounds().height() / 5f);
 
-        watchFace.getCanvas().drawText(
-                watchFace.getNow().format(TIME_FORMATTER),
-                watchFace.getBounds().centerX(),
-                watchFace.getBounds().height() * 0.15f - (paint.descent() + paint.ascent()) / 2,
+        watchFaceData.getCanvas().drawText(
+                watchFaceData.getNow().format(TIME_FORMATTER),
+                watchFaceData.getBounds().centerX(),
+                watchFaceData.getBounds().height() * 0.15f - (paint.descent() + paint.ascent()) / 2,
                 paint);
 
-        paint.setTextSize(watchFace.getBounds().height() / 15f);
+        paint.setTextSize(watchFaceData.getBounds().height() / 15f);
 
-        watchFace.getCanvas().drawText(
-                watchFace.getNow().format(DATE_FORMATTER),
-                watchFace.getBounds().centerX(),
-                watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
+        watchFaceData.getCanvas().drawText(
+                watchFaceData.getNow().format(DATE_FORMATTER),
+                watchFaceData.getBounds().centerX(),
+                watchFaceData.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                 paint);
     }
 }

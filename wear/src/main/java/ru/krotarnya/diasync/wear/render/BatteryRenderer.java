@@ -6,7 +6,7 @@ import android.graphics.Paint;
 import java.util.Optional;
 
 import ru.krotarnya.diasync.common.model.BatteryStatus;
-import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
 
 final class BatteryRenderer implements ComponentRenderer {
     private static final int BATTERY_NORMAL_COLOR = Color.WHITE;
@@ -22,17 +22,17 @@ final class BatteryRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(WatchFace watchFace) {
-        Optional.ofNullable(watchFace.getBatteryStatus())
+    public void render(WatchFaceData watchFaceData) {
+        Optional.ofNullable(watchFaceData.getBatteryStatus())
                 .ifPresent(batteryStatus -> {
                     paint.setColor(getColor(batteryStatus));
                     paint.setTextAlign(Paint.Align.LEFT);
-                    paint.setTextSize(watchFace.getBounds().height() / 15f);
+                    paint.setTextSize(watchFaceData.getBounds().height() / 15f);
 
-                    watchFace.getCanvas().drawText(
+                    watchFaceData.getCanvas().drawText(
                             batteryStatus.chargePercentRounded() + "%",
-                            (int) (watchFace.getBounds().width() * 0.1),
-                            watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
+                            (int) (watchFaceData.getBounds().width() * 0.1),
+                            watchFaceData.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                             paint);
                 });
     }

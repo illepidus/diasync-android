@@ -5,7 +5,7 @@ import android.graphics.Paint;
 
 import java.util.Optional;
 
-import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
 
 final class StepsTodayRenderer implements ComponentRenderer {
     private static final int COLOR = Color.WHITE;
@@ -19,15 +19,15 @@ final class StepsTodayRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(WatchFace watchFace) {
-        Optional.ofNullable(watchFace.getStepsToday())
+    public void render(WatchFaceData watchFaceData) {
+        Optional.ofNullable(watchFaceData.getStepsToday())
                 .ifPresent(stepsToday -> {
-                    paint.setTextSize(watchFace.getBounds().height() / 15f);
+                    paint.setTextSize(watchFaceData.getBounds().height() / 15f);
 
-                    watchFace.getCanvas().drawText(
+                    watchFaceData.getCanvas().drawText(
                             String.valueOf(stepsToday),
-                            (int) (watchFace.getBounds().width() * 0.9),
-                            watchFace.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
+                            (int) (watchFaceData.getBounds().width() * 0.9),
+                            watchFaceData.getBounds().height() * 0.28f - (paint.descent() + paint.ascent()) / 2,
                             paint);
                 });
     }

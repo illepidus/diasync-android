@@ -5,81 +5,47 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.view.SurfaceHolder;
 
-import androidx.annotation.NonNull;
-import androidx.wear.watchface.CanvasType;
-import androidx.wear.watchface.Renderer;
 import androidx.wear.watchface.WatchState;
 import androidx.wear.watchface.style.CurrentUserStyleRepository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import kotlin.coroutines.Continuation;
-import ru.krotarnya.diasync.wear.model.WatchFace;
-import ru.krotarnya.diasync.wear.service.WatchFaceHolder;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
+import ru.krotarnya.diasync.wear.service.WatchFaceDataAccessor;
 
-public final class DiasyncRenderer extends Renderer.CanvasRenderer2<Renderer.SharedAssets> {
-    public static final String TAG = DiasyncRenderer.class.getSimpleName();
+public final class DiasyncRenderer extends SimpleCanvasRender {
     private static final int BACKGROUND_COLOR = Color.BLACK;
 
-    private final WatchFaceHolder watchFaceHolder;
+    private final WatchFaceDataAccessor watchFaceDataAccessor;
     private final List<ComponentRenderer> componentRenderers;
 
     public DiasyncRenderer(
-            @NonNull WatchFaceHolder watchFaceHolder,
-            @NonNull SurfaceHolder surfaceHolder,
-            @NonNull CurrentUserStyleRepository userStyleRepository,
-            @NonNull WatchState watchState)
+            WatchFaceDataAccessor dataAccessor,
+            SurfaceHolder surfaceHolder,
+            CurrentUserStyleRepository styleRepository,
+            WatchState watchState)
     {
-        super(
-                surfaceHolder,
-                userStyleRepository,
-                watchState,
-                CanvasType.HARDWARE,
-                100L,
-                false);
+        super(surfaceHolder, styleRepository, watchState);
 
-        this.watchFaceHolder = watchFaceHolder;
+        this.watchFaceDataAccessor = dataAccessor;
         this.componentRenderers = List.of(
                 new DateTimeRenderer(),
                 new BatteryRenderer(),
                 new StepsTodayRenderer(),
                 new StaleRenderer(),
-                new ChartRenderer()
-        );
-    }
-
-
-    @Override
-    protected Renderer.SharedAssets createSharedAssets(@NonNull Continuation<? super Renderer.SharedAssets> continuation)
-    {
-        return () -> {};
+                new ChartRenderer());
     }
 
     @Override
-    public void render(
-            @NonNull Canvas canvas,
-            @NonNull Rect bounds,
-            @NonNull ZonedDateTime zonedDateTime,
-            @NonNull Renderer.SharedAssets sharedAssets)
-    {
+    public void doRender(Canvas canvas, Rect bounds, ZonedDateTime zonedDateTime) {
         canvas.drawColor(BACKGROUND_COLOR);
 
-        WatchFace watchFace = watchFaceHolder.build();
-        watchFace.setCanvas(canvas);
-        watchFace.setBounds(bounds);
-        watchFace.setNow(zonedDateTime);
+        WatchFaceData watchFaceData = watchFaceDataAccessor.build();
+        watchFaceData.setCanvas(canvas);
+        watchFaceData.setBounds(bounds);
+        watchFaceData.setNow(zonedDateTime);
 
-        componentRenderers.forEach(renderer -> renderer.render(watchFace));
-    }
-
-    @Override
-    public void renderHighlightLayer(
-            @NonNull Canvas canvas,
-            @NonNull Rect rect,
-            @NonNull ZonedDateTime zonedDateTime,
-            @NonNull Renderer.SharedAssets sharedAssets)
-    {
-
+        componentRenderers.forEach(renderer -> renderer.render(watchFaceData));
     }
 }

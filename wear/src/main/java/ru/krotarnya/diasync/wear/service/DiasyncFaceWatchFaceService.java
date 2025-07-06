@@ -40,7 +40,7 @@ import ru.krotarnya.diasync.wear.render.DiasyncRenderer;
 public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     public static final String TAG = DiasyncFaceWatchFaceService.class.getSimpleName();
     private final BatteryStatusReceiver batteryStatusReceiver = new BatteryStatusReceiver();
-    private final WatchFaceHolder watchFaceHolder = new WatchFaceHolder();
+    private final WatchFaceDataHolder watchFaceDataHolder = new WatchFaceDataHolder();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private DiasyncDatabase db;
@@ -53,7 +53,14 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
             @NonNull CurrentUserStyleRepository userStyleRepository,
             @NonNull Continuation<? super WatchFace> continuation)
     {
-        DiasyncRenderer renderer = new DiasyncRenderer(watchFaceHolder, surfaceHolder, userStyleRepository, watchState);
+        DiasyncRenderer renderer = new DiasyncRenderer(
+                watchFaceDataHolder,
+                surfaceHolder,
+                userStyleRepository,
+                watchState);
+
+        watchFaceDataHolder.setRenderer(renderer);
+
         return new WatchFace(WatchFaceType.DIGITAL, renderer);
     }
 
@@ -91,31 +98,31 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onSettings(SettingsChanged event) {
-        watchFaceHolder.mutate().settings(event.getSettings());
+        watchFaceDataHolder.mutate(data -> data.settings(event.getSettings()));
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onSteps(DailyStepsUpdated event) {
-        watchFaceHolder.mutate().stepsToday(event.getSteps());
+        watchFaceDataHolder.mutate(data -> data.stepsToday(event.getSteps()));
     }
 
     private void updateBloodData() {
-        Settings settings = watchFaceHolder.build().getSettings();
+        Settings settings = watchFaceDataHolder.build().getSettings();
 
         Instant to = Instant.now();
         Instant from = to.minus(settings.getWatchFaceTimeWindow());
         List<DataPoint> dataPoints = db.dataPointDao().find(settings.getUserId(), from, to);
 
-        watchFaceHolder.mutate().dataPoints(dataPoints);
+        watchFaceDataHolder.mutate(data -> data.dataPoints(dataPoints));
     }
 
     private void initialize() {
-        watchFaceHolder.mutate().settings(db.settingsDao().get());
+        watchFaceDataHolder.mutate(data -> data.settings(db.settingsDao().get()));
         updateBloodData();
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onBatteryChange(BatteryStatusChanged event) {
-        watchFaceHolder.mutate().batteryStatus(event.getBatteryStatus());
+        watchFaceDataHolder.mutate(data -> data.batteryStatus(event.getBatteryStatus()));
     }
 }

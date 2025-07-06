@@ -23,7 +23,7 @@ import lombok.Data;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.common.repository.Settings;
 import ru.krotarnya.diasync.common.util.DateTimeUtils;
-import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
 
 public final class ChartRenderer implements ComponentRenderer {
     private static final String TAG = ChartRenderer.class.getSimpleName();
@@ -47,32 +47,33 @@ public final class ChartRenderer implements ComponentRenderer {
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
     @Override
-    public void render(WatchFace watchFace) {
-        if (watchFace.getDataPoints() == null) {
+    public void render(WatchFaceData watchFaceData) {
+        if (watchFaceData.getDataPoints() == null) {
             Log.w(TAG, "No data points to render");
             return;
         }
 
-        List<DataPoint> dataPoints = watchFace.getDataPoints();
-        Settings settings = watchFace.getSettings();
-        Canvas canvas = watchFace.getCanvas();
-        ZonedDateTime now = watchFace.getNow();
+        List<DataPoint> dataPoints = watchFaceData.getDataPoints();
+        Settings settings = watchFaceData.getSettings();
+        Canvas canvas = watchFaceData.getCanvas();
+        ZonedDateTime now = watchFaceData.getNow();
 
         Rect rect = new Rect(
-                (int) (watchFace.getBounds().width() * 0.1),
-                (int) (watchFace.getBounds().height() * 0.35),
-                (int) (watchFace.getBounds().width() * 0.9),
-                (int) (watchFace.getBounds().height() * 0.8));
+                (int) (watchFaceData.getBounds().width() * 0.1),
+                (int) (watchFaceData.getBounds().height() * 0.35),
+                (int) (watchFaceData.getBounds().width() * 0.9),
+                (int) (watchFaceData.getBounds().height() * 0.8));
 
         Function<Instant, Integer> toX = instant -> {
             long t = instant.toEpochMilli();
-            long maxT = watchFace.getNow().toInstant().toEpochMilli();
-            long minT = maxT - watchFace.getSettings().getWatchFaceTimeWindow().toMillis();
+            long maxT = watchFaceData.getNow().toInstant().toEpochMilli();
+            long minT = maxT - watchFaceData.getSettings().getWatchFaceTimeWindow().toMillis();
             int minX = rect.left;
             int maxX = rect.right;
             return Math.toIntExact(minX + (maxX - minX) * (t - minT) / (maxT - minT));
         };
 
+        //noinspection DataFlowIssue
         DoubleSummaryStatistics glucoseStatistics = Stream.of(
                         dataPoints.stream()
                                 .map(DataPoint::getSensorGlucose)

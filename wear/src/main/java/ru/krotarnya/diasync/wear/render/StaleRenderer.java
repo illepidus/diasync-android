@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.Optional;
 
 import ru.krotarnya.diasync.common.repository.DataPoint;
-import ru.krotarnya.diasync.wear.model.WatchFace;
+import ru.krotarnya.diasync.wear.model.WatchFaceData;
 
 final class StaleRenderer implements ComponentRenderer {
     private static final String STALE_MESSAGE = "STALE";
@@ -26,10 +26,10 @@ final class StaleRenderer implements ComponentRenderer {
     }
 
     @Override
-    public void render(WatchFace watchFace) {
-        paint.setTextSize(watchFace.getBounds().height() / 10f);
+    public void render(WatchFaceData watchFaceData) {
+        paint.setTextSize(watchFaceData.getBounds().height() / 10f);
 
-        Optional<Instant> lastPoint = Optional.ofNullable(watchFace.getDataPoints())
+        Optional<Instant> lastPoint = Optional.ofNullable(watchFaceData.getDataPoints())
                 .stream()
                 .flatMap(Collection::stream)
                 .filter(p -> p.getSensorGlucose() != null)
@@ -37,14 +37,14 @@ final class StaleRenderer implements ComponentRenderer {
                 .map(DataPoint::getTimestamp);
 
         String text = lastPoint
-                .map(ts -> Duration.between(ts, watchFace.getNow()))
+                .map(ts -> Duration.between(ts, watchFaceData.getNow()))
                 .map(stale -> stale.compareTo(STALE_WARNING_THRESHOLD) > 0 ? stale.getSeconds() / 60 + "m" : "")
                 .orElse(STALE_MESSAGE);
 
-        watchFace.getCanvas().drawText(
+        watchFaceData.getCanvas().drawText(
                 text,
-                watchFace.getBounds().centerX(),
-                watchFace.getBounds().height() * 0.9f - (paint.descent() + paint.ascent()) / 2,
+                watchFaceData.getBounds().centerX(),
+                watchFaceData.getBounds().height() * 0.9f - (paint.descent() + paint.ascent()) / 2,
                 paint);
     }
 }

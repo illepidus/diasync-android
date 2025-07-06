@@ -17,7 +17,7 @@ import ru.krotarnya.diasync.common.repository.Settings;
 
 @Data
 @Builder
-public class WatchFace {
+public class WatchFaceData {
     @Nullable
     private final List<DataPoint> dataPoints;
     @Nullable
