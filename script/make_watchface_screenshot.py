@@ -2,7 +2,7 @@ import subprocess
 from PIL import Image, ImageDraw
 
 TEMP_DEVICE_PATH = "/sdcard/screen.png"
-LOCAL_PATH = "screenshots/watchface_raw.png"
+LOCAL_PATH = "../wear/src/main/res/drawable/watchface_raw.png"
 OUTPUT_PATH = "screenshots/watchface_512_round.png"
 SIZE = (512, 512)
 
