@@ -19,12 +19,10 @@ def process_image():
     img = Image.open(LOCAL_PATH).convert("RGBA")
     img = img.resize(SIZE, Image.LANCZOS)
 
-    # Центрированный круглый маск
     mask = Image.new("L", SIZE, 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse([(0, 0), SIZE], fill=255)
 
-    # Применяем маску
     img.putalpha(mask)
 
     img.save(OUTPUT_PATH, format="PNG")
