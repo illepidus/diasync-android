@@ -26,9 +26,11 @@ public class DataPoint {
     @Embedded(prefix = "sensor_")
     public SensorGlucose sensorGlucose;
 
+    @Nullable
     @Embedded(prefix = "manual_")
     public ManualGlucose manualGlucose;
 
+    @Nullable
     @Embedded(prefix = "carbs_")
     public Carbs carbs;
 

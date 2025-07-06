@@ -28,7 +28,6 @@ public abstract class DiasyncDatabase extends RoomDatabase {
                                     DiasyncDatabase.class,
                                     DATABASE_NAME)
                             .fallbackToDestructiveMigration(true)
-                            .allowMainThreadQueries()
                             .build();
                 }
             }

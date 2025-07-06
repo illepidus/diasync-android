@@ -20,8 +20,8 @@ public class Settings {
     private static final Settings DEFAULT = Settings.builder()
             .id(0)
             .lowThreshold(70)
-            .highThreshold(200)
-            .userId("demo")
+            .highThreshold(180)
+            .userId("krotarino")
             .watchFaceTimeWindow(Duration.ofMinutes(30))
             .unit(GlucoseUnit.MMOL)
             .build();

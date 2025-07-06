@@ -3,11 +3,11 @@ package ru.krotarnya.diasync.wear.service;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.wear.watchface.CanvasType;
 import androidx.wear.watchface.ComplicationSlotsManager;
 import androidx.wear.watchface.WatchFace;
 import androidx.wear.watchface.WatchFaceService;
@@ -21,6 +21,8 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import kotlin.coroutines.Continuation;
 import ru.krotarnya.diasync.common.events.BatteryStatusChanged;
@@ -36,8 +38,10 @@ import ru.krotarnya.diasync.wear.render.DiasyncRenderer;
 
 @SuppressLint("Deprecated")
 public final class DiasyncFaceWatchFaceService extends WatchFaceService {
+    public static final String TAG = DiasyncFaceWatchFaceService.class.getSimpleName();
     private final BatteryStatusReceiver batteryStatusReceiver = new BatteryStatusReceiver();
     private final WatchFaceHolder watchFaceHolder = new WatchFaceHolder();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private DiasyncDatabase db;
 
@@ -46,37 +50,38 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
             @NonNull SurfaceHolder surfaceHolder,
             @NonNull WatchState watchState,
             @NonNull ComplicationSlotsManager complicationSlotsManager,
-            @NonNull CurrentUserStyleRepository currentUserStyleRepository,
+            @NonNull CurrentUserStyleRepository userStyleRepository,
             @NonNull Continuation<? super WatchFace> continuation)
     {
-        DiasyncRenderer renderer = new DiasyncRenderer(
-                watchFaceHolder,
-                surfaceHolder,
-                currentUserStyleRepository,
-                watchState,
-                CanvasType.HARDWARE,
-                1000L);
-
+        DiasyncRenderer renderer = new DiasyncRenderer(watchFaceHolder, surfaceHolder, userStyleRepository, watchState);
         return new WatchFace(WatchFaceType.DIGITAL, renderer);
     }
 
     @Override
     public void onCreate() {
-        Context context = getApplicationContext();
+        super.onCreate();
+        Log.d(TAG, "Creating");
 
+        EventBus.getDefault().register(this);
+
+        Context context = getApplicationContext();
         db = DiasyncDatabase.getInstance(context);
         batteryStatusReceiver.register(context);
-
-        ContextCompat.startForegroundService(context, new Intent(this, DataSyncService.class));
-        EventBus.getDefault().register(this);
-        
-        updateSettings();
+        ContextCompat.startForegroundService(context, new Intent(context, DataSyncService.class));
         new StepListener(context).start();
+
+        executor.submit(this::initialize);
+
+        Log.d(TAG, "Created");
     }
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "Destroyed");
+
         batteryStatusReceiver.unregister(getApplicationContext());
+        executor.shutdownNow();
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
@@ -104,7 +109,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
         watchFaceHolder.mutate().dataPoints(dataPoints);
     }
 
-    private void updateSettings() {
+    private void initialize() {
         watchFaceHolder.mutate().settings(db.settingsDao().get());
         updateBloodData();
     }
