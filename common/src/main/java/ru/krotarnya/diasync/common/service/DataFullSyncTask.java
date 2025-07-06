@@ -13,8 +13,8 @@ import ru.krotarnya.diasync.common.events.NewData;
 import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
-public class DataSyncTask implements Runnable {
-    private static final String TAG = DataSyncTask.class.getSimpleName();
+public class DataFullSyncTask implements Runnable {
+    private static final String TAG = DataFullSyncTask.class.getSimpleName();
     private static final Duration MAX_SYNC_PERIOD = Duration.ofDays(1);
     private static final Duration OVERTIME_PERIOD = Duration.ofMinutes(1);
 
@@ -22,7 +22,7 @@ public class DataSyncTask implements Runnable {
     private final DiasyncDatabase db;
     private final DiasyncApiService api;
 
-    public DataSyncTask(Supplier<String> userIdSupplier, DiasyncDatabase db, DiasyncApiService api) {
+    public DataFullSyncTask(Supplier<String> userIdSupplier, DiasyncDatabase db, DiasyncApiService api) {
         this.userIdSupplier = userIdSupplier;
         this.db = db;
         this.api = api;

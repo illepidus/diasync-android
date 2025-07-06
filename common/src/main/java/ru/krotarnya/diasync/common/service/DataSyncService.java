@@ -61,11 +61,12 @@ public class DataSyncService extends Service {
 
     private void startSync(Supplier<String> userIdSupplier) {
         executorService.scheduleWithFixedDelay(
-                new DataSyncTask(userIdSupplier, db, api),
+                new DataFullSyncTask(userIdSupplier, db, api),
                 0,
                 5,
                 TimeUnit.SECONDS);
     }
+
 
     private Notification buildNotification() {
         NotificationManager notificationManager = getSystemService(NotificationManager.class);

@@ -28,9 +28,14 @@ android {
         }
     }
     buildTypes {
+        debug {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -38,16 +43,14 @@ android {
 }
 
 dependencies {
-
     implementation project(':common')
+
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
 
     implementation libs.appcompat
     implementation libs.material
     implementation libs.preference
-    implementation libs.room.runtime
-    annotationProcessor libs.room.compiler
-    implementation libs.retrofit
-    implementation libs.converter.gson
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
