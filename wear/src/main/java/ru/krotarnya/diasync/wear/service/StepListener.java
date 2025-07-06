@@ -25,6 +25,7 @@ import java.util.Set;
 import ru.krotarnya.diasync.common.events.DailyStepsUpdated;
 
 public class StepListener {
+    private static final String TAG = StepListener.class.getSimpleName();
     private static final PassiveListenerConfig config = new PassiveListenerConfig.Builder()
             .setDataTypes(Set.of(DataType.STEPS_DAILY))
             .build();
@@ -46,11 +47,15 @@ public class StepListener {
     private void requestPermissionsIfNeeded() {
         if (hasActivityRecognitionPermission()) return;
 
-        Toast.makeText(context, "Enable Permissions → Physical activity", Toast.LENGTH_LONG).show();
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        intent.setData(Uri.fromParts("package", context.getPackageName(), null));
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        try {
+            Toast.makeText(context, "Enable Permissions → Physical activity", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.setData(Uri.fromParts("package", context.getPackageName(), null));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Was not able to create toast with permissions instructions");
+        }
     }
 
     private boolean hasActivityRecognitionPermission() {
