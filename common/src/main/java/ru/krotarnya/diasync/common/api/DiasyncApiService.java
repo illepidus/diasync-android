@@ -1,6 +1,5 @@
 package ru.krotarnya.diasync.common.api;
 
-import java.time.Instant;
 import java.util.List;
 
 import retrofit2.Call;
@@ -12,6 +11,6 @@ public interface DiasyncApiService {
     @GET("/api/v1/getDataPoints")
     Call<List<DataPoint>> getDataPoints(
             @Query("userId") String userId,
-            @Query("from") Instant fromInclusive,
-            @Query("to") Instant toExclusive);
+            @Query("from") String fromInclusive,
+            @Query("to") String toExclusive);
 }

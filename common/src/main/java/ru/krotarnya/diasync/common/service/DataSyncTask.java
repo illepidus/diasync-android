@@ -49,7 +49,7 @@ public class DataSyncTask implements Runnable {
                 .map(t -> Instant.ofEpochMilli(Math.max(t.toEpochMilli(), fallbackFrom.toEpochMilli())))
                 .orElse(fallbackFrom);
 
-        Response<List<DataPoint>> call = api.getDataPoints(userId, from, to).execute();
+        Response<List<DataPoint>> call = api.getDataPoints(userId, from.toString(), to.toString()).execute();
 
         if (!call.isSuccessful() || call.body() == null) {
             Log.e(TAG, "API call failed: " + call.code());

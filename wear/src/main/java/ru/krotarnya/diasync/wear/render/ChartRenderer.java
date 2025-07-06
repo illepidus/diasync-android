@@ -73,7 +73,6 @@ public final class ChartRenderer implements ComponentRenderer {
             return Math.toIntExact(minX + (maxX - minX) * (t - minT) / (maxT - minT));
         };
 
-        //noinspection DataFlowIssue
         DoubleSummaryStatistics glucoseStatistics = Stream.of(
                         dataPoints.stream()
                                 .map(DataPoint::getSensorGlucose)
