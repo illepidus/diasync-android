@@ -95,7 +95,7 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
     }
 
     private void updateBloodData() {
-        Settings settings = watchFaceHolder.get().getSettings();
+        Settings settings = watchFaceHolder.build().getSettings();
 
         Instant to = Instant.now();
         Instant from = to.minus(settings.getWatchFaceTimeWindow());
@@ -108,7 +108,6 @@ public final class DiasyncFaceWatchFaceService extends WatchFaceService {
         watchFaceHolder.mutate().settings(db.settingsDao().get());
         updateBloodData();
     }
-
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
     public void onBatteryChange(BatteryStatusChanged event) {

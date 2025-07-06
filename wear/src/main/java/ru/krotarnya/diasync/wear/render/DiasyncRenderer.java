@@ -54,12 +54,12 @@ public final class DiasyncRenderer extends Renderer.CanvasRenderer {
     public void render(@NonNull Canvas canvas, @NonNull Rect bounds, @NonNull ZonedDateTime zonedDateTime) {
         canvas.drawColor(BACKGROUND_COLOR);
 
-        WatchFace data = watchFaceHolder.get();
-        data.setCanvas(canvas);
-        data.setBounds(bounds);
-        data.setNow(zonedDateTime);
+        WatchFace watchFace = watchFaceHolder.build();
+        watchFace.setCanvas(canvas);
+        watchFace.setBounds(bounds);
+        watchFace.setNow(zonedDateTime);
 
-        componentRenderers.forEach(renderer -> renderer.render(data));
+        componentRenderers.forEach(renderer -> renderer.render(watchFace));
     }
 
     @Override

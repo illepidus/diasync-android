@@ -21,7 +21,7 @@ public class Settings {
             .id(0)
             .lowThreshold(70)
             .highThreshold(200)
-            .userId("krotarino")
+            .userId("demo")
             .watchFaceTimeWindow(Duration.ofMinutes(30))
             .unit(GlucoseUnit.MMOL)
             .build();

@@ -13,7 +13,7 @@ import ru.krotarnya.diasync.common.repository.DataPoint;
 import ru.krotarnya.diasync.wear.model.WatchFace;
 
 final class StaleRenderer implements ComponentRenderer {
-    private static final String NO_DATA = "NO DATA";
+    private static final String STALE_MESSAGE = "STALE";
     private static final Duration STALE_WARNING_THRESHOLD = Duration.ofSeconds(90);
 
     private final Paint paint;
@@ -39,7 +39,7 @@ final class StaleRenderer implements ComponentRenderer {
         String text = lastPoint
                 .map(ts -> Duration.between(ts, watchFace.getNow()))
                 .map(stale -> stale.compareTo(STALE_WARNING_THRESHOLD) > 0 ? stale.getSeconds() / 60 + "m" : "")
-                .orElse(NO_DATA);
+                .orElse(STALE_MESSAGE);
 
         watchFace.getCanvas().drawText(
                 text,

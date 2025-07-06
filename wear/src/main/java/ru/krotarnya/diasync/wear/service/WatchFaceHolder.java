@@ -5,7 +5,7 @@ import ru.krotarnya.diasync.wear.model.WatchFace;
 public final class WatchFaceHolder {
     private final WatchFace.WatchFaceBuilder dataBuilder = WatchFace.builder();
 
-    public WatchFace get() {
+    public WatchFace build() {
         return dataBuilder.build();
     }
 
