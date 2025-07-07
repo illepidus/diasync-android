@@ -4,13 +4,16 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +28,8 @@ import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
 
 public class DataSyncService extends Service {
     private static final String TAG = DataSyncService.class.getSimpleName();
+    private static final Duration FULL_SYNC_TASK_INTERVAL = Duration.ofSeconds(5);
+    private static final Duration WAKE_LOCK_INTERVAL = Duration.ofSeconds(5);
 
     private DiasyncDatabase db;
     private DiasyncApiService api;
@@ -61,10 +66,23 @@ public class DataSyncService extends Service {
 
     private void startSync(Supplier<String> userIdSupplier) {
         executorService.scheduleWithFixedDelay(
-                new DataFullSyncTask(userIdSupplier, db, api),
-                0,
-                5,
-                TimeUnit.SECONDS);
+                () -> {
+                    PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                    PowerManager.WakeLock wakeLock = powerManager.newWakeLock(
+                            PowerManager.PARTIAL_WAKE_LOCK, "Diasync::FullSyncWakeLock");
+
+                    try {
+                        wakeLock.acquire(WAKE_LOCK_INTERVAL.toMillis());
+                        Log.d(TAG, "Acquired WakeLock for sync");
+
+                        new DataFullSyncTask(userIdSupplier, db, api).run();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Sync task failed", e);
+                    } finally {
+                        wakeLock.release();
+                        Log.d(TAG, "Released WakeLock after sync");
+                    }
+                }, 0, FULL_SYNC_TASK_INTERVAL.toMillis(), TimeUnit.MILLISECONDS);
     }
 
 
@@ -73,7 +91,10 @@ public class DataSyncService extends Service {
 
         String channelId = "sync_channel";
         String channelName = "Data Sync";
-        NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel channel = new NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_HIGH);
         channel.setDescription("Channel for data synchronization notifications");
         notificationManager.createNotificationChannel(channel);
 
