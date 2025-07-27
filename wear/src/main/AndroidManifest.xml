@@ -21,15 +21,15 @@
 
             <meta-data
                 android:name="android.service.wallpaper"
-                android:resource="@xml/watch_face" />
+                android:resource="@xml/watchface" />
 
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview"
-                android:resource="@drawable/preview" />
+                android:resource="@drawable/watchface_preview" />
 
             <meta-data
                 android:name="android.service.wallpaper.PREVIEW_METADATA"
-                android:resource="@xml/watch_face_preview_metadata" />
+                android:resource="@xml/watchface_preview_metadata" />
 
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />

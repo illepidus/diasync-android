@@ -1,5 +1,7 @@
 package ru.krotarnya.diasync.common.repository;
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 import androidx.room.Embedded;
 import androidx.room.Entity;
@@ -44,7 +46,10 @@ public class DataPoint {
 
         public double getMgdl(boolean useCalibrations) {
             if (calibration == null || !useCalibrations) return mgdl;
-            return calibration.slope + calibration.intercept * mgdl;
+            Log.d(
+                    "BLOOD_GLUCOSE",
+                    "mgdl = " + mgdl + "; SLOPE = " + calibration.slope + " INTERCEPT = " + calibration.intercept);
+            return calibration.intercept + calibration.slope * mgdl;
         }
     }
 

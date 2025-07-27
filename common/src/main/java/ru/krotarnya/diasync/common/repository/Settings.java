@@ -24,6 +24,7 @@ public class Settings {
             .userId("krotarino")
             .watchFaceTimeWindow(Duration.ofMinutes(30))
             .unit(GlucoseUnit.MMOL)
+            .useCalibrations(true)
             .build();
 
     @PrimaryKey

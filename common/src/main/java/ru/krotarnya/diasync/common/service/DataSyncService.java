@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import ru.krotarnya.diasync.common.R;
 import ru.krotarnya.diasync.common.api.DiasyncApiService;
 import ru.krotarnya.diasync.common.api.InstantTypeAdapter;
 import ru.krotarnya.diasync.common.repository.DiasyncDatabase;
@@ -99,7 +100,8 @@ public class DataSyncService extends Service {
         notificationManager.createNotificationChannel(channel);
 
         Notification.Builder builder = new Notification.Builder(this, channelId)
-                .setContentTitle("Diasync sync service")
+                .setSmallIcon(R.drawable.diasync_icon_monochrome)
+                .setContentTitle("Diasync service")
                 .setContentText("Synchronizing...")
                 .setOngoing(true);
 
