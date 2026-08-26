@@ -10,7 +10,7 @@
         android:theme="@android:style/Theme.DeviceDefault" >
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="true" />
+            android:value="false" />
     </application>
 
 </manifest>

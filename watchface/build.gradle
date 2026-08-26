@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace 'ru.krotarnya.diasync.watchface'
+    namespace 'ru.krotarnya.diasync2.watchface'
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId "ru.krotarnya.diasync.watchface"
+        applicationId "ru.krotarnya.diasync2.watchface"
         minSdk 33
         targetSdk 37
         versionCode 1
@@ -24,12 +24,4 @@ android {
             }
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
-    }
-}
-
-dependencies {
-    implementation libs.play.services.wearable
 }
