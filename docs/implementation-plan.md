@@ -141,7 +141,7 @@ watchface/build.gradle
 - Повтор того же response не создаёт duplicate rows.
 - Изменённая server point с тем же `(userId,timestamp)` обновляет локальную row.
 - После recreating Activity/process данные читаются из Room до следующей сети.
-- URL/userId не появляются в обычных logs; userId не показывается полностью в status UI.
+- userId не появляются в обычных logs; userId не показывается полностью в status UI.
 - Network и DB выполняются вне main thread.
 
 ### Tests
@@ -158,7 +158,7 @@ watchface/build.gradle
 ./gradlew :common:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-Manual: выполнить bootstrap против `demo` или контролируемого backend user и сверить отображение.
+Manual: выполнить bootstrap против `demo` и сверить отображение.
 
 ### Не входит
 
