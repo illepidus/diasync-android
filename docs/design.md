@@ -13,9 +13,10 @@
 
 1. Явное текущее решение владельца проекта.
 2. Этот `design.md`.
-3. Поведение `diasync-old` как референс пользовательского поведения.
-4. Текущая реализация `diasync-android`.
-5. Предпочтения конкретного разработчика или Codex.
+3. `implementation-plan.md`.
+4. Поведение `diasync-old` как референс пользовательского поведения.
+5. Текущая реализация `diasync-android`.
+6. Предпочтения конкретного разработчика или Codex.
 
 Старый проект используется как поведенческая спецификация и графический референс. Старые
 Android-механизмы и архитектура не копируются.
@@ -28,7 +29,7 @@ Diasync должен:
 - сохранять полученные точки локально и восстанавливаться после потери сети, process death и reboot;
 - показывать текущую глюкозу, тренд, возраст данных и график в Android home-screen widget;
 - передавать ограниченное окно данных с телефона на Wear OS через Wear Data Layer;
-- показывать на WFF WatchFace время, дату, батарею часов, график, последнее значение, тренд и
+- показывать на циферблате WFF время, дату, батарею часов, график, последнее значение, тренд и
   ошибки;
 - воспроизводить телефонные и часовые алерты с поведением, основанным на `diasync-old`;
 - оставаться достаточно простой системой для личного использования и дальнейшей разработки
@@ -59,7 +60,7 @@ Diasync должен:
 
 ### Wear OS
 
-- `minSdk 33` для `wear` и `WatchFace`.
+- `minSdk 33` для `wear` и `watchface`.
 - Java 17 в исполняемом `wear`.
 - Watch Face Format v1, который требует Wear OS 4 / API 33.
 - Galaxy Watch 4 поддерживается после обновления до Wear OS 4 или новее.
@@ -77,7 +78,7 @@ Diasync должен:
 Diasync
 ├── app        Android application для телефона
 ├── wear       Android application с Wear-сервисами
-├── WatchFace  code-free Watch Face Format application
+├── watchface  code-free Watch Face Format application
 └── common     чистая Java-библиотека
 ```
 
@@ -86,7 +87,7 @@ Diasync
 ```text
 app  ───────► common
 wear ───────► common
-WatchFace     без code dependency
+watchface     без code dependency
 ```
 
 ### `common`
@@ -131,7 +132,7 @@ WatchFace     без code dependency
 
 `com.google.android.wearable.standalone` для этого модуля должен быть `false`.
 
-### `WatchFace`
+### `watchface`
 
 - `android:hasCode="false"`.
 - WFF XML отвечает только за композицию и отображение.

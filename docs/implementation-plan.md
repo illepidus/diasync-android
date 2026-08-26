@@ -30,7 +30,7 @@
 | NFR-2 No cursor/data loss | 1, 3, 10 |
 | NFR-3 No blocking main thread | каждый slice |
 | NFR-4 Credential isolation | 1, 6, 11 |
-| NFR-5 Deterministic time tests | 0, 5, 9, 10 |
+| NFR-5 Deterministic time tests | 1, 2, 5, 6, 9, 10 |
 
 ---
 
@@ -75,6 +75,7 @@ watchface/build.gradle
 - Ни в одном source set нет Kotlin.
 - `app` и `wear` компилируются с Java 17.
 - WFF APK остаётся `android:hasCode="false"`.
+- WFF APK не содержит DEX или runtime dependencies.
 - Все debug APK и common tests собираются.
 
 ### Проверки
@@ -464,7 +465,6 @@ Manual на реальных часах: paired, disconnected/reconnected, Wear 
 - Time `HH:mm`, date `EE dd.MM`.
 - Interactive/ambient variants.
 - Preview и watch-face metadata.
-- Удалить зависимость Wearable API из code-free watchface module.
 
 ### Acceptance criteria
 

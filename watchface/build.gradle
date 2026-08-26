@@ -2,6 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+configurations.matching { it.name.endsWith('RuntimeClasspath') }.configureEach {
+    // AGP 9 adds Kotlin stdlib implicitly; WFF APK must remain resource-only.
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
+}
+
 android {
     namespace 'ru.krotarnya.diasync2.watchface'
     compileSdk {
@@ -18,10 +23,14 @@ android {
     }
 
     buildTypes {
+        debug {
+            debuggable false
+            minifyEnabled true
+            shrinkResources false
+        }
         release {
-            optimization {
-                enable false
-            }
+            minifyEnabled true
+            shrinkResources false
         }
     }
 }
