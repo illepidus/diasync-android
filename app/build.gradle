@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace 'ru.krotarnya.diasync'
+    namespace 'ru.krotarnya.diasync2'
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId "ru.krotarnya.diasync"
+        applicationId "ru.krotarnya.diasync2"
         minSdk 26
         targetSdk 37
         versionCode 1

@@ -1,4 +1,4 @@
-package ru.krotarnya.diasync;
+package ru.krotarnya.diasync2;
 
 import android.content.Context;
 
@@ -15,6 +15,6 @@ public class ExampleInstrumentedTest {
     @Test
     public void useAppContext() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("ru.krotarnya.diasync", appContext.getPackageName());
+        assertEquals("ru.krotarnya.diasync2", appContext.getPackageName());
     }
 }
