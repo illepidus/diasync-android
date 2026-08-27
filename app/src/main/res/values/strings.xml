@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">Diasync</string>
+    <string name="configuration_title">Configuration</string>
+    <string name="backend_url">Backend HTTPS URL</string>
+    <string name="user_id">User ID / token</string>
+    <string name="glucose_unit">Glucose unit</string>
+    <string name="use_calibration">Use calibration</string>
+    <string name="start_refresh">Start / Refresh</string>
+    <string name="status_configuration_missing">Enter the backend URL and user ID, then tap Start / Refresh.</string>
+    <string name="status_loading">Loading…</string>
+    <string name="status_latest">Latest sensor value</string>
+    <string name="status_no_data">NO DATA</string>
+    <string name="status_connection_error">Connection failed. Check the network and try again.</string>
+    <string name="status_http_error">The server rejected the request. Check the configuration and try again.</string>
+    <string name="status_parse_error">The server returned an unreadable response.</string>
+    <string name="status_invalid_data">The server returned invalid data.</string>
+    <string name="status_storage_error">Local data could not be saved.</string>
+    <string name="value_with_unit">%1$s %2$s</string>
+    <string name="timestamp_with_age">%1$s · %2$s</string>
+
+    <string-array name="glucose_units">
+        <item>mmol/L</item>
+        <item>mg/dL</item>
+    </string-array>
 </resources>

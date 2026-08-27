@@ -92,7 +92,7 @@ watchface/build.gradle
 
 ## Slice 1 — конфигурация → REST bootstrap → локальное состояние → status screen
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
