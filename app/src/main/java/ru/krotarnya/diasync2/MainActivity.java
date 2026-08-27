@@ -19,6 +19,7 @@ import ru.krotarnya.diasync2.data.BootstrapResult;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.settings.ConfigurationValidator;
+import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 
 public final class MainActivity extends AppCompatActivity {
     private final AtomicInteger operationGeneration = new AtomicInteger();
@@ -122,6 +123,7 @@ public final class MainActivity extends AppCompatActivity {
             BootstrapResult result = application.bootstrapRepository().bootstrap(
                     configuration.baseUrl(),
                     configuration.userId());
+            DiasyncWidgetProvider.requestUpdate(this);
             StatusState state = application.statusPresenter().bootstrap(
                     result,
                     configuration.unit(),
@@ -146,10 +148,9 @@ public final class MainActivity extends AppCompatActivity {
         boolean loading = state.kind() == StatusState.Kind.LOADING;
         progress.setVisibility(loading ? View.VISIBLE : View.GONE);
         refresh.setEnabled(!loading);
-        value.setVisibility(
-                state.kind() == StatusState.Kind.LATEST_VALUE ? View.VISIBLE : View.GONE);
-        timestamp.setVisibility(
-                state.kind() == StatusState.Kind.LATEST_VALUE ? View.VISIBLE : View.GONE);
+        int visibility = state.kind() == StatusState.Kind.LATEST_VALUE ? View.VISIBLE : View.GONE;
+        value.setVisibility(visibility);
+        timestamp.setVisibility(visibility);
         if (state.kind() == StatusState.Kind.LATEST_VALUE) {
             value.setText(getString(R.string.value_with_unit, state.value(), state.unit()));
             timestamp.setText(getString(

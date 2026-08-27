@@ -2,4 +2,10 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="widget_background">#E6141414</color>
+    <color name="widget_low">#FFFF5252</color>
+    <color name="widget_normal">#FF69F0AE</color>
+    <color name="widget_high">#FFFFB74D</color>
+    <color name="widget_error">#FFFFFFFF</color>
+    <color name="widget_secondary">#FFCCCCCC</color>
 </resources>

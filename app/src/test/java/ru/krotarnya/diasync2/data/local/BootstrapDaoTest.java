@@ -78,16 +78,50 @@ public class BootstrapDaoTest {
         context.deleteDatabase(databaseName);
     }
 
+    @Test
+    public void latestSensorPointsAreBoundedOrderedAndExcludeNonSensorRows() {
+        BootstrapDao dao = database.bootstrapDao();
+        dao.upsertDataPoints(List.of(
+                pointAt("2026-08-27T10:00:00Z", 1787824800L, 100.0),
+                pointAt("2026-08-27T10:01:00Z", 1787824860L, null),
+                pointAt("2026-08-27T10:02:00Z", 1787824920L, 120.0),
+                pointAt("2026-08-27T10:03:00Z", 1787824980L, 130.0)));
+
+        List<DataPointEntity> latest = dao.latestSensorPoints(USER_ID, 2);
+
+        assertEquals(2, latest.size());
+        assertEquals("2026-08-27T10:03:00Z", latest.get(0).timestamp);
+        assertEquals("2026-08-27T10:02:00Z", latest.get(1).timestamp);
+    }
+
     private DataPointEntity point(double sensorMgDl, long serverId) {
+        DataPointEntity point = pointAt(TIMESTAMP, 1787824800L, sensorMgDl);
+        return new DataPointEntity(
+                point.userId,
+                point.timestamp,
+                point.timestampEpochSecond,
+                point.timestampNano,
+                serverId,
+                point.updateTimestamp,
+                point.sensorMgDl,
+                point.sensorId,
+                point.calibrationSlope,
+                point.calibrationIntercept,
+                point.manualMgDl,
+                point.carbsGrams,
+                point.carbsDescription);
+    }
+
+    private DataPointEntity pointAt(String timestamp, long epochSecond, Double sensorMgDl) {
         return new DataPointEntity(
                 USER_ID,
-                TIMESTAMP,
-                1787824800L,
+                timestamp,
+                epochSecond,
                 0,
-                serverId,
+                1L,
                 "2026-08-27T10:00:01Z",
                 sensorMgDl,
-                "sensor",
+                sensorMgDl == null ? null : "sensor",
                 null,
                 null,
                 110.0,

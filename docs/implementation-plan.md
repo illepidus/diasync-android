@@ -168,7 +168,7 @@ Manual: выполнить bootstrap против `demo` и сверить от�
 
 ## Slice 2 — latest-value home-screen widget
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 

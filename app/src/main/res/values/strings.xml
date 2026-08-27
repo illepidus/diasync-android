@@ -17,6 +17,9 @@
     <string name="status_storage_error">Local data could not be saved.</string>
     <string name="value_with_unit">%1$s %2$s</string>
     <string name="timestamp_with_age">%1$s · %2$s</string>
+    <string name="widget_description">Latest glucose value</string>
+    <string name="widget_no_value">----</string>
+    <string name="widget_no_trend">-</string>
 
     <string-array name="glucose_units">
         <item>mmol/L</item>

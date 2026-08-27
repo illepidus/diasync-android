@@ -25,6 +25,11 @@ public interface BootstrapDao {
             + "ORDER BY timestamp_epoch_second DESC, timestamp_nano DESC LIMIT 1")
     DataPointEntity latestSensorPoint(String userId);
 
+    @Query("SELECT * FROM data_points "
+            + "WHERE user_id = :userId AND sensor_mg_dl IS NOT NULL "
+            + "ORDER BY timestamp_epoch_second DESC, timestamp_nano DESC LIMIT :limit")
+    List<DataPointEntity> latestSensorPoints(String userId, int limit);
+
     @Query("SELECT * FROM data_points WHERE user_id = :userId AND timestamp = :timestamp")
     DataPointEntity find(String userId, String timestamp);
 

@@ -7,18 +7,22 @@ import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
+import ru.krotarnya.diasync2.common.TrendCalculator;
 import ru.krotarnya.diasync2.data.BootstrapRepository;
 import ru.krotarnya.diasync2.data.DataPointMapper;
 import ru.krotarnya.diasync2.data.api.HttpBootstrapDataSource;
 import ru.krotarnya.diasync2.data.local.AppDatabase;
 import ru.krotarnya.diasync2.presentation.StatusPresenter;
 import ru.krotarnya.diasync2.settings.AppPreferences;
+import ru.krotarnya.diasync2.widget.WidgetPresenter;
 
 public final class DiasyncApplication extends Application {
     private BootstrapRepository bootstrapRepository;
     private AppPreferences preferences;
     private StatusPresenter statusPresenter;
+    private WidgetPresenter widgetPresenter;
     private ExecutorService ioExecutor;
+    private ExecutorService widgetExecutor;
 
     @Override
     public void onCreate() {
@@ -32,7 +36,9 @@ public final class DiasyncApplication extends Application {
                 clock);
         preferences = new AppPreferences(this);
         statusPresenter = new StatusPresenter(clock);
+        widgetPresenter = new WidgetPresenter(clock, new TrendCalculator());
         ioExecutor = Executors.newSingleThreadExecutor();
+        widgetExecutor = Executors.newSingleThreadExecutor();
     }
 
     public BootstrapRepository bootstrapRepository() {
@@ -47,7 +53,15 @@ public final class DiasyncApplication extends Application {
         return statusPresenter;
     }
 
+    public WidgetPresenter widgetPresenter() {
+        return widgetPresenter;
+    }
+
     public ExecutorService ioExecutor() {
         return ioExecutor;
+    }
+
+    public ExecutorService widgetExecutor() {
+        return widgetExecutor;
     }
 }
