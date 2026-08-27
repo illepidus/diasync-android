@@ -20,6 +20,16 @@ public interface BootstrapDao {
         upsertSyncState(state);
     }
 
+    @Transaction
+    default void applyLongPollBatch(List<DataPointEntity> points, SyncStateEntity state) {
+        upsertDataPoints(points);
+        upsertSyncState(state);
+    }
+
+    @Query("UPDATE sync_state SET last_success_at = :lastSuccessAt, last_error = NULL "
+            + "WHERE user_id = :userId")
+    void recordEmptyPollSuccess(String userId, String lastSuccessAt);
+
     @Query("SELECT * FROM data_points "
             + "WHERE user_id = :userId AND sensor_mg_dl IS NOT NULL "
             + "ORDER BY timestamp_epoch_second DESC, timestamp_nano DESC LIMIT 1")

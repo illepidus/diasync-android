@@ -58,6 +58,23 @@
             android:layout_marginTop="12dp"
             android:text="@string/start_refresh" />
 
+        <Button
+            android:id="@+id/stop_monitoring"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:enabled="false"
+            android:text="@string/stop_monitoring" />
+
+        <TextView
+            android:id="@+id/monitoring_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/monitoring_stopped"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
         <ProgressBar
             android:id="@+id/progress"
             style="?android:attr/progressBarStyle"

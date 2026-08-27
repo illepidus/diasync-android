@@ -1,5 +1,8 @@
 package ru.krotarnya.diasync2;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -10,18 +13,23 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.common.GlucoseUnit;
-import ru.krotarnya.diasync2.data.BootstrapResult;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.settings.ConfigurationValidator;
-import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
+import ru.krotarnya.diasync2.sync.MonitoringService;
+import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
+import ru.krotarnya.diasync2.sync.SyncConnectionState;
 
-public final class MainActivity extends AppCompatActivity {
+public final class MainActivity extends AppCompatActivity implements PhoneUpdateCoordinator.Listener {
+    private static final int NOTIFICATION_PERMISSION_REQUEST = 100;
+
     private final AtomicInteger operationGeneration = new AtomicInteger();
     private final ConfigurationValidator configurationValidator = new ConfigurationValidator();
 
@@ -35,6 +43,9 @@ public final class MainActivity extends AppCompatActivity {
     private TextView timestamp;
     private ProgressBar progress;
     private Button refresh;
+    private Button stopMonitoring;
+    private TextView monitoringStatus;
+    private AppConfiguration pendingStartConfiguration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +54,8 @@ public final class MainActivity extends AppCompatActivity {
         application = (DiasyncApplication) getApplication();
         bindViews();
         configureUnitSpinner();
-        refresh.setOnClickListener(ignored -> startBootstrap());
+        refresh.setOnClickListener(ignored -> startMonitoring());
+        stopMonitoring.setOnClickListener(ignored -> stopMonitoring());
 
         Optional<AppConfiguration> saved = application.preferences().load();
         if (saved.isEmpty()) {
@@ -53,6 +65,23 @@ public final class MainActivity extends AppCompatActivity {
         AppConfiguration configuration = saved.get();
         populate(configuration);
         loadLocal(configuration);
+        if (application.preferences().monitoringEnabled()) {
+            MonitoringService.start(this);
+        }
+        renderMonitoringState(application.preferences().syncConnectionState());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        application.phoneUpdateCoordinator().register(this);
+        renderMonitoringState(application.preferences().syncConnectionState());
+    }
+
+    @Override
+    protected void onStop() {
+        application.phoneUpdateCoordinator().unregister(this);
+        super.onStop();
     }
 
     @Override
@@ -72,6 +101,8 @@ public final class MainActivity extends AppCompatActivity {
         timestamp = findViewById(R.id.latest_timestamp);
         progress = findViewById(R.id.progress);
         refresh = findViewById(R.id.refresh);
+        stopMonitoring = findViewById(R.id.stop_monitoring);
+        monitoringStatus = findViewById(R.id.monitoring_status);
     }
 
     private void configureUnitSpinner() {
@@ -104,7 +135,7 @@ public final class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void startBootstrap() {
+    private void startMonitoring() {
         AppConfiguration configuration;
         try {
             configuration = configurationValidator.validate(
@@ -117,19 +148,67 @@ public final class MainActivity extends AppCompatActivity {
             return;
         }
         application.preferences().save(configuration);
-        int generation = operationGeneration.incrementAndGet();
+        pendingStartConfiguration = configuration;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                    NOTIFICATION_PERMISSION_REQUEST);
+            return;
+        }
+        beginMonitoring(configuration);
+    }
+
+    private void beginMonitoring(AppConfiguration configuration) {
+        pendingStartConfiguration = null;
+        operationGeneration.incrementAndGet();
         render(application.statusPresenter().loading());
-        application.ioExecutor().execute(() -> {
-            BootstrapResult result = application.bootstrapRepository().bootstrap(
-                    configuration.baseUrl(),
-                    configuration.userId());
-            DiasyncWidgetProvider.requestUpdate(this);
-            StatusState state = application.statusPresenter().bootstrap(
-                    result,
-                    configuration.unit(),
-                    configuration.useCalibration());
-            runOnUiThread(() -> renderIfCurrent(generation, state));
+        application.preferences().setMonitoringEnabled(true);
+        application.phoneUpdateCoordinator().stateChanged(SyncConnectionState.CONNECTING);
+        MonitoringService.start(this);
+    }
+
+    private void stopMonitoring() {
+        pendingStartConfiguration = null;
+        MonitoringService.stop(this);
+        renderMonitoringState(SyncConnectionState.STOPPED);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != NOTIFICATION_PERMISSION_REQUEST || pendingStartConfiguration == null) {
+            return;
+        }
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            beginMonitoring(pendingStartConfiguration);
+        } else {
+            pendingStartConfiguration = null;
+            monitoringStatus.setText(R.string.monitoring_permission_required);
+        }
+    }
+
+    @Override
+    public void onSyncStateChanged(SyncConnectionState state, boolean dataChanged) {
+        renderMonitoringState(state);
+        if (dataChanged) {
+            application.preferences().load().ifPresent(this::loadLocal);
+        }
+    }
+
+    private void renderMonitoringState(SyncConnectionState state) {
+        monitoringStatus.setText(switch (state) {
+            case STOPPED -> R.string.monitoring_stopped;
+            case CONNECTING -> R.string.monitoring_connecting;
+            case WAITING -> R.string.monitoring_waiting;
+            case RETRYING -> R.string.monitoring_retrying;
         });
+        stopMonitoring.setEnabled(state != SyncConnectionState.STOPPED);
     }
 
     private GlucoseUnit selectedUnit() {

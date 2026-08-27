@@ -218,7 +218,7 @@ Manual: add widget, resize, change unit, проверить fresh/1m/10m/future 
 
 ## Slice 3 — непрерывный long poll foreground service
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 

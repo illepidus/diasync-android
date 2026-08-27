@@ -22,6 +22,7 @@ import ru.krotarnya.diasync2.data.api.BootstrapDataSource;
 import ru.krotarnya.diasync2.data.api.BootstrapHttpException;
 import ru.krotarnya.diasync2.data.api.BootstrapParseException;
 import ru.krotarnya.diasync2.data.local.AppDatabase;
+import ru.krotarnya.diasync2.data.local.SyncStateEntity;
 
 @RunWith(RobolectricTestRunner.class)
 public class BootstrapRepositoryTest {
@@ -58,6 +59,9 @@ public class BootstrapRepositoryTest {
         assertEquals(100.0, result.latestPoint().sensorPoint().rawValue().mgDl(), 0.0001);
         assertNotNull(database.bootstrapDao().syncState(USER_ID).lastSuccessAt);
         assertNull(database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
+        assertEquals(
+                Instant.parse("2026-08-27T11:58:01Z"),
+                result.initialPollSince());
     }
 
     @Test
@@ -68,6 +72,7 @@ public class BootstrapRepositoryTest {
         assertEquals(BootstrapResult.Kind.NO_DATA, result.kind());
         assertEquals(0, database.bootstrapDao().count(USER_ID));
         assertNotNull(database.bootstrapDao().syncState(USER_ID).lastSuccessAt);
+        assertEquals(NOW.minus(BootstrapRepository.BOOTSTRAP_WINDOW), result.initialPollSince());
     }
 
     @Test
@@ -100,6 +105,22 @@ public class BootstrapRepositoryTest {
         assertEquals(BootstrapResult.Kind.INVALID_DATA, result.kind());
         assertEquals(0, database.bootstrapDao().count(USER_ID));
         assertNull(database.bootstrapDao().syncState(USER_ID));
+    }
+
+    @Test
+    public void existingServerCursorSurvivesReconciliationBootstrap() {
+        String cursor = "2026-08-27T11:55:00Z";
+        database.bootstrapDao().upsertSyncState(new SyncStateEntity(
+                USER_ID,
+                cursor,
+                NOW.minusSeconds(60).toString(),
+                null));
+
+        BootstrapResult result = repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://example.test", USER_ID);
+
+        assertEquals(Instant.parse(cursor), result.initialPollSince());
+        assertEquals(cursor, database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
     }
 
     private BootstrapRepository repository(BootstrapDataSource source) {

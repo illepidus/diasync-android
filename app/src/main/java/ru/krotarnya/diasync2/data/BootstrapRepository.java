@@ -18,6 +18,7 @@ import ru.krotarnya.diasync2.data.local.SyncStateEntity;
 
 public final class BootstrapRepository {
     public static final Duration BOOTSTRAP_WINDOW = Duration.ofHours(4);
+    public static final Duration LONG_POLL_OVERLAP = Duration.ofMinutes(1);
 
     private final BootstrapDataSource dataSource;
     private final BootstrapDao dao;
@@ -40,21 +41,43 @@ public final class BootstrapRepository {
         Instant to = clock.instant();
         Instant from = to.minus(BOOTSTRAP_WINDOW);
         try {
+            SyncStateEntity previousState = dao.syncState(userId);
             List<ApiDataPointDto> response = dataSource.getDataPoints(baseUrl, userId, from, to);
             List<DataPointEntity> entities = new ArrayList<>(response.size());
+            Instant maximumUpdateTimestamp = null;
             for (ApiDataPointDto dto : response) {
-                entities.add(mapper.toEntity(dto, userId));
+                DataPointEntity entity = mapper.toEntity(dto, userId);
+                entities.add(entity);
+                if (entity.updateTimestamp != null) {
+                    Instant updateTimestamp = Instant.parse(entity.updateTimestamp);
+                    if (maximumUpdateTimestamp == null
+                            || updateTimestamp.isAfter(maximumUpdateTimestamp)) {
+                        maximumUpdateTimestamp = updateTimestamp;
+                    }
+                }
             }
             dao.applyBootstrap(
                     entities,
-                    new SyncStateEntity(userId, null, to.toString(), null));
+                    new SyncStateEntity(
+                            userId,
+                            previousState == null ? null : previousState.cursorUpdateTimestamp,
+                            to.toString(),
+                            null));
+            Instant initialPollSince;
+            if (previousState != null && previousState.cursorUpdateTimestamp != null) {
+                initialPollSince = Instant.parse(previousState.cursorUpdateTimestamp);
+            } else {
+                initialPollSince = maximumUpdateTimestamp == null
+                        ? from
+                        : maximumUpdateTimestamp.minus(LONG_POLL_OVERLAP);
+            }
             if (entities.isEmpty()) {
-                return BootstrapResult.noData();
+                return BootstrapResult.noData(initialPollSince);
             }
             DataPointEntity latest = dao.latestSensorPoint(userId);
             return latest == null
-                    ? BootstrapResult.noData()
-                    : BootstrapResult.success(mapper.toDomain(latest));
+                    ? BootstrapResult.noData(initialPollSince)
+                    : BootstrapResult.success(mapper.toDomain(latest), initialPollSince);
         } catch (BootstrapHttpException exception) {
             return BootstrapResult.error(BootstrapResult.Kind.HTTP_ERROR);
         } catch (BootstrapParseException exception) {
