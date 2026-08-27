@@ -280,7 +280,7 @@ Manual: 10+ минут long polling, airplane mode, process kill, notification a
 
 ## Slice 4 — widget с графиком и parity со старой версией
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 

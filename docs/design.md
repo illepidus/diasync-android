@@ -361,8 +361,8 @@ displayMgdl = rawMgdl * slope + intercept
 
 ### Содержимое
 
-- последнее sensor glucose;
-- trend arrow;
+- последнее sensor glucose без отдельного label единицы измерения;
+- опциональная trend arrow, нарисованная как bitmap без зависимости от системного шрифта;
 - возраст данных или error message;
 - график;
 - low/normal/high zones либо threshold lines;
@@ -375,8 +375,14 @@ displayMgdl = rawMgdl * slope + intercept
 - X соответствует времени.
 - Y автоматически включает минимум/максимум данных и оба threshold с небольшим margin.
 - Данные рисуются цветными точками, как в старом приложении.
+- Радиус точек зависит от ширины widget и выбранного окна: чем длиннее окно, тем
+  меньше точки; сверху радиус ограничен высотой widget.
 - Bitmap строится под фактический размер widget.
-- Zones default: on; lines default: off.
+- Zones default: on; lines default: off; trend arrow default: on.
+- Значение и trend по возможности выравниваются к левому краю.
+- Размер значения и trend плавно растёт с доступной площадью widget; размер 1x1 остаётся
+  нижней границей масштаба.
+- Цвет значения: белый в normal range, `#FFBB33` в high range и `#C30909` в low range.
 
 ### Fresh/stale/error
 
@@ -548,10 +554,13 @@ Activity приложения является configuration/status UI, а не 
 - low/high;
 - use calibration;
 - widget graph period;
-- widget zones/lines;
+- widget zones/lines/trend arrow;
 - watch graph period;
 - low/high/no-data alerts;
 - snooze/resume.
+
+Monitoring включается и останавливается одной context-aware кнопкой, которая меняет действие и текст
+между `Start monitoring` и `Stop monitoring`.
 
 Status показывает:
 

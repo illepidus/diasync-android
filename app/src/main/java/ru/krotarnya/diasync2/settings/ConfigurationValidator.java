@@ -8,7 +8,13 @@ public final class ConfigurationValidator {
             String baseUrlInput,
             String userIdInput,
             GlucoseUnit unit,
-            boolean useCalibration
+            boolean useCalibration,
+            String lowMgDlInput,
+            String highMgDlInput,
+            GraphWindow widgetGraphWindow,
+            boolean widgetGraphZones,
+            boolean widgetGraphLines,
+            boolean widgetTrendArrow
     ) {
         String baseUrl = baseUrlInput.trim();
         String userId = userIdInput.trim();
@@ -19,6 +25,33 @@ public final class ConfigurationValidator {
         if (userId.isEmpty()) {
             throw new IllegalArgumentException("User ID is required");
         }
-        return new AppConfiguration(baseUrl, userId, unit, useCalibration);
+        double lowMgDl = parseThreshold(lowMgDlInput, "Low threshold");
+        double highMgDl = parseThreshold(highMgDlInput, "High threshold");
+        if (lowMgDl >= highMgDl) {
+            throw new IllegalArgumentException("Low threshold must be below high threshold");
+        }
+        return new AppConfiguration(
+                baseUrl,
+                userId,
+                unit,
+                useCalibration,
+                lowMgDl,
+                highMgDl,
+                widgetGraphWindow,
+                widgetGraphZones,
+                widgetGraphLines,
+                widgetTrendArrow);
+    }
+
+    private double parseThreshold(String input, String name) {
+        try {
+            double value = Double.parseDouble(input.trim());
+            if (!Double.isFinite(value) || value <= 0.0) {
+                throw new NumberFormatException();
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(name + " must be a positive mg/dL number");
+        }
     }
 }

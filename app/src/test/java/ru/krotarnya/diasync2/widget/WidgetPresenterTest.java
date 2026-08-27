@@ -14,6 +14,8 @@ import ru.krotarnya.diasync2.common.GlucoseUnit;
 import ru.krotarnya.diasync2.common.GlucoseValue;
 import ru.krotarnya.diasync2.common.SensorPoint;
 import ru.krotarnya.diasync2.common.TrendCalculator;
+import ru.krotarnya.diasync2.settings.AppConfiguration;
+import ru.krotarnya.diasync2.settings.GraphWindow;
 
 public class WidgetPresenterTest {
     private static final Instant NOW = Instant.parse("2026-08-27T12:00:00Z");
@@ -23,13 +25,14 @@ public class WidgetPresenterTest {
 
     @Test
     public void mapsNoDataState() {
-        WidgetState state = presenter.present(List.of(), GlucoseUnit.MMOL_L, true);
+        WidgetState state = presenter.present(List.of(), configuration(GlucoseUnit.MMOL_L));
 
         assertEquals("----", state.value());
         assertEquals("-", state.trend());
         assertEquals("NO DATA", state.message());
         assertTrue(state.valueVisible());
         assertFalse(state.strikeThrough());
+        assertFalse(state.graphVisible());
     }
 
     @Test
@@ -60,14 +63,15 @@ public class WidgetPresenterTest {
         assertTrue(tolerated.valueVisible());
         assertFalse(future.valueVisible());
         assertEquals("DATA FROM FAR FUTURE", future.message());
+        assertFalse(future.graphVisible());
     }
 
     @Test
     public void mapsRangeColorAtInclusiveThresholds() {
-        assertEquals(WidgetState.Range.LOW, presentAt(NOW, 70.0).range());
-        assertEquals(WidgetState.Range.NORMAL, presentAt(NOW, 70.1).range());
-        assertEquals(WidgetState.Range.NORMAL, presentAt(NOW, 179.9).range());
-        assertEquals(WidgetState.Range.HIGH, presentAt(NOW, 180.0).range());
+        assertEquals(WidgetState.Range.LOW, presentAt(NOW, 80.0, 80.0, 160.0).range());
+        assertEquals(WidgetState.Range.NORMAL, presentAt(NOW, 80.1, 80.0, 160.0).range());
+        assertEquals(WidgetState.Range.NORMAL, presentAt(NOW, 159.9, 80.0, 160.0).range());
+        assertEquals(WidgetState.Range.HIGH, presentAt(NOW, 160.0, 80.0, 160.0).range());
     }
 
     @Test
@@ -77,18 +81,44 @@ public class WidgetPresenterTest {
 
         WidgetState state = presenter.present(
                 List.of(data(latest), data(previous)),
-                GlucoseUnit.MMOL_L,
-                true);
+                configuration(GlucoseUnit.MMOL_L));
 
         assertEquals("5.6", state.value());
-        assertEquals("mmol/L", state.unit());
         assertEquals("↑", state.trend());
+        assertEquals(2, state.graphSamples().size());
+        assertTrue(state.graphVisible());
     }
 
     private WidgetState presentAt(Instant timestamp, double mgDl) {
+        return presentAt(timestamp, mgDl, 70.0, 180.0);
+    }
+
+    private WidgetState presentAt(
+            Instant timestamp,
+            double mgDl,
+            double lowMgDl,
+            double highMgDl
+    ) {
         return presenter.present(
                 List.of(data(sensor(timestamp, mgDl))),
-                GlucoseUnit.MG_DL,
+                configuration(GlucoseUnit.MG_DL, lowMgDl, highMgDl));
+    }
+
+    private AppConfiguration configuration(GlucoseUnit unit) {
+        return configuration(unit, 70.0, 180.0);
+    }
+
+    private AppConfiguration configuration(GlucoseUnit unit, double lowMgDl, double highMgDl) {
+        return new AppConfiguration(
+                "https://example.test",
+                "secret",
+                unit,
+                true,
+                lowMgDl,
+                highMgDl,
+                GraphWindow.THIRTY_MINUTES,
+                true,
+                false,
                 true);
     }
 

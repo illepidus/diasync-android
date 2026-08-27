@@ -5,7 +5,17 @@
     <string name="user_id">User ID / token</string>
     <string name="glucose_unit">Glucose unit</string>
     <string name="use_calibration">Use calibration</string>
-    <string name="start_refresh">Start monitoring</string>
+    <string name="low_threshold_mgdl">Low threshold (mg/dL)</string>
+    <string name="high_threshold_mgdl">High threshold (mg/dL)</string>
+    <string name="low_threshold_mmol">Low threshold (mmol/L)</string>
+    <string name="high_threshold_mmol">High threshold (mmol/L)</string>
+    <string name="default_low_threshold" translatable="false">3.9</string>
+    <string name="default_high_threshold" translatable="false">10.0</string>
+    <string name="widget_graph_window">Widget graph window</string>
+    <string name="widget_graph_zones">Show widget range zones</string>
+    <string name="widget_graph_lines">Show widget threshold lines</string>
+    <string name="widget_trend_arrow">Show widget trend arrow</string>
+    <string name="start_monitoring">Start monitoring</string>
     <string name="stop_monitoring">Stop monitoring</string>
     <string name="monitoring_stopped">Monitoring stopped</string>
     <string name="monitoring_connecting">Connecting…</string>
@@ -16,7 +26,7 @@
     <string name="monitoring_channel_description">Ongoing glucose sync connection status</string>
     <string name="monitoring_notification_title">Diasync monitoring active</string>
     <string name="monitoring_notification_value">%1$s %2$s · %3$s · %4$s</string>
-    <string name="status_configuration_missing">Enter the backend URL and user ID, then tap Start / Refresh.</string>
+    <string name="status_configuration_missing">Enter the backend URL and user ID, then tap Start monitoring.</string>
     <string name="status_loading">Loading…</string>
     <string name="status_latest">Latest sensor value</string>
     <string name="status_no_data">NO DATA</string>
@@ -30,9 +40,17 @@
     <string name="widget_description">Latest glucose value</string>
     <string name="widget_no_value">----</string>
     <string name="widget_no_trend">-</string>
+    <string name="widget_graph_description">Glucose history graph</string>
+    <string name="widget_trend_description">Glucose trend</string>
 
     <string-array name="glucose_units">
         <item>mmol/L</item>
         <item>mg/dL</item>
+    </string-array>
+
+    <string-array name="widget_graph_windows">
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>3 hours</item>
     </string-array>
 </resources>

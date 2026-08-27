@@ -2,20 +2,18 @@ package ru.krotarnya.diasync2.widget;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import ru.krotarnya.diasync2.common.DataPoint;
-import ru.krotarnya.diasync2.common.GlucoseUnit;
 import ru.krotarnya.diasync2.common.GlucoseValue;
 import ru.krotarnya.diasync2.common.SensorPoint;
 import ru.krotarnya.diasync2.common.TrendCalculator;
+import ru.krotarnya.diasync2.settings.AppConfiguration;
 
 public final class WidgetPresenter {
-    public static final double DEFAULT_LOW_MG_DL = 70.0;
-    public static final double DEFAULT_HIGH_MG_DL = 180.0;
-
     private static final Duration FUTURE_TOLERANCE = Duration.ofMinutes(1);
     private static final Duration FRESH_DURATION = Duration.ofMinutes(1);
     private static final Duration STRIKE_THROUGH_AGE = Duration.ofMinutes(10);
@@ -30,11 +28,11 @@ public final class WidgetPresenter {
 
     public WidgetState present(
             List<DataPoint> points,
-            GlucoseUnit unit,
-            boolean useCalibration
+            AppConfiguration configuration
     ) {
         Objects.requireNonNull(points);
-        Objects.requireNonNull(unit);
+        Objects.requireNonNull(configuration);
+        Instant now = clock.instant();
         List<SensorPoint> sensorPoints = new ArrayList<>(points.size());
         for (DataPoint point : points) {
             if (point.sensorPoint() != null) {
@@ -45,39 +43,91 @@ public final class WidgetPresenter {
                 .max(Comparator.comparing(SensorPoint::timestamp))
                 .orElse(null);
         if (latest == null) {
-            return new WidgetState("----", "", "-", "NO DATA", WidgetState.Range.ERROR, true, false);
+            return state(
+                    "----",
+                    "-",
+                    "NO DATA",
+                    WidgetState.Range.ERROR,
+                    true,
+                    false,
+                    now,
+                    List.of(),
+                    configuration,
+                    false);
         }
 
-        Duration age = Duration.between(latest.timestamp(), clock.instant());
+        Duration age = Duration.between(latest.timestamp(), now);
         if (age.compareTo(FUTURE_TOLERANCE.negated()) < 0) {
-            return new WidgetState(
-                    "",
+            return state(
                     "",
                     "-",
                     "DATA FROM FAR FUTURE",
                     WidgetState.Range.ERROR,
                     false,
+                    false,
+                    now,
+                    List.of(),
+                    configuration,
                     false);
         }
 
-        GlucoseValue value = latest.displayValue(useCalibration);
-        String trend = trendCalculator.calculate(sensorPoints, useCalibration);
+        GlucoseValue value = latest.displayValue(configuration.useCalibration());
+        String trend = trendCalculator.calculate(sensorPoints, configuration.useCalibration());
         String message = age.compareTo(FRESH_DURATION) < 0 ? "" : ageMessage(age);
-        return new WidgetState(
-                value.format(unit),
-                unit.symbol(),
+        List<WidgetGraphSample> samples = new ArrayList<>(sensorPoints.size());
+        for (SensorPoint point : sensorPoints) {
+            samples.add(new WidgetGraphSample(
+                    point.timestamp(),
+                    point.displayValue(configuration.useCalibration()).mgDl()));
+        }
+        return state(
+                value.format(configuration.unit()),
                 trend.isEmpty() ? "-" : trend,
                 message,
-                range(value.mgDl()),
+                range(value.mgDl(), configuration.lowMgDl(), configuration.highMgDl()),
                 true,
-                age.compareTo(STRIKE_THROUGH_AGE) > 0);
+                age.compareTo(STRIKE_THROUGH_AGE) > 0,
+                now,
+                samples,
+                configuration,
+                true);
     }
 
-    private WidgetState.Range range(double mgDl) {
-        if (mgDl <= DEFAULT_LOW_MG_DL) {
+    private WidgetState state(
+            String value,
+            String trend,
+            String message,
+            WidgetState.Range range,
+            boolean valueVisible,
+            boolean strikeThrough,
+            Instant now,
+            List<WidgetGraphSample> samples,
+            AppConfiguration configuration,
+            boolean graphVisible
+    ) {
+        return new WidgetState(
+                value,
+                trend,
+                message,
+                range,
+                valueVisible,
+                strikeThrough,
+                now,
+                samples,
+                configuration.widgetGraphWindow(),
+                configuration.lowMgDl(),
+                configuration.highMgDl(),
+                configuration.widgetGraphZones(),
+                configuration.widgetGraphLines(),
+                configuration.widgetTrendArrow(),
+                graphVisible);
+    }
+
+    private WidgetState.Range range(double mgDl, double lowMgDl, double highMgDl) {
+        if (mgDl <= lowMgDl) {
             return WidgetState.Range.LOW;
         }
-        if (mgDl >= DEFAULT_HIGH_MG_DL) {
+        if (mgDl >= highMgDl) {
             return WidgetState.Range.HIGH;
         }
         return WidgetState.Range.NORMAL;

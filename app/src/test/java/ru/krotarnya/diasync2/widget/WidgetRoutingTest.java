@@ -12,7 +12,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RemoteViews;
+import android.widget.TextView;
+import java.time.Instant;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +25,7 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowAppWidgetManager;
 import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
+import ru.krotarnya.diasync2.settings.GraphWindow;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
@@ -66,13 +70,25 @@ public class WidgetRoutingTest {
         Application application = RuntimeEnvironment.getApplication();
         WidgetState state = new WidgetState(
                 "5.6",
-                "mmol/L",
                 "→",
                 "",
                 WidgetState.Range.NORMAL,
                 true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                true,
                 false);
-        RemoteViews remoteViews = new WidgetRemoteViewsFactory().create(application, state);
+        RemoteViews remoteViews = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(180, 110));
         View view = remoteViews.apply(application, new FrameLayout(application));
 
         assertNotNull(view.findViewById(R.id.widget_root));
@@ -82,5 +98,117 @@ public class WidgetRoutingTest {
         assertEquals(
                 new ComponentName(application, MainActivity.class),
                 started.getComponent());
+    }
+
+    @Test
+    public void presentationTextGrowsWithWidgetArea() {
+        Application application = RuntimeEnvironment.getApplication();
+        WidgetState state = new WidgetState(
+                "5.6",
+                "→",
+                "",
+                WidgetState.Range.NORMAL,
+                true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                true,
+                false);
+
+        RemoteViews compactViews = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(70, 70));
+        RemoteViews largeViews = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(220, 440));
+        View compactView = compactViews.apply(application, new FrameLayout(application));
+        View largeView = largeViews.apply(application, new FrameLayout(application));
+
+        TextView compactValue = compactView.findViewById(R.id.widget_value);
+        TextView largeValue = largeView.findViewById(R.id.widget_value);
+        assertEquals(22.0f, compactValue.getTextSize(), 0.01f);
+        assertTrue(largeValue.getTextSize() > compactValue.getTextSize());
+        ImageView trend = largeView.findViewById(R.id.widget_trend);
+        assertNotNull(trend.getDrawable());
+    }
+
+    @Test
+    public void valueUsesCanonicalRangeColors() {
+        Application application = RuntimeEnvironment.getApplication();
+
+        assertValueColor(application, WidgetState.Range.NORMAL, R.color.widget_normal);
+        assertValueColor(application, WidgetState.Range.HIGH, R.color.widget_high);
+        assertValueColor(application, WidgetState.Range.LOW, R.color.widget_low);
+    }
+
+    @Test
+    public void trendArrowCanBeHiddenWithoutLeavingLayoutSpace() {
+        Application application = RuntimeEnvironment.getApplication();
+        WidgetState state = new WidgetState(
+                "5.6",
+                "→",
+                "",
+                WidgetState.Range.NORMAL,
+                true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                false,
+                false);
+
+        RemoteViews remoteViews = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(180, 110));
+        View view = remoteViews.apply(application, new FrameLayout(application));
+
+        assertEquals(View.GONE, view.findViewById(R.id.widget_trend).getVisibility());
+    }
+
+    private void assertValueColor(Application application, WidgetState.Range range, int colorId) {
+        WidgetState state = new WidgetState(
+                "100",
+                "→",
+                "",
+                range,
+                true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                true,
+                false);
+        RemoteViews remoteViews = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(180, 110));
+        View view = remoteViews.apply(application, new FrameLayout(application));
+        TextView value = view.findViewById(R.id.widget_value);
+
+        assertEquals(application.getColor(colorId), value.getCurrentTextColor());
+    }
+
+    private WidgetBitmapSize widgetSize(int widthDp, int heightDp) {
+        return new WidgetBitmapSize(widthDp, heightDp, widthDp, heightDp);
     }
 }

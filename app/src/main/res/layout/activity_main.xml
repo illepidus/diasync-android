@@ -51,20 +51,62 @@
             android:checked="true"
             android:text="@string/use_calibration" />
 
-        <Button
-            android:id="@+id/refresh"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/start_refresh" />
-
-        <Button
-            android:id="@+id/stop_monitoring"
+        <EditText
+            android:id="@+id/low_threshold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:enabled="false"
-            android:text="@string/stop_monitoring" />
+            android:hint="@string/low_threshold_mmol"
+            android:importantForAutofill="no"
+            android:inputType="numberDecimal"
+            android:maxLines="1"
+            android:text="@string/default_low_threshold" />
+
+        <EditText
+            android:id="@+id/high_threshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/high_threshold_mmol"
+            android:importantForAutofill="no"
+            android:inputType="numberDecimal"
+            android:maxLines="1"
+            android:text="@string/default_high_threshold" />
+
+        <Spinner
+            android:id="@+id/widget_graph_window"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/widget_graph_window" />
+
+        <CheckBox
+            android:id="@+id/widget_graph_zones"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/widget_graph_zones" />
+
+        <CheckBox
+            android:id="@+id/widget_graph_lines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/widget_graph_lines" />
+
+        <CheckBox
+            android:id="@+id/widget_trend_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/widget_trend_arrow" />
+
+        <Button
+            android:id="@+id/monitoring_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/start_monitoring" />
 
         <TextView
             android:id="@+id/monitoring_status"
