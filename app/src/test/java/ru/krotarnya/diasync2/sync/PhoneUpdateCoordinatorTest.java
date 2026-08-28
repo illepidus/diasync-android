@@ -59,14 +59,17 @@ public class PhoneUpdateCoordinatorTest {
     public void committedDataRequestsAlertCheck() {
         Application application = RuntimeEnvironment.getApplication();
         AtomicBoolean checked = new AtomicBoolean();
+        AtomicBoolean wearUpdated = new AtomicBoolean();
         PhoneUpdateCoordinator coordinator = new PhoneUpdateCoordinator(
                 application,
                 new AppPreferences(application),
-                () -> checked.set(true));
+                () -> checked.set(true),
+                () -> wearUpdated.set(true));
 
         coordinator.dataCommitted();
 
         assertTrue(checked.get());
+        assertTrue(wearUpdated.get());
     }
 
     private static final class RecordingListener implements PhoneUpdateCoordinator.Listener {

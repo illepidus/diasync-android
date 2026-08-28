@@ -17,10 +17,11 @@ public final class PhoneUpdateCoordinator {
     private final AppPreferences preferences;
     private final Handler mainHandler;
     private final Runnable alertCheck;
+    private final Runnable wearUpdate;
     private final AtomicReference<Listener> listener = new AtomicReference<>();
 
     public PhoneUpdateCoordinator(Context context, AppPreferences preferences) {
-        this(context, preferences, () -> { });
+        this(context, preferences, () -> { }, () -> { });
     }
 
     public PhoneUpdateCoordinator(
@@ -28,9 +29,19 @@ public final class PhoneUpdateCoordinator {
             AppPreferences preferences,
             Runnable alertCheck
     ) {
+        this(context, preferences, alertCheck, () -> { });
+    }
+
+    public PhoneUpdateCoordinator(
+            Context context,
+            AppPreferences preferences,
+            Runnable alertCheck,
+            Runnable wearUpdate
+    ) {
         this.context = context.getApplicationContext();
         this.preferences = Objects.requireNonNull(preferences);
         this.alertCheck = Objects.requireNonNull(alertCheck);
+        this.wearUpdate = Objects.requireNonNull(wearUpdate);
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
 
@@ -49,6 +60,7 @@ public final class PhoneUpdateCoordinator {
 
     public void dataCommitted() {
         alertCheck.run();
+        wearUpdate.run();
         DiasyncWidgetProvider.requestUpdate(context);
         notifyListener(preferences.syncConnectionState(), true);
     }

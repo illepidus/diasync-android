@@ -298,6 +298,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 lowAlertEnabled.isChecked(),
                 highAlertEnabled.isChecked(),
                 noDataAlertEnabled.isChecked()));
+        application.publishWearState();
     }
 
     private void toggleSnooze() {
@@ -309,6 +310,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             application.preferences().snoozeUntil(
                     application.clock().instant().plus(option.duration()));
         }
+        application.publishWearState();
         startSnoozeTicker();
     }
 
@@ -399,6 +401,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         WidgetSettings settings = currentWidgetSettings();
         application.preferences().saveWidgetSettings(settings);
         DiasyncWidgetProvider.requestUpdate(this);
+        application.publishWearState();
     }
 
     private WidgetSettings currentWidgetSettings() {
@@ -448,6 +451,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         }
         application.preferences().save(configuration);
         DiasyncWidgetProvider.requestUpdate(this);
+        application.publishWearState();
         pendingStartConfiguration = configuration;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)

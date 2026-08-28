@@ -107,4 +107,23 @@ public final class BootstrapRepository {
         }
         return points;
     }
+
+    public List<DataPoint> latestLocalSensorPointsSince(
+            String userId,
+            Instant from,
+            int limit
+    ) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit must be positive");
+        }
+        List<DataPointEntity> entities = dao.latestSensorPoints(userId, limit);
+        List<DataPoint> points = new ArrayList<>(entities.size());
+        for (DataPointEntity entity : entities) {
+            DataPoint point = mapper.toDomain(entity);
+            if (!point.timestamp().isBefore(from)) {
+                points.add(point);
+            }
+        }
+        return points;
+    }
 }

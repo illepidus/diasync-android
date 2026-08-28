@@ -11,6 +11,25 @@
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="false" />
+        <activity
+            android:name=".wear.WearDiagnosticActivity"
+            android:excludeFromRecents="true" android:exported="true" android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service
+            android:name=".wear.WearStateListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/diasync/v1/state" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

@@ -5,12 +5,12 @@ import android.content.res.Configuration;
 import androidx.annotation.NonNull;
 import androidx.room.Room;
 import com.google.gson.Gson;
+import com.google.android.gms.wearable.Wearable;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
-import ru.krotarnya.diasync2.alert.AlertEventOutput;
 import ru.krotarnya.diasync2.alert.AlertNotificationPublisher;
 import ru.krotarnya.diasync2.alert.AlertSoundPlayer;
 import ru.krotarnya.diasync2.alert.PhoneAlertController;
@@ -30,6 +30,11 @@ import ru.krotarnya.diasync2.sync.RepositorySyncWork;
 import ru.krotarnya.diasync2.sync.SyncWork;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 import ru.krotarnya.diasync2.widget.WidgetPresenter;
+import ru.krotarnya.diasync2.wear.WearSnapshotBuilder;
+import ru.krotarnya.diasync2.wear.WearDataRequestFactory;
+import ru.krotarnya.diasync2.wear.WearStatePublisher;
+import ru.krotarnya.diasync2.wear.WearSyncDiagnostics;
+import ru.krotarnya.diasync2.common.wear.WearSnapshotCodec;
 
 public final class DiasyncApplication extends Application {
     private BootstrapRepository bootstrapRepository;
@@ -42,7 +47,9 @@ public final class DiasyncApplication extends Application {
     private ExecutorService ioExecutor;
     private ExecutorService widgetExecutor;
     private ExecutorService alertExecutor;
+    private ExecutorService wearExecutor;
     private PhoneAlertController phoneAlertController;
+    private WearStatePublisher wearStatePublisher;
 
     @Override
     public void onCreate() {
@@ -60,6 +67,19 @@ public final class DiasyncApplication extends Application {
         ioExecutor = Executors.newSingleThreadExecutor();
         widgetExecutor = Executors.newSingleThreadExecutor();
         alertExecutor = Executors.newSingleThreadExecutor();
+        wearExecutor = Executors.newSingleThreadExecutor();
+        wearStatePublisher = new WearStatePublisher(
+                preferences,
+                new WearSnapshotBuilder(
+                        bootstrapRepository::latestLocalSensorPointsSince,
+                        new TrendCalculator(),
+                        clock),
+                new WearSnapshotCodec(),
+                Wearable.getDataClient(this),
+                new WearDataRequestFactory(),
+                new WearSyncDiagnostics(this),
+                wearExecutor,
+                clock);
         AlertSoundPlayer alertSoundPlayer = new AlertSoundPlayer(this);
         AlertNotificationPublisher alertNotificationPublisher =
                 new AlertNotificationPublisher(this);
@@ -69,12 +89,13 @@ public final class DiasyncApplication extends Application {
                 new AlertEvaluator(clock, preferences.lastAlertAt()),
                 alertSoundPlayer::play,
                 alertNotificationPublisher::show,
-                AlertEventOutput.NONE,
+                wearStatePublisher::publishAlert,
                 alertExecutor);
         phoneUpdateCoordinator = new PhoneUpdateCoordinator(
                 this,
                 preferences,
-                phoneAlertController::checkAsync);
+                phoneAlertController::checkAsync,
+                wearStatePublisher::publishState);
     }
 
     @Override
@@ -117,6 +138,10 @@ public final class DiasyncApplication extends Application {
 
     public PhoneAlertController phoneAlertController() {
         return phoneAlertController;
+    }
+
+    public void publishWearState() {
+        wearStatePublisher.publishState();
     }
 
     public SyncWork createSyncWork(AppConfiguration configuration) {
