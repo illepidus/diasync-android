@@ -162,7 +162,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:text="@string/monitoring_stopped"
+            android:text="@string/monitoring_disabled"
             android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
         <ProgressBar

@@ -27,11 +27,11 @@ record WidgetBitmapSize(int width, int height, int widthDp, int heightDp) {
                         AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,
                         AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,
                         DEFAULT_HEIGHT_DP);
-        return new WidgetBitmapSize(
-                toBoundedPixels(widthDp, density),
-                toBoundedPixels(heightDp, density),
-                widthDp,
-                heightDp);
+        return scaled(widthDp, heightDp, density);
+    }
+
+    static WidgetBitmapSize exact(int widthDp, int heightDp, float density) {
+        return scaled(widthDp, heightDp, density);
     }
 
     private static int option(Bundle options, String primary, String fallback, int defaultValue) {
@@ -58,9 +58,17 @@ record WidgetBitmapSize(int width, int height, int widthDp, int heightDp) {
         return (float) Math.max(1.0, Math.min(2.2, Math.sqrt(area / (110.0 * 110.0))));
     }
 
-    private static int toBoundedPixels(int dp, float density) {
-        int fallback = dp > 0 ? dp : 1;
-        long pixels = Math.round((double) fallback * Math.max(density, 0.1f));
-        return (int) Math.max(1, Math.min(MAX_DIMENSION_PX, pixels));
+    private static WidgetBitmapSize scaled(int widthDp, int heightDp, float density) {
+        int safeWidthDp = widthDp > 0 ? widthDp : 1;
+        int safeHeightDp = heightDp > 0 ? heightDp : 1;
+        float safeDensity = Float.isFinite(density) && density > 0.0f ? density : 0.1f;
+        double rawWidth = (double) safeWidthDp * safeDensity;
+        double rawHeight = (double) safeHeightDp * safeDensity;
+        double scale = Math.min(
+                1.0,
+                MAX_DIMENSION_PX / Math.max(rawWidth, rawHeight));
+        int width = (int) Math.max(1, Math.round(rawWidth * scale));
+        int height = (int) Math.max(1, Math.round(rawHeight * scale));
+        return new WidgetBitmapSize(width, height, widthDp, heightDp);
     }
 }

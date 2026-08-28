@@ -39,7 +39,7 @@ public class MainActivityWidgetSettingsTest {
 
         assertEquals(application.getString(R.string.start_monitoring), toggle.getText().toString());
 
-        activity.onSyncStateChanged(SyncConnectionState.WAITING, false);
+        activity.onSyncStateChanged(SyncConnectionState.CONNECTED, false);
 
         assertEquals(application.getString(R.string.stop_monitoring), toggle.getText().toString());
         toggle.performClick();

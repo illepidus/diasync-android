@@ -32,21 +32,20 @@ public class WidgetPresenterTest {
         assertEquals("NO DATA", state.message());
         assertTrue(state.valueVisible());
         assertFalse(state.strikeThrough());
+        assertFalse(state.trendVisible());
         assertFalse(state.graphVisible());
     }
 
     @Test
-    public void keepsMessageEmptyUntilOneMinute() {
-        WidgetState state = presentAt(NOW.minusSeconds(59), 100.0);
-
-        assertEquals("", state.message());
-        assertFalse(state.strikeThrough());
+    public void keepsMessageEmptyUntilTwoMinutes() {
+        assertEquals("", presentAt(NOW.minusSeconds(119), 100.0).message());
+        assertFalse(presentAt(NOW.minusSeconds(119), 100.0).strikeThrough());
     }
 
     @Test
-    public void showsSingularAndPluralMinuteAge() {
-        assertEquals("1 minute ago", presentAt(NOW.minusSeconds(60), 100.0).message());
-        assertEquals("2 minutes ago", presentAt(NOW.minusSeconds(179), 100.0).message());
+    public void showsCompactMinuteAgeFromTwoMinutes() {
+        assertEquals("2m ago", presentAt(NOW.minusSeconds(120), 100.0).message());
+        assertEquals("2m ago", presentAt(NOW.minusSeconds(179), 100.0).message());
     }
 
     @Test

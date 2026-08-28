@@ -41,7 +41,7 @@ final class WidgetRemoteViewsFactory {
                 trendIconRenderer.render(
                         state.trend(),
                         trendSizePx,
-                        context.getColor(R.color.widget_secondary)));
+                        context.getColor(colorResource(state.range()))));
         views.setViewVisibility(
                 R.id.widget_trend,
                 state.trendVisible() ? View.VISIBLE : View.GONE);
@@ -62,7 +62,7 @@ final class WidgetRemoteViewsFactory {
         return views;
     }
 
-    private int colorResource(WidgetState.Range range) {
+    int colorResource(WidgetState.Range range) {
         return switch (range) {
             case LOW -> R.color.widget_low;
             case NORMAL -> R.color.widget_normal;

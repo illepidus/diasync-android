@@ -23,6 +23,7 @@ public final class SyncRunner implements Runnable {
     private final Sleeper sleeper;
     private final Listener listener;
     private final AtomicBoolean stopped = new AtomicBoolean();
+    private SyncConnectionState lastState;
 
     public SyncRunner(
             SyncWork work,
@@ -38,7 +39,7 @@ public final class SyncRunner implements Runnable {
 
     @Override
     public void run() {
-        listener.onStateChanged(SyncConnectionState.CONNECTING);
+        changeState(SyncConnectionState.CONNECTING);
         Instant since = bootstrapUntilSuccessful();
         while (!stopped.get() && since != null) {
             LongPollResult result = work.poll(since);
@@ -48,11 +49,11 @@ public final class SyncRunner implements Runnable {
             if (result.kind() == LongPollResult.Kind.DATA) {
                 since = result.cursor();
                 backoff.reset();
+                changeState(SyncConnectionState.CONNECTED);
                 listener.onDataCommitted();
-                listener.onStateChanged(SyncConnectionState.WAITING);
             } else if (result.kind() == LongPollResult.Kind.EMPTY) {
                 backoff.reset();
-                listener.onStateChanged(SyncConnectionState.WAITING);
+                changeState(SyncConnectionState.CONNECTED);
             } else if (!retryAfterFailure()) {
                 return;
             }
@@ -73,8 +74,8 @@ public final class SyncRunner implements Runnable {
             if (result.kind() == BootstrapResult.Kind.SUCCESS
                     || result.kind() == BootstrapResult.Kind.NO_DATA) {
                 backoff.reset();
+                changeState(SyncConnectionState.CONNECTED);
                 listener.onDataCommitted();
-                listener.onStateChanged(SyncConnectionState.WAITING);
                 return result.initialPollSince();
             }
             if (!retryAfterFailure()) {
@@ -86,13 +87,20 @@ public final class SyncRunner implements Runnable {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean retryAfterFailure() {
-        listener.onStateChanged(SyncConnectionState.RETRYING);
+        changeState(SyncConnectionState.CONNECTING);
         try {
             sleeper.sleep(backoff.nextDelay());
             return !stopped.get();
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             return false;
+        }
+    }
+
+    private void changeState(SyncConnectionState state) {
+        if (state != lastState) {
+            lastState = state;
+            listener.onStateChanged(state);
         }
     }
 }

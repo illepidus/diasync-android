@@ -8,8 +8,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.IBinder;
+import androidx.annotation.NonNull;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +39,10 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
     private SyncRunner runner;
     private Future<?> runnerFuture;
     private AlertMinuteScheduler alertMinuteScheduler;
+    private ConnectivityManager connectivityManager;
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private DefaultNetworkTracker networkTracker;
+    private volatile SyncConnectionState runnerState = SyncConnectionState.DISABLED;
 
     public static void start(Context context) {
         context.startForegroundService(new Intent(context, MonitoringService.class)
@@ -53,6 +61,38 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
         notificationManager = getSystemService(NotificationManager.class);
         executor = Executors.newSingleThreadExecutor();
         alertMinuteScheduler = new AlertMinuteScheduler();
+        connectivityManager = getSystemService(ConnectivityManager.class);
+        Network initialNetwork = connectivityManager.getActiveNetwork();
+        networkTracker = new DefaultNetworkTracker(
+                networkHandle(initialNetwork),
+                isNetworkValidated(initialNetwork));
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                networkTracker.onAvailable(
+                        network.getNetworkHandle(),
+                        isNetworkValidated(network));
+                updateNetworkValidation();
+            }
+
+            @Override
+            public void onLost(@NonNull Network network) {
+                networkTracker.onLost(network.getNetworkHandle());
+                updateNetworkValidation();
+            }
+
+            @Override
+            public void onCapabilitiesChanged(
+                    @NonNull Network network,
+                    @NonNull NetworkCapabilities capabilities
+            ) {
+                networkTracker.onCapabilitiesChanged(
+                        network.getNetworkHandle(),
+                        NetworkValidation.isValidated(capabilities));
+                updateNetworkValidation();
+            }
+        };
+        connectivityManager.registerDefaultNetworkCallback(networkCallback);
         createNotificationChannel();
     }
 
@@ -76,6 +116,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
     @Override
     public void onDestroy() {
         cancelRunner();
+        connectivityManager.unregisterNetworkCallback(networkCallback);
         executor.shutdownNow();
         super.onDestroy();
     }
@@ -87,8 +128,8 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
 
     @Override
     public void onStateChanged(SyncConnectionState state) {
-        application.phoneUpdateCoordinator().stateChanged(state);
-        notificationManager.notify(NOTIFICATION_ID, notification(state, true));
+        runnerState = state;
+        publishConnectionState();
     }
 
     @Override
@@ -122,7 +163,8 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
 
     private void stopMonitoring() {
         application.preferences().setMonitoringEnabled(false);
-        application.phoneUpdateCoordinator().stateChanged(SyncConnectionState.STOPPED);
+        runnerState = SyncConnectionState.DISABLED;
+        application.phoneUpdateCoordinator().stateChanged(runnerState);
         cancelRunner();
         alertMinuteScheduler.cancel(this);
         stopForeground(STOP_FOREGROUND_REMOVE);
@@ -181,10 +223,9 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
     private String notificationText(SyncConnectionState state, boolean includeLatestValue) {
         Optional<AppConfiguration> configuration = application.preferences().load();
         String connection = getString(switch (state) {
-            case STOPPED -> R.string.monitoring_stopped;
+            case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
-            case WAITING -> R.string.monitoring_waiting;
-            case RETRYING -> R.string.monitoring_retrying;
+            case CONNECTED -> R.string.monitoring_connected;
         });
         if (!includeLatestValue || configuration.isEmpty()) {
             return connection;
@@ -204,5 +245,28 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
                 latestState.unit(),
                 latestState.age(),
                 connection);
+    }
+
+    private void updateNetworkValidation() {
+        if (runnerState != SyncConnectionState.DISABLED) {
+            publishConnectionState();
+        }
+    }
+
+    private boolean isNetworkValidated(Network network) {
+        return network != null && NetworkValidation.isValidated(
+                connectivityManager.getNetworkCapabilities(network));
+    }
+
+    private long networkHandle(Network network) {
+        return network == null ? 0L : network.getNetworkHandle();
+    }
+
+    private void publishConnectionState() {
+        SyncConnectionState effectiveState = SyncConnectionStatus.effective(
+                runnerState,
+                networkTracker.isValidated());
+        application.phoneUpdateCoordinator().stateChanged(effectiveState);
+        notificationManager.notify(NOTIFICATION_ID, notification(effectiveState, true));
     }
 }

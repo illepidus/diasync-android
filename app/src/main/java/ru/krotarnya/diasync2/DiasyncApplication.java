@@ -1,6 +1,8 @@
 package ru.krotarnya.diasync2;
 
 import android.app.Application;
+import android.content.res.Configuration;
+import androidx.annotation.NonNull;
 import androidx.room.Room;
 import com.google.gson.Gson;
 import java.time.Clock;
@@ -26,6 +28,7 @@ import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
 import ru.krotarnya.diasync2.sync.RepositorySyncWork;
 import ru.krotarnya.diasync2.sync.SyncWork;
+import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 import ru.krotarnya.diasync2.widget.WidgetPresenter;
 
 public final class DiasyncApplication extends Application {
@@ -72,6 +75,12 @@ public final class DiasyncApplication extends Application {
                 this,
                 preferences,
                 phoneAlertController::checkAsync);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        DiasyncWidgetProvider.requestUpdate(this);
     }
 
     public BootstrapRepository bootstrapRepository() {

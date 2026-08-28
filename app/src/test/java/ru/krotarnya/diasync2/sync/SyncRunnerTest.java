@@ -1,7 +1,6 @@
 package ru.krotarnya.diasync2.sync;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Duration;
@@ -19,7 +18,7 @@ public class SyncRunnerTest {
     private static final Instant SERVER_CURSOR = Instant.parse("2026-08-27T12:01:00Z");
 
     @Test
-    public void emptySuccessImmediatelyPollsAgainAndDoesNotEnterRetrying() {
+    public void emptySuccessImmediatelyPollsAgainAndStaysConnected() {
         FakeWork work = new FakeWork(
                 BootstrapResult.noData(INITIAL_SINCE),
                 LongPollResult.of(LongPollResult.Kind.EMPTY),
@@ -31,7 +30,9 @@ public class SyncRunnerTest {
         runner.run();
 
         assertEquals(List.of(INITIAL_SINCE, INITIAL_SINCE), work.pollCursors);
-        assertFalse(listener.states.contains(SyncConnectionState.RETRYING));
+        assertEquals(
+                List.of(SyncConnectionState.CONNECTING, SyncConnectionState.CONNECTED),
+                listener.states);
         assertEquals(0, sleeps.size());
     }
 
@@ -58,10 +59,19 @@ public class SyncRunnerTest {
                 LongPollResult.of(LongPollResult.Kind.HTTP_ERROR),
                 LongPollResult.of(LongPollResult.Kind.CANCELLED));
         List<Duration> sleeps = new ArrayList<>();
+        RecordingListener listener = new RecordingListener();
 
-        runner(work, new RecordingListener(), sleeps).run();
+        runner(work, listener, sleeps).run();
 
         assertEquals(List.of(Duration.ofMillis(500), Duration.ofMillis(500)), sleeps);
+        assertEquals(
+                List.of(
+                        SyncConnectionState.CONNECTING,
+                        SyncConnectionState.CONNECTED,
+                        SyncConnectionState.CONNECTING,
+                        SyncConnectionState.CONNECTED,
+                        SyncConnectionState.CONNECTING),
+                listener.states);
     }
 
     @Test
@@ -71,7 +81,7 @@ public class SyncRunnerTest {
         SyncRunner.Listener listener = new SyncRunner.Listener() {
             @Override
             public void onStateChanged(SyncConnectionState state) {
-                if (state == SyncConnectionState.WAITING) {
+                if (state == SyncConnectionState.CONNECTED) {
                     holder[0].stop();
                 }
             }

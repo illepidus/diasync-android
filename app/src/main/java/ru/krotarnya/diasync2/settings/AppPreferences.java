@@ -181,12 +181,22 @@ public final class AppPreferences {
     }
 
     public SyncConnectionState syncConnectionState() {
+        String savedState = preferences.getString(
+                KEY_SYNC_CONNECTION_STATE,
+                SyncConnectionState.DISABLED.name());
+        if ("WAITING".equals(savedState)) {
+            return SyncConnectionState.CONNECTED;
+        }
+        if ("STOPPED".equals(savedState)) {
+            return SyncConnectionState.DISABLED;
+        }
+        if ("RETRYING".equals(savedState)) {
+            return SyncConnectionState.CONNECTING;
+        }
         try {
-            return SyncConnectionState.valueOf(preferences.getString(
-                    KEY_SYNC_CONNECTION_STATE,
-                    SyncConnectionState.STOPPED.name()));
+            return SyncConnectionState.valueOf(savedState);
         } catch (IllegalArgumentException exception) {
-            return SyncConnectionState.STOPPED;
+            return SyncConnectionState.DISABLED;
         }
     }
 

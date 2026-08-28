@@ -29,7 +29,7 @@ public class WidgetBitmapSizeTest {
     }
 
     @Test
-    public void capsLargeOrInvalidLauncherDimensions() {
+    public void proportionallyCapsLargeOrInvalidLauncherDimensions() {
         Bundle options = new Bundle();
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, Integer.MAX_VALUE);
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
@@ -37,7 +37,16 @@ public class WidgetBitmapSizeTest {
         WidgetBitmapSize size = WidgetBitmapSize.from(options, 4.0f, false);
 
         assertEquals(WidgetBitmapSize.MAX_DIMENSION_PX, size.width());
-        assertEquals(4, size.height());
+        assertEquals(1, size.height());
+    }
+
+    @Test
+    public void preservesAspectRatioWhenWideBitmapExceedsPixelLimit() {
+        WidgetBitmapSize size = WidgetBitmapSize.exact(1200, 200, 2.0f);
+
+        assertEquals(WidgetBitmapSize.MAX_DIMENSION_PX, size.width());
+        assertEquals(171, size.height());
+        assertEquals(1200.0 / 200.0, (double) size.width() / size.height(), 0.02);
     }
 
     @Test

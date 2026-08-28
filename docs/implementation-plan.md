@@ -187,12 +187,13 @@ Manual: выполнить bootstrap против `demo` и сверить от�
 ### Acceptance criteria
 
 - Widget добавляется и переживает launcher restart.
-- No data: `----`, `-`, `NO DATA`.
+- No data: `----`, скрытая trend arrow, `NO DATA`.
 - Fresh: message пустой.
-- После минуты показывается age.
+- После двух минут показывается age в формате `Nm ago`.
 - После 10 минут значение перечёркнуто.
 - Более чем +1 minute future timestamp показывает `DATA FROM FAR FUTURE`.
-- Resize не вызывает crash и сохраняет читаемую компоновку.
+- Resize не вызывает crash, сохраняет читаемую компоновку и заполняет графиком всю площадь widget,
+  включая сверхширокие размеры.
 - После Slice 1 bootstrap widget обновляется без ручного удаления/добавления.
 
 ### Tests
@@ -208,7 +209,7 @@ Manual: выполнить bootstrap против `demo` и сверить от�
 ./gradlew :common:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-Manual: add widget, resize, change unit, проверить fresh/1m/10m/future states через debug clock/data fixture.
+Manual: add widget, resize, change unit, проверить fresh/2m/10m/future states через debug clock/data fixture.
 
 ### Не входит
 
@@ -251,7 +252,7 @@ Manual: add widget, resize, change unit, проверить fresh/1m/10m/future 
 - Notification видна всё время работы.
 - Пустой response не отображается как ошибка.
 - Новая server point появляется в Room/widget в пределах NFR-1 при нормальной сети.
-- Airplane mode приводит к retrying/backoff без потери локального state.
+- Airplane mode приводит к connecting/backoff без потери локального state.
 - Возврат сети восстанавливает loop без открытия Activity.
 - Force-stop исключается из обещаний Android; обычный process kill восстанавливается.
 - Stop отменяет активный call и не оставляет executor/thread leak.
@@ -295,7 +296,7 @@ Widget визуально и поведенчески соответствует
 - Colored points.
 - Zones default on, lines default off.
 - Настройки unit/threshold/window/zones/lines.
-- Перерисовка после data/settings/resize/minute age update.
+- Перерисовка после data/settings/resize/home-screen orientation/minute age update.
 
 ### Acceptance criteria
 

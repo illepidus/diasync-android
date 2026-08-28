@@ -10,6 +10,10 @@ import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Typeface;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -23,6 +27,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowAppWidgetManager;
+import ru.krotarnya.diasync2.DiasyncApplication;
 import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
 import ru.krotarnya.diasync2.settings.GraphWindow;
@@ -63,6 +68,27 @@ public class WidgetRoutingTest {
         DiasyncWidgetProvider.requestUpdate(application);
 
         assertEquals(before, shadowOf(application).getBroadcastIntents().size());
+    }
+
+    @Test
+    public void configurationChangeRequestsEveryWidgetUpdate() {
+        Application application = RuntimeEnvironment.getApplication();
+        AppWidgetManager manager = AppWidgetManager.getInstance(application);
+        ShadowAppWidgetManager shadowManager = shadowOf(manager);
+        int widgetId = shadowManager.createWidget(
+                DiasyncWidgetProvider.class,
+                R.layout.widget_latest_value);
+
+        Configuration landscape = new Configuration(application.getResources().getConfiguration());
+        landscape.orientation = Configuration.ORIENTATION_LANDSCAPE;
+        ((DiasyncApplication) application).onConfigurationChanged(landscape);
+
+        List<Intent> broadcasts = shadowOf(application).getBroadcastIntents();
+        Intent update = broadcasts.get(broadcasts.size() - 1);
+        assertEquals(AppWidgetManager.ACTION_APPWIDGET_UPDATE, update.getAction());
+        assertArrayEquals(
+                new int[]{widgetId},
+                update.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
     }
 
     @Test
@@ -151,6 +177,54 @@ public class WidgetRoutingTest {
     }
 
     @Test
+    public void trendUsesTheSameRangeColorAsValue() {
+        WidgetRemoteViewsFactory factory = new WidgetRemoteViewsFactory();
+
+        assertEquals(R.color.widget_normal, factory.colorResource(WidgetState.Range.NORMAL));
+        assertEquals(R.color.widget_high, factory.colorResource(WidgetState.Range.HIGH));
+        assertEquals(R.color.widget_low, factory.colorResource(WidgetState.Range.LOW));
+    }
+
+    @Test
+    public void ageMessageIsBoldAndCenteredNearTheBottomEdge() {
+        Application application = RuntimeEnvironment.getApplication();
+        WidgetState state = new WidgetState(
+                "5.6",
+                "→",
+                "2m ago",
+                WidgetState.Range.NORMAL,
+                true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                true,
+                false);
+        View view = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(180, 110)).apply(application, new FrameLayout(application));
+        TextView message = view.findViewById(R.id.widget_message);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) message.getLayoutParams();
+        int expectedBottomMargin = Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                8.0f,
+                application.getResources().getDisplayMetrics()));
+
+        assertEquals(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, params.gravity);
+        assertEquals(expectedBottomMargin, params.bottomMargin);
+        assertEquals(
+                Gravity.CENTER_HORIZONTAL,
+                message.getGravity() & Gravity.HORIZONTAL_GRAVITY_MASK);
+        assertEquals(Typeface.BOLD, message.getTypeface().getStyle());
+    }
+
+    @Test
     public void trendArrowCanBeHiddenWithoutLeavingLayoutSpace() {
         Application application = RuntimeEnvironment.getApplication();
         WidgetState state = new WidgetState(
@@ -178,6 +252,38 @@ public class WidgetRoutingTest {
         View view = remoteViews.apply(application, new FrameLayout(application));
 
         assertEquals(View.GONE, view.findViewById(R.id.widget_trend).getVisibility());
+    }
+
+    @Test
+    public void graphPreservesItsAspectRatioWithinTheEntireWidgetBounds() {
+        Application application = RuntimeEnvironment.getApplication();
+        WidgetState state = new WidgetState(
+                "5.6",
+                "→",
+                "",
+                WidgetState.Range.NORMAL,
+                true,
+                false,
+                Instant.parse("2026-08-27T12:00:00Z"),
+                List.of(),
+                GraphWindow.THIRTY_MINUTES,
+                70.0,
+                180.0,
+                true,
+                false,
+                true,
+                true);
+
+        View view = new WidgetRemoteViewsFactory().create(
+                application,
+                state,
+                null,
+                widgetSize(600, 100)).apply(application, new FrameLayout(application));
+        ImageView graph = view.findViewById(R.id.widget_graph);
+
+        assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, graph.getLayoutParams().width);
+        assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, graph.getLayoutParams().height);
+        assertEquals(ImageView.ScaleType.FIT_CENTER, graph.getScaleType());
     }
 
     private void assertValueColor(Application application, WidgetState.Range range, int colorId) {

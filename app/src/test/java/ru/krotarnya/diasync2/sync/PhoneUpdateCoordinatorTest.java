@@ -34,7 +34,7 @@ public class PhoneUpdateCoordinatorTest {
                 DiasyncWidgetProvider.class,
                 R.layout.widget_latest_value);
         AppPreferences preferences = new AppPreferences(application);
-        preferences.saveSyncConnectionState(SyncConnectionState.WAITING);
+        preferences.saveSyncConnectionState(SyncConnectionState.CONNECTED);
         PhoneUpdateCoordinator coordinator = new PhoneUpdateCoordinator(application, preferences);
         RecordingListener listener = new RecordingListener();
         coordinator.register(listener);
@@ -42,7 +42,7 @@ public class PhoneUpdateCoordinatorTest {
         coordinator.dataCommitted();
         shadowOf(Looper.getMainLooper()).idle();
 
-        assertEquals(SyncConnectionState.WAITING, listener.state);
+        assertEquals(SyncConnectionState.CONNECTED, listener.state);
         assertTrue(listener.dataChanged);
         List<Intent> broadcasts = shadowOf(application).getBroadcastIntents();
         Intent update = broadcasts.get(broadcasts.size() - 1);

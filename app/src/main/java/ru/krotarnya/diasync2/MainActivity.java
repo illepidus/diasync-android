@@ -472,7 +472,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private void stopMonitoring() {
         pendingStartConfiguration = null;
         MonitoringService.stop(this);
-        renderMonitoringState(SyncConnectionState.STOPPED);
+        renderMonitoringState(SyncConnectionState.DISABLED);
     }
 
     private void toggleMonitoring() {
@@ -510,12 +510,11 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     }
 
     private void renderMonitoringState(SyncConnectionState state) {
-        monitoringActive = state != SyncConnectionState.STOPPED;
+        monitoringActive = state != SyncConnectionState.DISABLED;
         monitoringStatus.setText(switch (state) {
-            case STOPPED -> R.string.monitoring_stopped;
+            case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
-            case WAITING -> R.string.monitoring_waiting;
-            case RETRYING -> R.string.monitoring_retrying;
+            case CONNECTED -> R.string.monitoring_connected;
         });
         monitoringToggle.setText(monitoringActive
                 ? R.string.stop_monitoring

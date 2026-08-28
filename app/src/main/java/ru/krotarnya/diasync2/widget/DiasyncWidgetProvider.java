@@ -7,8 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.PowerManager;
+import android.util.ArrayMap;
+import android.util.SizeF;
+import android.widget.RemoteViews;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import ru.krotarnya.diasync2.DiasyncApplication;
 import ru.krotarnya.diasync2.common.DataPoint;
@@ -83,16 +88,40 @@ public final class DiasyncWidgetProvider extends AppWidgetProvider {
                 WidgetState state = loadState(application);
                 AppWidgetManager manager = AppWidgetManager.getInstance(context);
                 for (int appWidgetId : appWidgetIds) {
-                    WidgetBitmapSize size = widgetSize(context, manager, appWidgetId);
-                    Bitmap graphBitmap = renderGraph(size, state);
-                    manager.updateAppWidget(
-                            appWidgetId,
-                            viewsFactory.create(context, state, graphBitmap, size));
+                    updateWidget(context, manager, appWidgetId, state);
                 }
             } finally {
                 pendingResult.finish();
             }
         });
+    }
+
+    private void updateWidget(
+            Context context,
+            AppWidgetManager manager,
+            int appWidgetId,
+            WidgetState state
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            List<WidgetSizeOption> options = WidgetSizeOption.from(
+                    manager.getAppWidgetOptions(appWidgetId),
+                    context.getResources().getDisplayMetrics().density);
+            if (!options.isEmpty()) {
+                Map<SizeF, RemoteViews> exactViews = new ArrayMap<>();
+                for (WidgetSizeOption option : options) {
+                    WidgetBitmapSize size = option.bitmapSize();
+                    exactViews.put(
+                            option.hostSize(),
+                            viewsFactory.create(context, state, renderGraph(size, state), size));
+                }
+                manager.updateAppWidget(appWidgetId, new RemoteViews(exactViews));
+                return;
+            }
+        }
+        WidgetBitmapSize size = widgetSize(context, manager, appWidgetId);
+        manager.updateAppWidget(
+                appWidgetId,
+                viewsFactory.create(context, state, renderGraph(size, state), size));
     }
 
     private WidgetState loadState(DiasyncApplication application) {

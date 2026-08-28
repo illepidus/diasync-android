@@ -15,7 +15,7 @@ import ru.krotarnya.diasync2.settings.AppConfiguration;
 
 public final class WidgetPresenter {
     private static final Duration FUTURE_TOLERANCE = Duration.ofMinutes(1);
-    private static final Duration FRESH_DURATION = Duration.ofMinutes(1);
+    private static final Duration AGE_MESSAGE_DELAY = Duration.ofMinutes(2);
     private static final Duration STRIKE_THROUGH_AGE = Duration.ofMinutes(10);
 
     private final Clock clock;
@@ -53,6 +53,7 @@ public final class WidgetPresenter {
                     now,
                     List.of(),
                     configuration,
+                    false,
                     false);
         }
 
@@ -68,12 +69,13 @@ public final class WidgetPresenter {
                     now,
                     List.of(),
                     configuration,
+                    true,
                     false);
         }
 
         GlucoseValue value = latest.displayValue(configuration.useCalibration());
         String trend = trendCalculator.calculate(sensorPoints, configuration.useCalibration());
-        String message = age.compareTo(FRESH_DURATION) < 0 ? "" : ageMessage(age);
+        String message = age.compareTo(AGE_MESSAGE_DELAY) < 0 ? "" : ageMessage(age);
         List<WidgetGraphSample> samples = new ArrayList<>(sensorPoints.size());
         for (SensorPoint point : sensorPoints) {
             samples.add(new WidgetGraphSample(
@@ -90,6 +92,7 @@ public final class WidgetPresenter {
                 now,
                 samples,
                 configuration,
+                true,
                 true);
     }
 
@@ -103,6 +106,7 @@ public final class WidgetPresenter {
             Instant now,
             List<WidgetGraphSample> samples,
             AppConfiguration configuration,
+            boolean trendVisible,
             boolean graphVisible
     ) {
         return new WidgetState(
@@ -119,7 +123,7 @@ public final class WidgetPresenter {
                 configuration.highMgDl(),
                 configuration.widgetGraphZones(),
                 configuration.widgetGraphLines(),
-                configuration.widgetTrendArrow(),
+                configuration.widgetTrendArrow() && trendVisible,
                 graphVisible);
     }
 
@@ -134,7 +138,6 @@ public final class WidgetPresenter {
     }
 
     private String ageMessage(Duration age) {
-        long minutes = age.toMinutes();
-        return minutes + (minutes == 1 ? " minute ago" : " minutes ago");
+        return age.toMinutes() + "m ago";
     }
 }

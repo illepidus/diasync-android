@@ -258,7 +258,10 @@ Notification является частью продукта и показыва�
 
 - что мониторинг активен;
 - последнее значение и возраст, если они есть;
-- состояние соединения: connected / waiting / retrying;
+- состояние соединения: disabled / connecting / connected; `connected` означает, что bootstrap или
+  предыдущий long-poll round trip успешно завершился, при валидированной Android сети активен
+  следующий long poll; отсутствие сети, request error, backoff и повторная попытка до первого
+  успешного ответа показываются как `connecting`;
 - действие для открытия настроек/статуса;
 - действие остановки мониторинга только если пользователь явно запросил такую возможность.
 
@@ -362,7 +365,8 @@ displayMgdl = rawMgdl * slope + intercept
 ### Содержимое
 
 - последнее sensor glucose без отдельного label единицы измерения;
-- опциональная trend arrow, нарисованная как bitmap без зависимости от системного шрифта;
+- опциональная trend arrow, нарисованная как bitmap без зависимости от системного шрифта и
+  окрашенная так же, как последнее значение;
 - возраст данных или error message;
 - график;
 - low/normal/high zones либо threshold lines;
@@ -377,7 +381,12 @@ displayMgdl = rawMgdl * slope + intercept
 - Данные рисуются цветными точками, как в старом приложении.
 - Радиус точек зависит от ширины widget и выбранного окна: чем длиннее окно, тем
   меньше точки; сверху радиус ограничен высотой widget.
-- Bitmap строится под фактический размер widget.
+- Bitmap строится под фактический размер widget. На Android 12+ для переданных launcher размеров
+  готовится bounded exact-size `RemoteViews` mapping, чтобы home screen сам выбирал корректный
+  portrait/landscape вариант независимо от orientation открытого приложения.
+- Графический bitmap заполняет всю доступную площадь widget, включая сверхширокие размеры. При
+  достижении pixel limit обе стороны bitmap уменьшаются пропорционально, поэтому точки остаются
+  круглыми.
 - Zones default: on; lines default: off; trend arrow default: on.
 - Значение и trend по возможности выравниваются к левому краю.
 - Размер значения и trend плавно растёт с доступной площадью widget; размер 1x1 остаётся
@@ -386,9 +395,10 @@ displayMgdl = rawMgdl * slope + intercept
 
 ### Fresh/stale/error
 
-- Нет точек: `NO DATA`, glucose `----`, trend `-`, график пустой.
-- Возраст меньше минуты: сообщение пустое.
-- Возраст от минуты: `N minute(s) ago`.
+- Нет точек: `NO DATA`, glucose `----`, trend скрыт, график пустой.
+- Возраст меньше двух минут: сообщение пустое.
+- Возраст от двух минут: жирный `Nm ago`, по центру у нижнего края отдельно от строки значения и
+  trend.
 - Возраст больше 10 минут: glucose дополнительно перечёркнута.
 - Timestamp более чем на минуту в будущем: `DATA FROM FAR FUTURE`, glucose и график скрыты.
 
@@ -396,6 +406,8 @@ displayMgdl = rawMgdl * slope + intercept
 
 - после commit новых данных;
 - после изменения размера;
+- после изменения набора размеров/orientation домашнего экрана; orientation устройства остаётся
+  fallback для launcher без exact-size options;
 - раз в минуту при интерактивном экране для обновления возраста;
 - системный `updatePeriodMillis` остаётся редким fallback, а не основным механизмом.
 
@@ -564,8 +576,7 @@ Monitoring включается и останавливается одной con
 
 Status показывает:
 
-- service running/stopped;
-- connected/waiting/backoff;
+- disabled/connecting/connected;
 - last successful response;
 - last data timestamp/age;
 - количество локальных точек в рабочем окне;
@@ -576,7 +587,7 @@ Status показывает:
 | Событие                   | Поведение                                                              |
 |---------------------------|------------------------------------------------------------------------|
 | Long poll timeout         | Немедленно следующий poll, не показывать как ошибку                    |
-| Нет сети                  | Сохранить данные, показать retrying, backoff+jitter                    |
+| Нет сети                  | Сохранить данные, показать connecting, backoff+jitter                  |
 | HTTP/JSON error           | Не менять cursor; retry; оставить последнее корректное состояние       |
 | Duplicate batch           | Безопасный Room upsert                                                 |
 | Process death             | `START_STICKY`, восстановить cursor и loop                             |

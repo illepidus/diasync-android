@@ -13,6 +13,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import ru.krotarnya.diasync2.common.GlucoseUnit;
+import ru.krotarnya.diasync2.sync.SyncConnectionState;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
@@ -95,5 +96,38 @@ public class AppPreferencesTest {
 
         assertTrue(preferences.load().isEmpty());
         assertEquals(expected, preferences.loadWidgetSettings());
+    }
+
+    @Test
+    public void migratesLegacyWaitingConnectionStateToConnected() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0)
+                .edit()
+                .putString("sync_connection_state", "WAITING")
+                .commit();
+
+        assertEquals(
+                SyncConnectionState.CONNECTED,
+                new AppPreferences(application).syncConnectionState());
+    }
+
+    @Test
+    public void migratesRemovedConnectionStates() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0)
+                .edit()
+                .putString("sync_connection_state", "RETRYING")
+                .commit();
+        assertEquals(
+                SyncConnectionState.CONNECTING,
+                new AppPreferences(application).syncConnectionState());
+
+        application.getSharedPreferences("diasync_settings", 0)
+                .edit()
+                .putString("sync_connection_state", "STOPPED")
+                .commit();
+        assertEquals(
+                SyncConnectionState.DISABLED,
+                new AppPreferences(application).syncConnectionState());
     }
 }

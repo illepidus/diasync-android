@@ -31,10 +31,9 @@
     <string name="alert_notification_text">Open Diasync alert settings</string>
     <string name="start_monitoring">Start monitoring</string>
     <string name="stop_monitoring">Stop monitoring</string>
-    <string name="monitoring_stopped">Monitoring stopped</string>
+    <string name="monitoring_disabled">Disabled</string>
     <string name="monitoring_connecting">Connecting…</string>
-    <string name="monitoring_waiting">Connected · waiting for data</string>
-    <string name="monitoring_retrying">Connection lost · retrying</string>
+    <string name="monitoring_connected">Connected</string>
     <string name="monitoring_permission_required">Notification permission is required for continuous monitoring.</string>
     <string name="monitoring_channel_name">Continuous monitoring</string>
     <string name="monitoring_channel_description">Ongoing glucose sync connection status</string>
