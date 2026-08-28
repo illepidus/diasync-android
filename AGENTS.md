@@ -1,8 +1,11 @@
 # AGENTS.md
 
-Этот репозиторий содержит Diasync Android v2: личное Java-приложение для непрерывного мониторинга глюкозы на телефоне и Wear OS.
+Этот репозиторий содержит Diasync Android v2: личное Java-приложение для непрерывного мониторинга
+глюкозы на телефоне и Wear OS.
 
-Перед изменениями прочитай `docs/design.md` и относящийся к задаче slice из `docs/implementation-plan.md`. Не переосмысливай зафиксированное пользовательское поведение без явного запроса.
+Перед изменениями прочитай `docs/design.md` и относящийся к задаче slice из
+`docs/implementation-plan.md`. Не переосмысливай зафиксированное пользовательское поведение без
+явного запроса.
 
 ## Источники истины
 
@@ -14,7 +17,11 @@
 4. Поведение `diasync-old` как референс.
 5. Существующий код этого репозитория.
 
-Если нужное решение уже следует из этих источников, не задавай вопрос. Спрашивай только когда выбор существенно меняет пользовательское поведение, безопасность, данные или границы scope.
+Если нужное решение уже следует из этих источников, не задавай вопрос. Спрашивай только когда выбор
+существенно меняет пользовательское поведение, безопасность, данные или границы scope.
+
+Исходный код приложений `diasync-old` и `diasync-backend` доступны локально на уровень выше данного
+проекта. Их запрещено модифицировать, но можно изучать.
 
 ## Общение и язык
 
@@ -25,16 +32,20 @@
 
 ## Неподвижные архитектурные решения
 
-- Только Java 17. Не добавляй Kotlin, Kotlin DSL, Compose или `*-ktx` dependency без отдельного явного запроса.
+- Только Java 17. Не добавляй Kotlin, Kotlin DSL, Compose или `*-ktx` dependency без отдельного
+  явного запроса.
 - UI телефона — XML Views; widget — `RemoteViews` и Canvas bitmap.
 - Backend доступен только модулю `app`.
 - Используется REST bootstrap + long poll. GraphQL/WebSocket не использовать.
 - `userId` — credential. Не передавай его в `wear`, не логируй и не показывай в notification/widget.
-- `wear` получает bounded snapshot через Wear Data Layer, хранит последний корректный snapshot и предоставляет complication.
+- `wear` получает bounded snapshot через Wear Data Layer, хранит последний корректный snapshot и
+  предоставляет complication.
 - `watchface` — Watch Face Format с `android:hasCode="false"`; исполняемый код туда не добавлять.
 - `common` — чистая Java-библиотека без Android SDK.
-- Continuous phone sync живёт в `specialUse` foreground service с ongoing notification; не используй `dataSync` FGS для 24/7 loop.
-- Sync cursor — server `updateTimestamp`, никогда не measurement timestamp и не локальное время после bootstrap.
+- Continuous phone sync живёт в `specialUse` foreground service с ongoing notification; не используй
+  `dataSync` FGS для 24/7 loop.
+- Sync cursor — server `updateTimestamp`, никогда не measurement timestamp и не локальное время
+  после bootstrap.
 - Data batch и cursor сохраняются в одной Room-транзакции.
 - Старый проект копируется по поведению и внешнему виду, но не по архитектуре.
 
@@ -55,16 +66,20 @@ wear -> common
 watchface -> none
 ```
 
-Не создавай зависимости `common -> app/wear`, `wear -> app` или `watchface -> wear` на уровне Gradle/code.
+Не создавай зависимости `common -> app/wear`, `wear -> app` или `watchface -> wear` на уровне
+Gradle/code.
 
 ## Стиль архитектуры
 
 - Реализуй один небольшой vertical slice за раз.
 - Предпочитай прямой код и явные зависимости слоям ради слоёв.
-- Не создавай интерфейс, если существует только одна реализация и тестовая граница не приносит пользы.
-- Не добавляй DI framework в первой версии. Используй небольшой composition root и constructor injection.
+- Не создавай интерфейс, если существует только одна реализация и тестовая граница не приносит
+  пользы.
+- Не добавляй DI framework в первой версии. Используй небольшой composition root и constructor
+  injection.
 - Не используй service locator/static mutable singleton для domain state.
-- Android components должны быть тонкими: orchestration в service/provider, логика в обычных Java-классах.
+- Android components должны быть тонкими: orchestration в service/provider, логика в обычных
+  Java-классах.
 - Время передавай через `Clock`; domain logic использует `Instant` и `Duration` в UTC.
 - Blocking network, database и bitmap rendering никогда не выполнять на main thread.
 - Публичные DTO между телефоном и часами versioned и имеют contract tests.
@@ -76,7 +91,8 @@ watchface -> none
 - Upsert должен быть idempotent.
 - Не продвигай cursor при частичном/неуспешном batch.
 - Пустой long-poll response — нормальный timeout.
-- При ошибке оставляй последнее корректное пользовательское состояние и повторяй с bounded exponential backoff+jitter.
+- При ошибке оставляй последнее корректное пользовательское состояние и повторяй с bounded
+  exponential backoff+jitter.
 - Активный HTTP call должен отменяться при остановке service.
 - Snapshot на Wear содержит только ограниченное окно данных и не содержит backend URL/userId.
 - Повреждённый или неподдерживаемый Wear payload не заменяет последнее корректное состояние.
@@ -95,14 +111,18 @@ watchface -> none
 - global silence interval 55s и persistent snooze;
 - Wear alert event дедуплицируется и имеет expiry.
 
-Если старый код содержит очевидную платформенную ошибку, race или утечку lifecycle, сохрани намеренное пользовательское поведение, а механизм исправь. Добавь characterization test, который показывает сохранённое поведение.
+Если старый код содержит очевидную платформенную ошибку, race или утечку lifecycle, сохрани
+намеренное пользовательское поведение, а механизм исправь. Добавь characterization test, который
+показывает сохранённое поведение.
 
 ## Dependencies
 
 - Управляй версиями через `gradle/libs.versions.toml`.
 - Используй Gradle wrapper.
 - Перед новой dependency объясни, какую конкретную сложность она убирает.
-- Предпочтительные базовые средства: Room, OkHttp/Retrofit, Gson, AndroidX AppWidget/Wear APIs и существующий JUnit 4 test stack. Не добавляй отдельную JUnit 5 integration без конкретной необходимости.
+- Предпочтительные базовые средства: Room, OkHttp/Retrofit, Gson, AndroidX AppWidget/Wear APIs и
+  существующий JUnit 4 test stack. Не добавляй отдельную JUnit 5 integration без конкретной
+  необходимости.
 - Не добавляй RxJava/Reactor/coroutines/event bus ради одного loop.
 - Не обновляй AGP/Gradle/targetSdk одновременно с feature slice без необходимости.
 
@@ -131,7 +151,8 @@ watchface -> none
 2. Просмотри собственный diff на секреты, случайный Kotlin, debug code и scope creep.
 3. Отметь slice выполненным только если выполнены все acceptance criteria.
 4. Если реализация изменила архитектурное решение, обнови `docs/design.md` в том же change.
-5. В финальном ответе перечисли: результат, важные файлы, выполненные проверки, что не удалось проверить.
+5. В финальном ответе перечисли: результат, важные файлы, выполненные проверки, что не удалось
+   проверить.
 
 ## Проверки
 
@@ -159,15 +180,25 @@ watchface -> none
 ./gradlew test lint assembleDebug
 ```
 
-Если команда не существует из-за фактической конфигурации Gradle, сначала посмотри доступные tasks и используй ближайшую эквивалентную проверку. Не заявляй, что device behavior проверено, если был только JVM build.
+Если команда не существует из-за фактической конфигурации Gradle, сначала посмотри доступные tasks и
+используй ближайшую эквивалентную проверку. Не заявляй, что device behavior проверено, если был
+только JVM build.
 
 ## Device validation
 
-Для изменений widget, foreground lifecycle, Wear Data Layer, complication, vibration или WFF одних unit tests недостаточно.
+Для изменений widget, foreground lifecycle, Wear Data Layer, complication, vibration или WFF одних
+unit tests недостаточно.
 
-- Используй подключённое устройство/emulator только когда оно доступно.
-- Не очищай app data и не переустанавливай APK с потерей данных без явного согласия.
-- Для time-based behavior можно сокращать интервалы только через debug-only injection/configuration, не меняя production constants.
+- Перед ручной проверкой сначала выполни `adb devices` и используй только target со статусом
+  `device`. Если подходящий target не запущен, самостоятельно выполни
+  `$ANDROID_SDK_ROOT/emulator/emulator -list-avds`, выбери подходящий доступный AVD, запусти его и
+  дождись полной загрузки через `adb wait-for-device` и `sys.boot_completed`. Это обычный шаг device
+  validation и не требует отдельного подтверждения.
+- Из известных AVD `Medium_Phone` предназначен для phone/tablet-проверок, а
+  `Wear_OS_Large_Round` — для Wear OS-проверок.
+- Перед `adb install` явно проверь тип выбранного устройства чер
+- Для time-based behavior можно сокращать интервалы только через debug-only injection/configuration,
+  не меняя production constants.
 - Записывай точный manual scenario и фактический результат.
 
 ## Definition of done для slice
