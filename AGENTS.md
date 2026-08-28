@@ -187,19 +187,8 @@ Gradle/code.
 ## Device validation
 
 Для изменений widget, foreground lifecycle, Wear Data Layer, complication, vibration или WFF одних
-unit tests недостаточно.
-
-- Перед ручной проверкой сначала выполни `adb devices` и используй только target со статусом
-  `device`. Если подходящий target не запущен, самостоятельно выполни
-  `$ANDROID_SDK_ROOT/emulator/emulator -list-avds`, выбери подходящий доступный AVD, запусти его и
-  дождись полной загрузки через `adb wait-for-device` и `sys.boot_completed`. Это обычный шаг device
-  validation и не требует отдельного подтверждения.
-- Из известных AVD `Medium_Phone` предназначен для phone/tablet-проверок, а
-  `Wear_OS_Large_Round` — для Wear OS-проверок.
-- Перед `adb install` явно проверь тип выбранного устройства чер
-- Для time-based behavior можно сокращать интервалы только через debug-only injection/configuration,
-  не меняя production constants.
-- Записывай точный manual scenario и фактический результат.
+unit tests недостаточно. Валидация проводится оператором в ручном режиме. После того как код будет
+готов к проверке оператором опиши ожидаемые от него действия и ожидаемый результат от них
 
 ## Definition of done для slice
 
