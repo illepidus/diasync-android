@@ -451,7 +451,7 @@ Manual на реальных часах: paired, disconnected/reconnected, Wear 
 
 ## Slice 7 — минимальный complication + WFF end-to-end
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 

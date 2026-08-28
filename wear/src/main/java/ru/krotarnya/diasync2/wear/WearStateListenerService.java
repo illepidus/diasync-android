@@ -37,6 +37,7 @@ public final class WearStateListenerService extends WearableListenerService {
                     continue;
                 }
                 WearSnapshot snapshot = repository.load().orElseThrow();
+                DiasyncComplicationDataSourceService.requestUpdate(this);
                 sendBroadcast(new Intent(WearDiagnosticActivity.ACTION_STATE_UPDATED)
                         .setPackage(getPackageName()));
                 String latest = snapshot.points().isEmpty()

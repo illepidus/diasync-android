@@ -36,6 +36,7 @@ android {
 dependencies {
     implementation project(':common')
     implementation libs.play.services.wearable
+    implementation libs.wear.watchface.complications.data.source
     testImplementation libs.junit
     testImplementation libs.robolectric
     testImplementation libs.androidx.test.core
