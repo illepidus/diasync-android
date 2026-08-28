@@ -49,9 +49,14 @@ public class WidgetPresenterTest {
     }
 
     @Test
-    public void strikesValueOnlyAfterTenMinutes() {
-        assertFalse(presentAt(NOW.minusSeconds(600), 100.0).strikeThrough());
-        assertTrue(presentAt(NOW.minusSeconds(601), 100.0).strikeThrough());
+    public void entersNoDataVisualStateOnlyAfterTenMinutes() {
+        WidgetState boundary = presentAt(NOW.minusSeconds(600), 100.0);
+        WidgetState noData = presentAt(NOW.minusSeconds(601), 100.0);
+
+        assertFalse(boundary.strikeThrough());
+        assertTrue(boundary.trendVisible());
+        assertTrue(noData.strikeThrough());
+        assertFalse(noData.trendVisible());
     }
 
     @Test

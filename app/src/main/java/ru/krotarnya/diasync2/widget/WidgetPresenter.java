@@ -76,6 +76,7 @@ public final class WidgetPresenter {
         GlucoseValue value = latest.displayValue(configuration.useCalibration());
         String trend = trendCalculator.calculate(sensorPoints, configuration.useCalibration());
         String message = age.compareTo(AGE_MESSAGE_DELAY) < 0 ? "" : ageMessage(age);
+        boolean noData = age.compareTo(STRIKE_THROUGH_AGE) > 0;
         List<WidgetGraphSample> samples = new ArrayList<>(sensorPoints.size());
         for (SensorPoint point : sensorPoints) {
             samples.add(new WidgetGraphSample(
@@ -88,11 +89,11 @@ public final class WidgetPresenter {
                 message,
                 range(value.mgDl(), configuration.lowMgDl(), configuration.highMgDl()),
                 true,
-                age.compareTo(STRIKE_THROUGH_AGE) > 0,
+                noData,
                 now,
                 samples,
                 configuration,
-                true,
+                !noData,
                 true);
     }
 
