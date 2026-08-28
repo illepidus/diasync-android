@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -25,8 +27,11 @@ import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.common.GlucoseUnit;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
+import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.ConfigurationValidator;
 import ru.krotarnya.diasync2.settings.GraphWindow;
+import ru.krotarnya.diasync2.settings.SnoozeOption;
+import ru.krotarnya.diasync2.settings.SnoozeCountdown;
 import ru.krotarnya.diasync2.settings.ThresholdDisplay;
 import ru.krotarnya.diasync2.settings.WidgetSettings;
 import ru.krotarnya.diasync2.sync.MonitoringService;
@@ -40,6 +45,8 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private final AtomicInteger operationGeneration = new AtomicInteger();
     private final ConfigurationValidator configurationValidator = new ConfigurationValidator();
     private final ThresholdDisplay thresholdDisplay = new ThresholdDisplay();
+    private final Handler snoozeHandler = new Handler(Looper.getMainLooper());
+    private final Runnable snoozeTicker = this::updateSnoozeCountdown;
 
     private DiasyncApplication application;
     private EditText backendUrl;
@@ -52,6 +59,12 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private CheckBox widgetGraphZones;
     private CheckBox widgetGraphLines;
     private CheckBox widgetTrendArrow;
+    private CheckBox lowAlertEnabled;
+    private CheckBox highAlertEnabled;
+    private CheckBox noDataAlertEnabled;
+    private Spinner snoozeDuration;
+    private Button snoozeToggle;
+    private TextView snoozeStatus;
     private TextView status;
     private TextView value;
     private TextView timestamp;
@@ -63,19 +76,26 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private double lowMgDl;
     private double highMgDl;
     private boolean bindingWidgetSettings;
+    private boolean bindingAlertSettings;
     private boolean monitoringActive;
+    private SnoozeCountdown snoozeCountdown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         application = (DiasyncApplication) getApplication();
+        snoozeCountdown = new SnoozeCountdown(application.clock());
         bindViews();
         configureUnitSpinner();
         configureGraphWindowSpinner();
+        configureSnoozeSpinner();
+        snoozeDuration.setSelection(application.preferences().loadSnoozeOption().ordinal());
         monitoringToggle.setOnClickListener(ignored -> toggleMonitoring());
+        snoozeToggle.setOnClickListener(ignored -> toggleSnooze());
 
         populateWidgetSettings(application.preferences().loadWidgetSettings());
+        populateAlertSettings(application.preferences().loadAlertSettings());
         Optional<AppConfiguration> saved = application.preferences().load();
         if (saved.isEmpty()) {
             render(application.statusPresenter().configurationMissing());
@@ -88,6 +108,9 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             }
         }
         configureWidgetSettingsListeners();
+        configureAlertSettingsListeners();
+        configureSnoozeSettingsListener();
+        renderSnoozeCountdown();
         renderMonitoringState(application.preferences().syncConnectionState());
     }
 
@@ -95,11 +118,13 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     protected void onStart() {
         super.onStart();
         application.phoneUpdateCoordinator().register(this);
+        startSnoozeTicker();
         renderMonitoringState(application.preferences().syncConnectionState());
     }
 
     @Override
     protected void onStop() {
+        snoozeHandler.removeCallbacks(snoozeTicker);
         application.phoneUpdateCoordinator().unregister(this);
         super.onStop();
     }
@@ -122,6 +147,12 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         widgetGraphZones = findViewById(R.id.widget_graph_zones);
         widgetGraphLines = findViewById(R.id.widget_graph_lines);
         widgetTrendArrow = findViewById(R.id.widget_trend_arrow);
+        lowAlertEnabled = findViewById(R.id.low_alert_enabled);
+        highAlertEnabled = findViewById(R.id.high_alert_enabled);
+        noDataAlertEnabled = findViewById(R.id.no_data_alert_enabled);
+        snoozeDuration = findViewById(R.id.snooze_duration);
+        snoozeToggle = findViewById(R.id.snooze_toggle);
+        snoozeStatus = findViewById(R.id.snooze_status);
         status = findViewById(R.id.status_text);
         value = findViewById(R.id.latest_value);
         timestamp = findViewById(R.id.latest_timestamp);
@@ -148,6 +179,15 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         widgetGraphWindow.setAdapter(adapter);
     }
 
+    private void configureSnoozeSpinner() {
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.snooze_options,
+                android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        snoozeDuration.setAdapter(adapter);
+    }
+
     private void populateCredentials(AppConfiguration configuration) {
         backendUrl.setText(configuration.baseUrl());
         userId.setText(configuration.userId());
@@ -170,6 +210,14 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         widgetTrendArrow.setChecked(settings.trendArrow());
         updateThresholdFields();
         bindingWidgetSettings = false;
+    }
+
+    private void populateAlertSettings(AlertSettings settings) {
+        bindingAlertSettings = true;
+        lowAlertEnabled.setChecked(settings.lowEnabled());
+        highAlertEnabled.setChecked(settings.highEnabled());
+        noDataAlertEnabled.setChecked(settings.noDataEnabled());
+        bindingAlertSettings = false;
     }
 
     private void configureWidgetSettingsListeners() {
@@ -221,6 +269,75 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         };
         lowThreshold.addTextChangedListener(thresholdWatcher);
         highThreshold.addTextChangedListener(thresholdWatcher);
+    }
+
+    private void configureAlertSettingsListeners() {
+        lowAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
+        highAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
+        noDataAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
+    }
+
+    private void configureSnoozeSettingsListener() {
+        snoozeDuration.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                application.preferences().saveSnoozeOption(SnoozeOption.atPosition(position));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
+    private void persistAlertSettings() {
+        if (bindingAlertSettings) {
+            return;
+        }
+        application.preferences().saveAlertSettings(new AlertSettings(
+                lowAlertEnabled.isChecked(),
+                highAlertEnabled.isChecked(),
+                noDataAlertEnabled.isChecked()));
+    }
+
+    private void toggleSnooze() {
+        if (alertsSnoozed()) {
+            application.preferences().resumeAlerts();
+            application.phoneAlertController().checkAsync();
+        } else {
+            SnoozeOption option = SnoozeOption.atPosition(snoozeDuration.getSelectedItemPosition());
+            application.preferences().snoozeUntil(
+                    application.clock().instant().plus(option.duration()));
+        }
+        startSnoozeTicker();
+    }
+
+    private void startSnoozeTicker() {
+        snoozeHandler.removeCallbacks(snoozeTicker);
+        updateSnoozeCountdown();
+    }
+
+    private void updateSnoozeCountdown() {
+        boolean snoozed = renderSnoozeCountdown();
+        if (snoozed) {
+            snoozeHandler.postDelayed(snoozeTicker, 1_000L);
+        }
+    }
+
+    private boolean renderSnoozeCountdown() {
+        Optional<String> remaining = snoozeCountdown.remaining(
+                application.preferences().snoozedUntil());
+        snoozeStatus.setVisibility(remaining.isPresent() ? View.VISIBLE : View.GONE);
+        remaining.ifPresent(value -> snoozeStatus.setText(
+                getString(R.string.alerts_snoozed_for, value)));
+        snoozeToggle.setText(remaining.isPresent()
+                ? R.string.resume_alerts
+                : R.string.snooze_alerts);
+        return remaining.isPresent();
+    }
+
+    private boolean alertsSnoozed() {
+        return snoozeCountdown.remaining(application.preferences().snoozedUntil()).isPresent();
     }
 
     private void updateThresholdFields() {

@@ -37,6 +37,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_latest_value_info" />
         </receiver>
+        <receiver
+            android:name=".alert.AlertMinuteReceiver"
+            android:exported="false" />
         <service
             android:name=".sync.MonitoringService"
             android:exported="false"

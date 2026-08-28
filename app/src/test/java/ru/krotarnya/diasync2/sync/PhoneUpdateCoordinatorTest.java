@@ -11,6 +11,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Looper;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -52,6 +53,20 @@ public class PhoneUpdateCoordinatorTest {
         assertArrayEquals(
                 new int[]{widgetId},
                 update.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS));
+    }
+
+    @Test
+    public void committedDataRequestsAlertCheck() {
+        Application application = RuntimeEnvironment.getApplication();
+        AtomicBoolean checked = new AtomicBoolean();
+        PhoneUpdateCoordinator coordinator = new PhoneUpdateCoordinator(
+                application,
+                new AppPreferences(application),
+                () -> checked.set(true));
+
+        coordinator.dataCommitted();
+
+        assertTrue(checked.get());
     }
 
     private static final class RecordingListener implements PhoneUpdateCoordinator.Listener {

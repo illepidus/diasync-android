@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import ru.krotarnya.diasync2.DiasyncApplication;
 import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
+import ru.krotarnya.diasync2.alert.AlertMinuteScheduler;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
@@ -33,6 +34,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
     private ExecutorService executor;
     private SyncRunner runner;
     private Future<?> runnerFuture;
+    private AlertMinuteScheduler alertMinuteScheduler;
 
     public static void start(Context context) {
         context.startForegroundService(new Intent(context, MonitoringService.class)
@@ -50,6 +52,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
         application = (DiasyncApplication) getApplication();
         notificationManager = getSystemService(NotificationManager.class);
         executor = Executors.newSingleThreadExecutor();
+        alertMinuteScheduler = new AlertMinuteScheduler();
         createNotificationChannel();
     }
 
@@ -66,6 +69,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
         }
         enterForeground(SyncConnectionState.CONNECTING);
         restartRunner(configuration.get());
+        alertMinuteScheduler.schedule(this);
         return START_STICKY;
     }
 
@@ -120,6 +124,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
         application.preferences().setMonitoringEnabled(false);
         application.phoneUpdateCoordinator().stateChanged(SyncConnectionState.STOPPED);
         cancelRunner();
+        alertMinuteScheduler.cancel(this);
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }

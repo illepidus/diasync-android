@@ -325,7 +325,7 @@ Manual: screenshot matrix размеров × windows × normal/low/high/stale.
 
 ## Slice 5 — phone alert engine и настройки snooze
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 

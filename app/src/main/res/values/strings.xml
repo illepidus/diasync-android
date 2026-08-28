@@ -15,6 +15,20 @@
     <string name="widget_graph_zones">Show widget range zones</string>
     <string name="widget_graph_lines">Show widget threshold lines</string>
     <string name="widget_trend_arrow">Show widget trend arrow</string>
+    <string name="alert_settings_title">Phone alerts</string>
+    <string name="low_alert_enabled">Low glucose alert</string>
+    <string name="high_alert_enabled">High glucose alert</string>
+    <string name="no_data_alert_enabled">No data alert</string>
+    <string name="snooze_duration">Alert snooze duration</string>
+    <string name="snooze_alerts">Snooze all alerts</string>
+    <string name="resume_alerts">Resume alerts</string>
+    <string name="alerts_snoozed_for">All alerts snoozed for %1$s</string>
+    <string name="alert_channel_name">Glucose alerts</string>
+    <string name="alert_channel_description">Low, high, and missing glucose data alerts</string>
+    <string name="alert_low_title">LOW glucose</string>
+    <string name="alert_high_title">HIGH glucose</string>
+    <string name="alert_no_data_title">NO DATA</string>
+    <string name="alert_notification_text">Open Diasync alert settings</string>
     <string name="start_monitoring">Start monitoring</string>
     <string name="stop_monitoring">Stop monitoring</string>
     <string name="monitoring_stopped">Monitoring stopped</string>
@@ -52,5 +66,21 @@
         <item>30 minutes</item>
         <item>1 hour</item>
         <item>3 hours</item>
+    </string-array>
+
+    <string-array name="snooze_options">
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>15 minutes</item>
+        <item>20 minutes</item>
+        <item>30 minutes</item>
+        <item>1 hour</item>
+        <item>2 hours</item>
+        <item>4 hours</item>
+        <item>6 hours</item>
+        <item>8 hours</item>
+        <item>10 hours</item>
+        <item>12 hours</item>
+        <item>24 hours</item>
     </string-array>
 </resources>

@@ -8,6 +8,11 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
+import ru.krotarnya.diasync2.alert.AlertEventOutput;
+import ru.krotarnya.diasync2.alert.AlertNotificationPublisher;
+import ru.krotarnya.diasync2.alert.AlertSoundPlayer;
+import ru.krotarnya.diasync2.alert.PhoneAlertController;
+import ru.krotarnya.diasync2.common.AlertEvaluator;
 import ru.krotarnya.diasync2.common.TrendCalculator;
 import ru.krotarnya.diasync2.data.BootstrapRepository;
 import ru.krotarnya.diasync2.data.DataPointMapper;
@@ -33,6 +38,8 @@ public final class DiasyncApplication extends Application {
     private Clock clock;
     private ExecutorService ioExecutor;
     private ExecutorService widgetExecutor;
+    private ExecutorService alertExecutor;
+    private PhoneAlertController phoneAlertController;
 
     @Override
     public void onCreate() {
@@ -45,11 +52,26 @@ public final class DiasyncApplication extends Application {
                 new DataPointMapper(),
                 clock);
         preferences = new AppPreferences(this);
-        phoneUpdateCoordinator = new PhoneUpdateCoordinator(this, preferences);
         statusPresenter = new StatusPresenter(clock);
         widgetPresenter = new WidgetPresenter(clock, new TrendCalculator());
         ioExecutor = Executors.newSingleThreadExecutor();
         widgetExecutor = Executors.newSingleThreadExecutor();
+        alertExecutor = Executors.newSingleThreadExecutor();
+        AlertSoundPlayer alertSoundPlayer = new AlertSoundPlayer(this);
+        AlertNotificationPublisher alertNotificationPublisher =
+                new AlertNotificationPublisher(this);
+        phoneAlertController = new PhoneAlertController(
+                preferences,
+                bootstrapRepository::latestLocalSensorPoints,
+                new AlertEvaluator(clock, preferences.lastAlertAt()),
+                alertSoundPlayer::play,
+                alertNotificationPublisher::show,
+                AlertEventOutput.NONE,
+                alertExecutor);
+        phoneUpdateCoordinator = new PhoneUpdateCoordinator(
+                this,
+                preferences,
+                phoneAlertController::checkAsync);
     }
 
     public BootstrapRepository bootstrapRepository() {
@@ -76,8 +98,16 @@ public final class DiasyncApplication extends Application {
         return widgetExecutor;
     }
 
+    public Clock clock() {
+        return clock;
+    }
+
     public PhoneUpdateCoordinator phoneUpdateCoordinator() {
         return phoneUpdateCoordinator;
+    }
+
+    public PhoneAlertController phoneAlertController() {
+        return phoneAlertController;
     }
 
     public SyncWork createSyncWork(AppConfiguration configuration) {

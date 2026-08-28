@@ -101,6 +101,54 @@
             android:checked="true"
             android:text="@string/widget_trend_arrow" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/alert_settings_title"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+        <CheckBox
+            android:id="@+id/low_alert_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/low_alert_enabled" />
+
+        <CheckBox
+            android:id="@+id/high_alert_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/high_alert_enabled" />
+
+        <CheckBox
+            android:id="@+id/no_data_alert_enabled"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/no_data_alert_enabled" />
+
+        <Spinner
+            android:id="@+id/snooze_duration"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:contentDescription="@string/snooze_duration" />
+
+        <Button
+            android:id="@+id/snooze_toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/snooze_alerts" />
+
+        <TextView
+            android:id="@+id/snooze_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/monitoring_toggle"
             android:layout_width="match_parent"

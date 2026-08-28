@@ -2,6 +2,7 @@ package ru.krotarnya.diasync2.settings;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import java.time.Instant;
 import java.util.Optional;
 import ru.krotarnya.diasync2.common.GlucoseUnit;
 import ru.krotarnya.diasync2.sync.SyncConnectionState;
@@ -20,6 +21,12 @@ public final class AppPreferences {
     private static final String KEY_WIDGET_TREND_ARROW = "widget_trend_arrow";
     private static final String KEY_MONITORING_ENABLED = "monitoring_enabled";
     private static final String KEY_SYNC_CONNECTION_STATE = "sync_connection_state";
+    private static final String KEY_LOW_ALERT_ENABLED = "low_alert_enabled";
+    private static final String KEY_HIGH_ALERT_ENABLED = "high_alert_enabled";
+    private static final String KEY_NO_DATA_ALERT_ENABLED = "no_data_alert_enabled";
+    private static final String KEY_SNOOZED_UNTIL = "snoozed_until";
+    private static final String KEY_LAST_ALERT_AT = "last_alert_at";
+    private static final String KEY_SNOOZE_OPTION = "snooze_option";
 
     private final SharedPreferences preferences;
 
@@ -110,6 +117,55 @@ public final class AppPreferences {
                 .putBoolean(KEY_WIDGET_GRAPH_LINES, settings.graphLines())
                 .putBoolean(KEY_WIDGET_TREND_ARROW, settings.trendArrow())
                 .apply();
+    }
+
+    public AlertSettings loadAlertSettings() {
+        return new AlertSettings(
+                preferences.getBoolean(KEY_LOW_ALERT_ENABLED, false),
+                preferences.getBoolean(KEY_HIGH_ALERT_ENABLED, false),
+                preferences.getBoolean(KEY_NO_DATA_ALERT_ENABLED, false));
+    }
+
+    public void saveAlertSettings(AlertSettings settings) {
+        preferences.edit()
+                .putBoolean(KEY_LOW_ALERT_ENABLED, settings.lowEnabled())
+                .putBoolean(KEY_HIGH_ALERT_ENABLED, settings.highEnabled())
+                .putBoolean(KEY_NO_DATA_ALERT_ENABLED, settings.noDataEnabled())
+                .apply();
+    }
+
+    public SnoozeOption loadSnoozeOption() {
+        try {
+            return SnoozeOption.valueOf(preferences.getString(
+                    KEY_SNOOZE_OPTION,
+                    SnoozeOption.FIVE_MINUTES.name()));
+        } catch (IllegalArgumentException exception) {
+            return SnoozeOption.FIVE_MINUTES;
+        }
+    }
+
+    public void saveSnoozeOption(SnoozeOption option) {
+        preferences.edit().putString(KEY_SNOOZE_OPTION, option.name()).apply();
+    }
+
+    public Instant snoozedUntil() {
+        return Instant.ofEpochMilli(preferences.getLong(KEY_SNOOZED_UNTIL, 0L));
+    }
+
+    public void snoozeUntil(Instant instant) {
+        preferences.edit().putLong(KEY_SNOOZED_UNTIL, instant.toEpochMilli()).apply();
+    }
+
+    public void resumeAlerts() {
+        preferences.edit().putLong(KEY_SNOOZED_UNTIL, 0L).apply();
+    }
+
+    public Instant lastAlertAt() {
+        return Instant.ofEpochMilli(preferences.getLong(KEY_LAST_ALERT_AT, 0L));
+    }
+
+    public void saveLastAlertAt(Instant instant) {
+        preferences.edit().putLong(KEY_LAST_ALERT_AT, instant.toEpochMilli()).apply();
     }
 
     private double validThreshold(float value, double fallback) {
