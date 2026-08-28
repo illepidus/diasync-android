@@ -19,6 +19,10 @@ public final class AppPreferences {
     private static final String KEY_WIDGET_GRAPH_ZONES = "widget_graph_zones";
     private static final String KEY_WIDGET_GRAPH_LINES = "widget_graph_lines";
     private static final String KEY_WIDGET_TREND_ARROW = "widget_trend_arrow";
+    private static final String KEY_WATCH_GRAPH_WINDOW = "watch_graph_window";
+    private static final String KEY_WATCH_GRAPH_ZONES = "watch_graph_zones";
+    private static final String KEY_WATCH_GRAPH_LINES = "watch_graph_lines";
+    private static final String KEY_WATCH_TREND_ARROW = "watch_trend_arrow";
     private static final String KEY_MONITORING_ENABLED = "monitoring_enabled";
     private static final String KEY_SYNC_CONNECTION_STATE = "sync_connection_state";
     private static final String KEY_LOW_ALERT_ENABLED = "low_alert_enabled";
@@ -116,6 +120,45 @@ public final class AppPreferences {
                 .putBoolean(KEY_WIDGET_GRAPH_ZONES, settings.graphZones())
                 .putBoolean(KEY_WIDGET_GRAPH_LINES, settings.graphLines())
                 .putBoolean(KEY_WIDGET_TREND_ARROW, settings.trendArrow())
+                .apply();
+    }
+
+    public WatchSettings loadWatchSettings() {
+        WidgetSettings previousSharedSettings = loadWidgetSettings();
+        GraphWindow graphWindow;
+        try {
+            graphWindow = GraphWindow.valueOf(preferences.getString(
+                    KEY_WATCH_GRAPH_WINDOW,
+                    previousSharedSettings.graphWindow().name()));
+        } catch (IllegalArgumentException exception) {
+            graphWindow = previousSharedSettings.graphWindow();
+        }
+        WatchSettings settings = new WatchSettings(
+                graphWindow,
+                preferences.getBoolean(
+                        KEY_WATCH_GRAPH_ZONES,
+                        previousSharedSettings.graphZones()),
+                preferences.getBoolean(
+                        KEY_WATCH_GRAPH_LINES,
+                        previousSharedSettings.graphLines()),
+                preferences.getBoolean(
+                        KEY_WATCH_TREND_ARROW,
+                        previousSharedSettings.trendArrow()));
+        if (!preferences.contains(KEY_WATCH_GRAPH_WINDOW)
+                || !preferences.contains(KEY_WATCH_GRAPH_ZONES)
+                || !preferences.contains(KEY_WATCH_GRAPH_LINES)
+                || !preferences.contains(KEY_WATCH_TREND_ARROW)) {
+            saveWatchSettings(settings);
+        }
+        return settings;
+    }
+
+    public void saveWatchSettings(WatchSettings settings) {
+        preferences.edit()
+                .putString(KEY_WATCH_GRAPH_WINDOW, settings.graphWindow().name())
+                .putBoolean(KEY_WATCH_GRAPH_ZONES, settings.graphZones())
+                .putBoolean(KEY_WATCH_GRAPH_LINES, settings.graphLines())
+                .putBoolean(KEY_WATCH_TREND_ARROW, settings.trendArrow())
                 .apply();
     }
 

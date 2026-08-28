@@ -505,15 +505,17 @@ event и не вибрируют повторно после process restart. П
 Исполняемый `wear` предоставляет complication data source и запрашивает обновление после нового
 snapshot или изменения stale/no-data state.
 
-Для воспроизведения старого сложного дизайна provider может генерировать цветной bitmap (
-`PHOTO_IMAGE`) с:
+Для воспроизведения старого сложного дизайна provider генерирует цветной bitmap с:
 
 - графиком;
 - последним значением;
 - trend;
 - stale/error text.
 
-WFF размещает этот image complication вместе со своими time/date и системной батареей.
+Provider также отдаёт текстовый fallback. WFF получает bitmap как optional `SMALL_IMAGE` внутри
+`LONG_TEXT`: в interactive показывает bitmap, в ambient — текст из того же complication. Один слот
+для обоих режимов обязателен, потому что Samsung WFF runtime отбрасывает один из перекрывающихся
+complication slots. Отдельный `PHOTO_IMAGE` остаётся поддерживаемым provider для других watchface.
 
 ### Watchface presentation
 
@@ -568,8 +570,13 @@ Activity приложения является configuration/status UI, а не 
 - widget graph period;
 - widget zones/lines/trend arrow;
 - watch graph period;
+- watch zones/lines/trend arrow;
 - low/high/no-data alerts;
 - snooze/resume.
+
+Настройки отображения widget и watchface независимы. Unit, low/high и use calibration являются
+общими параметрами данных. Все watch-настройки меняются на телефоне; каждое их изменение немедленно
+формирует новый urgent Wear snapshot, не ожидая следующего обновления данных.
 
 Monitoring включается и останавливается одной context-aware кнопкой, которая меняет действие и текст
 между `Start monitoring` и `Stop monitoring`.

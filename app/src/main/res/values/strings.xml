@@ -11,10 +11,16 @@
     <string name="high_threshold_mmol">High threshold (mmol/L)</string>
     <string name="default_low_threshold" translatable="false">3.9</string>
     <string name="default_high_threshold" translatable="false">10.0</string>
+    <string name="widget_settings_title">Widget</string>
     <string name="widget_graph_window">Widget graph window</string>
     <string name="widget_graph_zones">Show widget range zones</string>
     <string name="widget_graph_lines">Show widget threshold lines</string>
     <string name="widget_trend_arrow">Show widget trend arrow</string>
+    <string name="watch_settings_title">Watchface</string>
+    <string name="watch_graph_window">Watch graph window</string>
+    <string name="watch_graph_zones">Show watch range zones</string>
+    <string name="watch_graph_lines">Show watch threshold lines</string>
+    <string name="watch_trend_arrow">Show watch trend arrow</string>
     <string name="alert_settings_title">Phone alerts</string>
     <string name="low_alert_enabled">Low glucose alert</string>
     <string name="high_alert_enabled">High glucose alert</string>

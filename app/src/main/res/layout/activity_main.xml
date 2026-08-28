@@ -73,6 +73,13 @@
             android:maxLines="1"
             android:text="@string/default_high_threshold" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/widget_settings_title"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
         <Spinner
             android:id="@+id/widget_graph_window"
             android:layout_width="match_parent"
@@ -100,6 +107,41 @@
             android:layout_height="wrap_content"
             android:checked="true"
             android:text="@string/widget_trend_arrow" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/watch_settings_title"
+            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+        <Spinner
+            android:id="@+id/watch_graph_window"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="@string/watch_graph_window" />
+
+        <CheckBox
+            android:id="@+id/watch_graph_zones"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/watch_graph_zones" />
+
+        <CheckBox
+            android:id="@+id/watch_graph_lines"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="@string/watch_graph_lines" />
+
+        <CheckBox
+            android:id="@+id/watch_trend_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/watch_trend_arrow" />
 
         <TextView
             android:layout_width="wrap_content"

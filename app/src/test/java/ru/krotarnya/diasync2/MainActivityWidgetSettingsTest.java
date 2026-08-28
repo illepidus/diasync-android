@@ -23,6 +23,7 @@ import org.robolectric.shadows.ShadowAppWidgetManager;
 import ru.krotarnya.diasync2.settings.AppPreferences;
 import ru.krotarnya.diasync2.settings.GraphWindow;
 import ru.krotarnya.diasync2.settings.WidgetSettings;
+import ru.krotarnya.diasync2.settings.WatchSettings;
 import ru.krotarnya.diasync2.sync.MonitoringService;
 import ru.krotarnya.diasync2.sync.SyncConnectionState;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
@@ -103,5 +104,30 @@ public class MainActivityWidgetSettingsTest {
         assertEquals(GraphWindow.ONE_HOUR, saved.graphWindow());
         assertFalse(saved.graphZones());
         assertFalse(saved.trendArrow());
+    }
+
+    @Test
+    public void watchControlsPersistWithoutChangingWidgetSettings() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        AppPreferences preferences = new AppPreferences(application);
+        WidgetSettings widgetSettings = WidgetSettings.defaults();
+        preferences.saveWidgetSettings(widgetSettings);
+        preferences.saveWatchSettings(WatchSettings.defaults());
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+
+        Spinner watchWindow = activity.findViewById(R.id.watch_graph_window);
+        CheckBox watchZones = activity.findViewById(R.id.watch_graph_zones);
+        CheckBox watchLines = activity.findViewById(R.id.watch_graph_lines);
+        CheckBox watchTrend = activity.findViewById(R.id.watch_trend_arrow);
+        watchWindow.setSelection(2);
+        watchZones.performClick();
+        watchLines.performClick();
+        watchTrend.performClick();
+
+        assertEquals(
+                new WatchSettings(GraphWindow.THREE_HOURS, false, true, false),
+                preferences.loadWatchSettings());
+        assertEquals(widgetSettings, preferences.loadWidgetSettings());
     }
 }

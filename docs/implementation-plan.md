@@ -494,7 +494,13 @@ Manual обязательно: Watch 7 complication/WFF/ambient.
 
 ## Slice 8 — полный watchface visual parity
 
-Статус: `[ ]`
+Статус: `[x]` — условно завершён.
+
+Фактический статус: snapshot-driven graph/value/trend работают на эмуляторе и реальных часах;
+interactive и ambient отображаются. Между новыми snapshot bitmap графика остаётся неподвижным, хотя
+время циферблата продолжает идти. Плавное продвижение временной шкалы (WFF transform либо отдельный
+interactive lifecycle) не входило в исходный scope Slice 8 и оставлено отдельной follow-up задачей.
+Полная manual matrix на Watch 7 и обновлённых Watch 4 не закрыта.
 
 ### Outcome
 

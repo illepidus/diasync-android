@@ -61,7 +61,7 @@ public final class WearStatePublisher {
             try {
                 WearSnapshot snapshot = builder.build(
                         configuration.get(),
-                        preferences.loadWidgetSettings(),
+                        preferences.loadWatchSettings(),
                         preferences.loadAlertSettings(),
                         preferences.snoozedUntil(),
                         event);

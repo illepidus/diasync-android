@@ -2,6 +2,7 @@ package ru.krotarnya.diasync2.wear;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -22,7 +23,7 @@ import ru.krotarnya.diasync2.common.wear.WearSnapshotCodec;
 import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.settings.GraphWindow;
-import ru.krotarnya.diasync2.settings.WidgetSettings;
+import ru.krotarnya.diasync2.settings.WatchSettings;
 
 public class WearSnapshotBuilderTest {
     private static final Instant NOW = Instant.parse("2026-08-28T12:00:00Z");
@@ -44,13 +45,9 @@ public class WearSnapshotBuilderTest {
                 new TrendCalculator(),
                 Clock.fixed(NOW, ZoneOffset.UTC));
         AppConfiguration configuration = configuration();
-        WidgetSettings display = new WidgetSettings(
-                GlucoseUnit.MMOL_L,
-                true,
-                70.0,
-                180.0,
+        WatchSettings display = new WatchSettings(
                 GraphWindow.THREE_HOURS,
-                true,
+                false,
                 false,
                 true);
 
@@ -69,6 +66,10 @@ public class WearSnapshotBuilderTest {
         assertEquals(2, snapshot.points().size());
         assertEquals(1.1, snapshot.points().get(0).calibrationSlope(), 0.0);
         assertEquals(180, snapshot.display().graphWindowMinutes());
+        assertEquals(GlucoseUnit.MMOL_L, snapshot.display().unit());
+        assertEquals(70.0, snapshot.display().lowMgDl(), 0.0);
+        assertTrue(snapshot.display().useCalibration());
+        assertFalse(snapshot.display().graphZones());
         assertEquals("⇈", snapshot.display().trend());
         String json = new String(new WearSnapshotCodec().encode(snapshot), StandardCharsets.UTF_8);
         assertFalse(json.contains(configuration.userId()));

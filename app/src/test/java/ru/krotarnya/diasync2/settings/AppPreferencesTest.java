@@ -53,6 +53,7 @@ public class AppPreferencesTest {
     @Test
     public void persistsWidgetSettings() {
         Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
         AppPreferences preferences = new AppPreferences(application);
         AppConfiguration expected = new AppConfiguration(
                 "https://example.test",
@@ -81,6 +82,7 @@ public class AppPreferencesTest {
     @Test
     public void persistsWidgetSettingsWithoutCredentials() {
         Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
         AppPreferences preferences = new AppPreferences(application);
         WidgetSettings expected = new WidgetSettings(
                 GlucoseUnit.MG_DL,
@@ -96,6 +98,42 @@ public class AppPreferencesTest {
 
         assertTrue(preferences.load().isEmpty());
         assertEquals(expected, preferences.loadWidgetSettings());
+    }
+
+    @Test
+    public void migratesThenPersistsWatchSettingsIndependentlyFromWidget() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        AppPreferences preferences = new AppPreferences(application);
+        WidgetSettings previousSharedSettings = new WidgetSettings(
+                GlucoseUnit.MMOL_L,
+                true,
+                70.0,
+                180.0,
+                GraphWindow.ONE_HOUR,
+                false,
+                true,
+                false);
+        preferences.saveWidgetSettings(previousSharedSettings);
+
+        assertEquals(
+                new WatchSettings(GraphWindow.ONE_HOUR, false, true, false),
+                preferences.loadWatchSettings());
+
+        preferences.saveWidgetSettings(WidgetSettings.defaults());
+        assertEquals(
+                new WatchSettings(GraphWindow.ONE_HOUR, false, true, false),
+                new AppPreferences(application).loadWatchSettings());
+
+        WatchSettings watchSettings = new WatchSettings(
+                GraphWindow.THREE_HOURS,
+                true,
+                false,
+                true);
+        preferences.saveWatchSettings(watchSettings);
+
+        assertEquals(watchSettings, new AppPreferences(application).loadWatchSettings());
+        assertEquals(WidgetSettings.defaults(), preferences.loadWidgetSettings());
     }
 
     @Test

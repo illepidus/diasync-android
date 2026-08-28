@@ -18,7 +18,7 @@ import ru.krotarnya.diasync2.common.wear.WearGlucosePoint;
 import ru.krotarnya.diasync2.common.wear.WearSnapshot;
 import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
-import ru.krotarnya.diasync2.settings.WidgetSettings;
+import ru.krotarnya.diasync2.settings.WatchSettings;
 
 public final class WearSnapshotBuilder {
     @FunctionalInterface
@@ -42,7 +42,7 @@ public final class WearSnapshotBuilder {
 
     public WearSnapshot build(
             AppConfiguration configuration,
-            WidgetSettings displaySettings,
+            WatchSettings watchSettings,
             AlertSettings alertSettings,
             Instant snoozedUntil,
             WearAlertEvent alertEvent
@@ -75,15 +75,15 @@ public final class WearSnapshotBuilder {
                     calibration == null ? null : calibration.intercept()));
         }
         WearDisplayPolicy display = new WearDisplayPolicy(
-                displaySettings.unit(),
-                displaySettings.useCalibration(),
-                displaySettings.lowMgDl(),
-                displaySettings.highMgDl(),
-                Math.toIntExact(displaySettings.graphWindow().duration().toMinutes()),
-                displaySettings.graphZones(),
-                displaySettings.graphLines(),
-                displaySettings.trendArrow(),
-                trendCalculator.calculate(sensorPoints, displaySettings.useCalibration()));
+                configuration.unit(),
+                configuration.useCalibration(),
+                configuration.lowMgDl(),
+                configuration.highMgDl(),
+                Math.toIntExact(watchSettings.graphWindow().duration().toMinutes()),
+                watchSettings.graphZones(),
+                watchSettings.graphLines(),
+                watchSettings.trendArrow(),
+                trendCalculator.calculate(sensorPoints, configuration.useCalibration()));
         WearAlertPolicy alerts = new WearAlertPolicy(
                 alertSettings.lowEnabled(),
                 alertSettings.highEnabled(),

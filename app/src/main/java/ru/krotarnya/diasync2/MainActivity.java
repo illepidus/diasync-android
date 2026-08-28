@@ -33,6 +33,7 @@ import ru.krotarnya.diasync2.settings.GraphWindow;
 import ru.krotarnya.diasync2.settings.SnoozeOption;
 import ru.krotarnya.diasync2.settings.SnoozeCountdown;
 import ru.krotarnya.diasync2.settings.ThresholdDisplay;
+import ru.krotarnya.diasync2.settings.WatchSettings;
 import ru.krotarnya.diasync2.settings.WidgetSettings;
 import ru.krotarnya.diasync2.sync.MonitoringService;
 import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
@@ -59,6 +60,10 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private CheckBox widgetGraphZones;
     private CheckBox widgetGraphLines;
     private CheckBox widgetTrendArrow;
+    private Spinner watchGraphWindow;
+    private CheckBox watchGraphZones;
+    private CheckBox watchGraphLines;
+    private CheckBox watchTrendArrow;
     private CheckBox lowAlertEnabled;
     private CheckBox highAlertEnabled;
     private CheckBox noDataAlertEnabled;
@@ -76,6 +81,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private double lowMgDl;
     private double highMgDl;
     private boolean bindingWidgetSettings;
+    private boolean bindingWatchSettings;
     private boolean bindingAlertSettings;
     private boolean monitoringActive;
     private SnoozeCountdown snoozeCountdown;
@@ -88,13 +94,14 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         snoozeCountdown = new SnoozeCountdown(application.clock());
         bindViews();
         configureUnitSpinner();
-        configureGraphWindowSpinner();
+        configureGraphWindowSpinners();
         configureSnoozeSpinner();
         snoozeDuration.setSelection(application.preferences().loadSnoozeOption().ordinal());
         monitoringToggle.setOnClickListener(ignored -> toggleMonitoring());
         snoozeToggle.setOnClickListener(ignored -> toggleSnooze());
 
         populateWidgetSettings(application.preferences().loadWidgetSettings());
+        populateWatchSettings(application.preferences().loadWatchSettings());
         populateAlertSettings(application.preferences().loadAlertSettings());
         Optional<AppConfiguration> saved = application.preferences().load();
         if (saved.isEmpty()) {
@@ -108,6 +115,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             }
         }
         configureWidgetSettingsListeners();
+        configureWatchSettingsListeners();
         configureAlertSettingsListeners();
         configureSnoozeSettingsListener();
         renderSnoozeCountdown();
@@ -147,6 +155,10 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         widgetGraphZones = findViewById(R.id.widget_graph_zones);
         widgetGraphLines = findViewById(R.id.widget_graph_lines);
         widgetTrendArrow = findViewById(R.id.widget_trend_arrow);
+        watchGraphWindow = findViewById(R.id.watch_graph_window);
+        watchGraphZones = findViewById(R.id.watch_graph_zones);
+        watchGraphLines = findViewById(R.id.watch_graph_lines);
+        watchTrendArrow = findViewById(R.id.watch_trend_arrow);
         lowAlertEnabled = findViewById(R.id.low_alert_enabled);
         highAlertEnabled = findViewById(R.id.high_alert_enabled);
         noDataAlertEnabled = findViewById(R.id.no_data_alert_enabled);
@@ -170,13 +182,18 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         unit.setAdapter(adapter);
     }
 
-    private void configureGraphWindowSpinner() {
+    private void configureGraphWindowSpinners() {
+        configureGraphWindowSpinner(widgetGraphWindow);
+        configureGraphWindowSpinner(watchGraphWindow);
+    }
+
+    private void configureGraphWindowSpinner(Spinner spinner) {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 this,
                 R.array.widget_graph_windows,
                 android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        widgetGraphWindow.setAdapter(adapter);
+        spinner.setAdapter(adapter);
     }
 
     private void configureSnoozeSpinner() {
@@ -212,6 +229,15 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         bindingWidgetSettings = false;
     }
 
+    private void populateWatchSettings(WatchSettings settings) {
+        bindingWatchSettings = true;
+        watchGraphWindow.setSelection(graphWindowPosition(settings.graphWindow()));
+        watchGraphZones.setChecked(settings.graphZones());
+        watchGraphLines.setChecked(settings.graphLines());
+        watchTrendArrow.setChecked(settings.trendArrow());
+        bindingWatchSettings = false;
+    }
+
     private void populateAlertSettings(AlertSettings settings) {
         bindingAlertSettings = true;
         lowAlertEnabled.setChecked(settings.lowEnabled());
@@ -230,7 +256,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 }
                 displayedThresholdUnit = selected;
                 updateThresholdFields();
-                persistWidgetSettings();
+                persistWidgetSettings(true);
             }
 
             @Override
@@ -241,7 +267,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (!bindingWidgetSettings) {
-                    persistWidgetSettings();
+                    persistWidgetSettings(false);
                 }
             }
 
@@ -249,10 +275,14 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
-        useCalibration.setOnCheckedChangeListener((button, checked) -> persistWidgetSettings());
-        widgetGraphZones.setOnCheckedChangeListener((button, checked) -> persistWidgetSettings());
-        widgetGraphLines.setOnCheckedChangeListener((button, checked) -> persistWidgetSettings());
-        widgetTrendArrow.setOnCheckedChangeListener((button, checked) -> persistWidgetSettings());
+        useCalibration.setOnCheckedChangeListener(
+                (button, checked) -> persistWidgetSettings(true));
+        widgetGraphZones.setOnCheckedChangeListener(
+                (button, checked) -> persistWidgetSettings(false));
+        widgetGraphLines.setOnCheckedChangeListener(
+                (button, checked) -> persistWidgetSettings(false));
+        widgetTrendArrow.setOnCheckedChangeListener(
+                (button, checked) -> persistWidgetSettings(false));
         TextWatcher thresholdWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence text, int start, int count, int after) {
@@ -269,6 +299,22 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         };
         lowThreshold.addTextChangedListener(thresholdWatcher);
         highThreshold.addTextChangedListener(thresholdWatcher);
+    }
+
+    private void configureWatchSettingsListeners() {
+        watchGraphWindow.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                persistWatchSettings();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        watchGraphZones.setOnCheckedChangeListener((button, checked) -> persistWatchSettings());
+        watchGraphLines.setOnCheckedChangeListener((button, checked) -> persistWatchSettings());
+        watchTrendArrow.setOnCheckedChangeListener((button, checked) -> persistWatchSettings());
     }
 
     private void configureAlertSettingsListeners() {
@@ -373,7 +419,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             }
             lowMgDl = candidateLow;
             highMgDl = candidateHigh;
-            persistWidgetSettings();
+            persistWidgetSettings(true);
         } catch (IllegalArgumentException ignored) {
         }
     }
@@ -394,13 +440,27 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         highMgDl = candidateHigh;
     }
 
-    private void persistWidgetSettings() {
+    private void persistWidgetSettings(boolean publishWearState) {
         if (bindingWidgetSettings) {
             return;
         }
         WidgetSettings settings = currentWidgetSettings();
         application.preferences().saveWidgetSettings(settings);
         DiasyncWidgetProvider.requestUpdate(this);
+        if (publishWearState) {
+            application.publishWearState();
+        }
+    }
+
+    private void persistWatchSettings() {
+        if (bindingWatchSettings) {
+            return;
+        }
+        application.preferences().saveWatchSettings(new WatchSettings(
+                selectedGraphWindow(watchGraphWindow),
+                watchGraphZones.isChecked(),
+                watchGraphLines.isChecked(),
+                watchTrendArrow.isChecked()));
         application.publishWearState();
     }
 
@@ -410,7 +470,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 useCalibration.isChecked(),
                 lowMgDl,
                 highMgDl,
-                selectedGraphWindow(),
+                selectedGraphWindow(widgetGraphWindow),
                 widgetGraphZones.isChecked(),
                 widgetGraphLines.isChecked(),
                 widgetTrendArrow.isChecked());
@@ -441,7 +501,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                     useCalibration.isChecked(),
                     Double.toString(lowMgDl),
                     Double.toString(highMgDl),
-                    selectedGraphWindow(),
+                    selectedGraphWindow(widgetGraphWindow),
                     widgetGraphZones.isChecked(),
                     widgetGraphLines.isChecked(),
                     widgetTrendArrow.isChecked());
@@ -532,11 +592,19 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 : GlucoseUnit.MG_DL;
     }
 
-    private GraphWindow selectedGraphWindow() {
-        return switch (widgetGraphWindow.getSelectedItemPosition()) {
+    private GraphWindow selectedGraphWindow(Spinner spinner) {
+        return switch (spinner.getSelectedItemPosition()) {
             case 1 -> GraphWindow.ONE_HOUR;
             case 2 -> GraphWindow.THREE_HOURS;
             default -> GraphWindow.THIRTY_MINUTES;
+        };
+    }
+
+    private int graphWindowPosition(GraphWindow graphWindow) {
+        return switch (graphWindow) {
+            case THIRTY_MINUTES -> 0;
+            case ONE_HOUR -> 1;
+            case THREE_HOURS -> 2;
         };
     }
 
