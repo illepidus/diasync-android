@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.data.api.ApiDataPointDto;
 import ru.krotarnya.diasync2.data.api.BootstrapDataSource;
@@ -25,6 +26,7 @@ public final class BootstrapRepository {
     private final BootstrapDao dao;
     private final DataPointMapper mapper;
     private final Clock clock;
+    private final Consumer<Instant> dataReceived;
 
     public BootstrapRepository(
             BootstrapDataSource dataSource,
@@ -32,10 +34,21 @@ public final class BootstrapRepository {
             DataPointMapper mapper,
             Clock clock
     ) {
+        this(dataSource, dao, mapper, clock, ignored -> { });
+    }
+
+    public BootstrapRepository(
+            BootstrapDataSource dataSource,
+            BootstrapDao dao,
+            DataPointMapper mapper,
+            Clock clock,
+            Consumer<Instant> dataReceived
+    ) {
         this.dataSource = Objects.requireNonNull(dataSource);
         this.dao = Objects.requireNonNull(dao);
         this.mapper = Objects.requireNonNull(mapper);
         this.clock = Objects.requireNonNull(clock);
+        this.dataReceived = Objects.requireNonNull(dataReceived);
     }
 
     public BootstrapResult bootstrap(String baseUrl, String userId) {
@@ -81,6 +94,9 @@ public final class BootstrapRepository {
                             to.toString(),
                             null,
                             sourceFingerprint));
+            if (!entities.isEmpty()) {
+                dataReceived.accept(clock.instant());
+            }
             Instant initialPollSince;
             if (storedCursor != null) {
                 initialPollSince = storedCursor;
@@ -161,5 +177,23 @@ public final class BootstrapRepository {
             }
         }
         return points;
+    }
+
+    public SyncDiagnosticsData diagnostics(String userId) {
+        DataPointEntity latest = dao.latestSensorPoint(userId);
+        SyncStateEntity state = dao.syncState(userId);
+        return new SyncDiagnosticsData(
+                latest == null ? null : mapper.toDomain(latest),
+                state == null ? null : parseInstant(state.lastSuccessAt),
+                state == null ? null : parseInstant(state.cursorUpdateTimestamp),
+                state == null ? null : state.lastError);
+    }
+
+    private Instant parseInstant(String value) {
+        try {
+            return value == null ? null : Instant.parse(value);
+        } catch (DateTimeException exception) {
+            return null;
+        }
     }
 }

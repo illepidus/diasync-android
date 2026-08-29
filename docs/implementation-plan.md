@@ -23,13 +23,13 @@
 | FR-5 Phone widget | 2, 4, 11 |
 | FR-6 Phone alerts | 5 |
 | FR-7 Wear snapshot | 6, 11 |
-| FR-8 WFF | 7, 8 |
+| FR-8 WFF | 7, 8, 12 |
 | FR-9 Watch alerts | 9 |
 | FR-10 Recovery | 10 |
 | NFR-1 End-to-end latency | 3, 6, 10 |
 | NFR-2 No cursor/data loss | 1, 3, 10 |
 | NFR-3 No blocking main thread | каждый slice |
-| NFR-4 Credential isolation | 1, 6, 11, 12 |
+| NFR-4 Credential isolation | 1, 6, 11, 13 |
 | NFR-5 Deterministic time tests | 1, 2, 5, 6, 9, 10 |
 
 ---
@@ -655,7 +655,7 @@ Manual: пройти failure matrix на телефоне и Watch 7; крити
 
 ## Slice 11 — переработка UI телефона, часов и widget navigation
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
@@ -703,11 +703,54 @@ Manual: пройти все phone подменю, сверить Wear Activity �
 
 ### Не входит
 
-- Install/release flow, icons/previews, backup/restore и общий release acceptance pass — Slice 12.
+- Watchface visual polish — Slice 12.
+- Install/release flow, icons/previews, backup/restore и общий release acceptance pass — Slice 13.
 
 ---
 
-## Slice 12 — install flow и первый личный release
+## Slice 12 — Watchface UI polish
+
+Статус: `[ ]`
+
+### Outcome
+
+Watchface получает завершённую визуальную иерархию и остаётся хорошо читаемым в active и ambient
+режимах на поддерживаемых круглых экранах.
+
+### Scope
+
+- Визуальная полировка существующего Watch Face Format: typography, spacing, alignment, colors и
+  relative prominence элементов.
+- Отдельная проверка active и ambient представлений на целевых размерах Watch 7 и Watch 4.
+- Сохранение текущей семантики value, unit, trend, graph, stale/no-data и complication data.
+- Только WFF resources; исполняемый код и новые data paths не добавляются.
+
+### Acceptance criteria
+
+- Latest value и trend остаются главными визуальными элементами и читаются с первого взгляда.
+- Вторичная информация не конкурирует с value и не обрезается на поддерживаемых круглых экранах.
+- Active mode соответствует принятой black/white/orange схеме приложения.
+- Ambient mode сохраняет достаточный контраст и не добавляет лишнюю подсветку пикселей.
+- Fresh, stale и no-data состояния визуально различимы без изменения их текущей логики.
+
+### Проверки
+
+```bash
+./gradlew :watchface:lintDebug :watchface:assembleDebug
+```
+
+Manual: проверить active/ambient и fresh/stale/no-data на Watch 7; итоговый вариант повторить на
+Watch 4 и убедиться, что критичные элементы не обрезаны.
+
+### Не входит
+
+- Изменение Wear payload, complication contract, alert logic или data freshness semantics.
+- Исполняемый код в `watchface`.
+- Install/release flow, icons/previews, backup/restore и общий release acceptance pass — Slice 13.
+
+---
+
+## Slice 13 — install flow и первый личный release
 
 Статус: `[ ]`
 

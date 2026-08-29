@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Looper;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.time.Clock;
+import ru.krotarnya.diasync2.presentation.DiagnosticEventLog;
 import ru.krotarnya.diasync2.settings.AppPreferences;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 
@@ -19,6 +21,8 @@ public final class PhoneUpdateCoordinator {
     private final Runnable alertCheck;
     private final Runnable wearUpdate;
     private final AtomicReference<Listener> listener = new AtomicReference<>();
+    private final DiagnosticEventLog eventLog;
+    private final Clock clock;
 
     public PhoneUpdateCoordinator(Context context, AppPreferences preferences) {
         this(context, preferences, () -> { }, () -> { });
@@ -38,11 +42,24 @@ public final class PhoneUpdateCoordinator {
             Runnable alertCheck,
             Runnable wearUpdate
     ) {
+        this(context, preferences, alertCheck, wearUpdate, null, Clock.systemUTC());
+    }
+
+    public PhoneUpdateCoordinator(
+            Context context,
+            AppPreferences preferences,
+            Runnable alertCheck,
+            Runnable wearUpdate,
+            DiagnosticEventLog eventLog,
+            Clock clock
+    ) {
         this.context = context.getApplicationContext();
         this.preferences = Objects.requireNonNull(preferences);
         this.alertCheck = Objects.requireNonNull(alertCheck);
         this.wearUpdate = Objects.requireNonNull(wearUpdate);
         this.mainHandler = new Handler(Looper.getMainLooper());
+        this.eventLog = eventLog;
+        this.clock = Objects.requireNonNull(clock);
     }
 
     public void register(Listener listener) {
@@ -55,14 +72,22 @@ public final class PhoneUpdateCoordinator {
 
     public void stateChanged(SyncConnectionState state) {
         preferences.saveSyncConnectionState(state);
+        record("Sync", state.name());
         notifyListener(state, false);
     }
 
     public void dataCommitted() {
+        record("Sync", "Data batch committed");
         alertCheck.run();
         wearUpdate.run();
         DiasyncWidgetProvider.requestUpdate(context);
         notifyListener(preferences.syncConnectionState(), true);
+    }
+
+    private void record(String category, String message) {
+        if (eventLog != null) {
+            eventLog.record(category, message, clock.instant());
+        }
     }
 
     private void notifyListener(SyncConnectionState state, boolean dataChanged) {

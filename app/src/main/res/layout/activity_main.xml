@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -12,30 +13,62 @@
         android:padding="24dp">
 
         <TextView
+            android:id="@+id/screen_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/configuration_title"
+            android:textColor="@color/brand_orange"
             android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall" />
 
-        <EditText
-            android:id="@+id/backend_url"
+        <LinearLayout
+            android:id="@+id/settings_menu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:autofillHints="url"
-            android:hint="@string/backend_url"
-            android:inputType="textUri"
-            android:maxLines="1" />
+            android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/user_id"
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_connection" style="@style/Widget.Diasync.MenuButton" android:text="@string/connection_settings_title" app:icon="@drawable/ic_menu_connection" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_glucose" style="@style/Widget.Diasync.MenuButton" android:text="@string/glucose_settings_title" app:icon="@drawable/ic_menu_glucose" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_alerts" style="@style/Widget.Diasync.MenuButton" android:text="@string/alert_settings_title" app:icon="@drawable/ic_menu_alerts" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_widget" style="@style/Widget.Diasync.MenuButton" android:text="@string/widget_settings_title" app:icon="@drawable/ic_menu_widget" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_watch" style="@style/Widget.Diasync.MenuButton" android:text="@string/watch_settings_title" app:icon="@drawable/ic_menu_watch" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/open_diagnostics" style="@style/Widget.Diasync.MenuButton" android:text="@string/diagnostics_title" app:icon="@drawable/ic_menu_diagnostics" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/backend_url_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/backend_url">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/backend_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="url"
+                android:inputType="textUri"
+                android:maxLines="1"
+                android:text="@string/default_backend_url" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/user_id_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:autofillHints="password"
             android:hint="@string/user_id"
-            android:inputType="textPassword"
-            android:maxLines="1" />
+            app:endIconMode="password_toggle"
+            app:endIconTint="@color/brand_orange">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/user_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autofillHints="password"
+                android:inputType="textPassword"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Spinner
             android:id="@+id/glucose_unit"
@@ -44,6 +77,40 @@
             android:layout_marginTop="8dp"
             android:contentDescription="@string/glucose_unit" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/low_threshold_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/low_threshold_mmol">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/low_threshold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal"
+                android:maxLines="1"
+                android:text="@string/default_low_threshold" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/high_threshold_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/high_threshold_mmol">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/high_threshold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAutofill="no"
+                android:inputType="numberDecimal"
+                android:maxLines="1"
+                android:text="@string/default_high_threshold" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <CheckBox
             android:id="@+id/use_calibration"
             android:layout_width="wrap_content"
@@ -51,41 +118,67 @@
             android:checked="true"
             android:text="@string/use_calibration" />
 
-        <EditText
-            android:id="@+id/low_threshold"
+        <LinearLayout
+            android:id="@+id/widget_window_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/monitoring_status_background"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_graph_window"
+                android:textColor="@color/brand_orange"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+            <TextView
+                android:id="@+id/widget_graph_window_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/white"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/widget_graph_window"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/widget_graph_window" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/widget_single_click_container"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="@string/single_click_action">
+
+            <AutoCompleteTextView
+                android:id="@+id/widget_single_click_action"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/widget_double_click_container"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="@string/low_threshold_mmol"
-            android:importantForAutofill="no"
-            android:inputType="numberDecimal"
-            android:maxLines="1"
-            android:text="@string/default_low_threshold" />
+            android:hint="@string/double_click_action">
 
-        <EditText
-            android:id="@+id/high_threshold"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/high_threshold_mmol"
-            android:importantForAutofill="no"
-            android:inputType="numberDecimal"
-            android:maxLines="1"
-            android:text="@string/default_high_threshold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/widget_settings_title"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
-
-        <Spinner
-            android:id="@+id/widget_graph_window"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:contentDescription="@string/widget_graph_window" />
+            <AutoCompleteTextView
+                android:id="@+id/widget_double_click_action"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <CheckBox
             android:id="@+id/widget_graph_zones"
@@ -108,19 +201,37 @@
             android:checked="true"
             android:text="@string/widget_trend_arrow" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/watch_settings_title"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
-
-        <Spinner
-            android:id="@+id/watch_graph_window"
+        <LinearLayout
+            android:id="@+id/watch_window_block"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:contentDescription="@string/watch_graph_window" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/monitoring_status_background"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/watch_graph_window"
+                android:textColor="@color/brand_orange"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+            <TextView
+                android:id="@+id/watch_graph_window_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/white"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/watch_graph_window"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/watch_graph_window" />
+        </LinearLayout>
 
         <CheckBox
             android:id="@+id/watch_graph_zones"
@@ -143,17 +254,60 @@
             android:checked="true"
             android:text="@string/watch_trend_arrow" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/snooze_block"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/alert_settings_title"
-            android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+            android:layout_marginTop="16dp"
+            android:background="@drawable/monitoring_status_background"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/snooze_alerts"
+                android:textColor="@color/brand_orange"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+
+            <TextView
+                android:id="@+id/snooze_duration_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/white"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/snooze_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/snooze_duration" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/snooze_toggle"
+                style="@style/Widget.Diasync.PrimaryAction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/snooze_alerts" />
+
+            <TextView
+                android:id="@+id/snooze_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <CheckBox
             android:id="@+id/low_alert_enabled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:checked="false"
             android:text="@string/low_alert_enabled" />
 
@@ -171,41 +325,55 @@
             android:checked="false"
             android:text="@string/no_data_alert_enabled" />
 
-        <Spinner
-            android:id="@+id/snooze_duration"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:contentDescription="@string/snooze_duration" />
-
-        <Button
-            android:id="@+id/snooze_toggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/snooze_alerts" />
-
-        <TextView
-            android:id="@+id/snooze_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-            android:visibility="gone" />
-
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/monitoring_toggle"
+            style="@style/Widget.Diasync.PrimaryAction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/start_monitoring" />
 
-        <TextView
-            android:id="@+id/monitoring_status"
+        <LinearLayout
+            android:id="@+id/monitoring_status_panel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:gravity="center"
-            android:text="@string/monitoring_disabled"
-            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+            android:background="@drawable/monitoring_status_background"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:contentDescription="@string/monitoring_status_label"
+                android:src="@drawable/ic_menu_diagnostics"
+                app:tint="@color/brand_orange" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/monitoring_status_label"
+                    android:textColor="@color/brand_orange"
+                    android:textAppearance="@style/TextAppearance.Material3.LabelMedium" />
+
+                <TextView
+                    android:id="@+id/monitoring_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/monitoring_disabled"
+                    android:textColor="@color/white"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+            </LinearLayout>
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/progress"
@@ -215,6 +383,34 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="20dp"
             android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/diagnostics_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/monitoring_status_background"
+                android:padding="16dp"
+                android:text="@string/diagnostics_data_title"
+                android:textColor="@color/brand_orange"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+            <TextView android:id="@+id/diagnostics_data" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:textColor="@color/white" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/monitoring_status_background" android:padding="16dp" android:text="@string/diagnostics_sync_title" android:textColor="@color/brand_orange" android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+            <TextView android:id="@+id/diagnostics_sync" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:textColor="@color/white" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/monitoring_status_background" android:padding="16dp" android:text="@string/diagnostics_wear_title" android:textColor="@color/brand_orange" android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+            <TextView android:id="@+id/diagnostics_wear" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:textColor="@color/white" />
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/monitoring_status_background" android:padding="16dp" android:text="@string/diagnostics_events_title" android:textColor="@color/brand_orange" android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
+            <TextView android:id="@+id/diagnostics_events" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="monospace" android:padding="16dp" android:textColor="@color/white" android:textSize="12sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/status_text"

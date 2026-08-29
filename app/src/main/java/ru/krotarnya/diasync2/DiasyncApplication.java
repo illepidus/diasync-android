@@ -23,6 +23,8 @@ import ru.krotarnya.diasync2.data.LongPollRepository;
 import ru.krotarnya.diasync2.data.api.HttpLongPollDataSource;
 import ru.krotarnya.diasync2.data.local.AppDatabase;
 import ru.krotarnya.diasync2.presentation.StatusPresenter;
+import ru.krotarnya.diasync2.presentation.DataReceiptDiagnostics;
+import ru.krotarnya.diasync2.presentation.DiagnosticEventLog;
 import ru.krotarnya.diasync2.settings.AppPreferences;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
@@ -51,6 +53,9 @@ public final class DiasyncApplication extends Application {
     private ExecutorService wearExecutor;
     private PhoneAlertController phoneAlertController;
     private WearStatePublisher wearStatePublisher;
+    private DataReceiptDiagnostics dataReceiptDiagnostics;
+    private DiagnosticEventLog diagnosticEventLog;
+    private WearSyncDiagnostics wearSyncDiagnostics;
 
     @Override
     public void onCreate() {
@@ -59,11 +64,15 @@ public final class DiasyncApplication extends Application {
                 .addMigrations(AppDatabase.MIGRATION_1_2)
                 .build();
         clock = Clock.systemUTC();
+        dataReceiptDiagnostics = new DataReceiptDiagnostics(this);
+        diagnosticEventLog = new DiagnosticEventLog(this);
+        wearSyncDiagnostics = new WearSyncDiagnostics(this, diagnosticEventLog);
         bootstrapRepository = new BootstrapRepository(
                 new HttpBootstrapDataSource(new OkHttpClient(), new Gson()),
                 database.bootstrapDao(),
                 new DataPointMapper(),
-                clock);
+                clock,
+                dataReceiptDiagnostics::record);
         preferences = new AppPreferences(this);
         statusPresenter = new StatusPresenter(clock);
         widgetPresenter = new WidgetPresenter(clock, new TrendCalculator());
@@ -80,7 +89,7 @@ public final class DiasyncApplication extends Application {
                 new WearSnapshotCodec(),
                 Wearable.getDataClient(this),
                 new WearDataRequestFactory(),
-                new WearSyncDiagnostics(this),
+                wearSyncDiagnostics,
                 wearExecutor,
                 clock);
         AlertSoundPlayer alertSoundPlayer = new AlertSoundPlayer(this);
@@ -98,7 +107,9 @@ public final class DiasyncApplication extends Application {
                 this,
                 preferences,
                 phoneAlertController::checkAsync,
-                wearStatePublisher::publishState);
+                wearStatePublisher::publishState,
+                diagnosticEventLog,
+                clock);
     }
 
     @Override
@@ -147,6 +158,18 @@ public final class DiasyncApplication extends Application {
         wearStatePublisher.publishState();
     }
 
+    public DataReceiptDiagnostics dataReceiptDiagnostics() {
+        return dataReceiptDiagnostics;
+    }
+
+    public DiagnosticEventLog diagnosticEventLog() {
+        return diagnosticEventLog;
+    }
+
+    public WearSyncDiagnostics wearSyncDiagnostics() {
+        return wearSyncDiagnostics;
+    }
+
     public SyncWork createSyncWork(AppConfiguration configuration) {
         boolean debug = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
         SyncTimeouts timeouts = SyncTimeouts.forBuild(debug);
@@ -160,7 +183,8 @@ public final class DiasyncApplication extends Application {
                         new HttpBootstrapDataSource(syncClient, new Gson()),
                         database.bootstrapDao(),
                         mapper,
-                        clock),
+                        clock,
+                        dataReceiptDiagnostics::record),
                 new LongPollRepository(
                         new HttpLongPollDataSource(
                                 syncClient,
@@ -168,7 +192,8 @@ public final class DiasyncApplication extends Application {
                                 timeouts.serverLongPoll()),
                         database.bootstrapDao(),
                         mapper,
-                        clock),
+                        clock,
+                        dataReceiptDiagnostics::record),
                 syncClient);
     }
 }

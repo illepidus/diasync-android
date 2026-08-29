@@ -1,7 +1,19 @@
 <resources>
     <string name="app_name">Diasync</string>
     <string name="configuration_title">Configuration</string>
+    <string name="status_title">Diasync</string>
+    <string name="connection_settings_title">Connection</string>
+    <string name="glucose_settings_title">Glucose</string>
+    <string name="diagnostics_title">Diagnostics</string>
+    <string name="diagnostics_data_title">Data</string>
+    <string name="diagnostics_sync_title">Phone sync</string>
+    <string name="diagnostics_wear_title">Wear</string>
+    <string name="diagnostics_events_title">Recent events</string>
+    <string name="required_field">Required</string>
+    <string name="threshold_number_error">Enter a positive number</string>
+    <string name="threshold_order_error">High threshold must be above low threshold</string>
     <string name="backend_url">Backend HTTPS URL</string>
+    <string name="default_backend_url" translatable="false">https://diasync.krotarnya.ru</string>
     <string name="user_id">User ID / token</string>
     <string name="glucose_unit">Glucose unit</string>
     <string name="use_calibration">Use calibration</string>
@@ -13,6 +25,8 @@
     <string name="default_high_threshold" translatable="false">10.0</string>
     <string name="widget_settings_title">Widget</string>
     <string name="widget_graph_window">Widget graph window</string>
+    <string name="single_click_action">Single click action</string>
+    <string name="double_click_action">Double click action</string>
     <string name="widget_graph_zones">Show widget range zones</string>
     <string name="widget_graph_lines">Show widget threshold lines</string>
     <string name="widget_trend_arrow">Show widget trend arrow</string>
@@ -21,7 +35,7 @@
     <string name="watch_graph_zones">Show watch range zones</string>
     <string name="watch_graph_lines">Show watch threshold lines</string>
     <string name="watch_trend_arrow">Show watch trend arrow</string>
-    <string name="alert_settings_title">Phone alerts</string>
+    <string name="alert_settings_title">Alerts</string>
     <string name="low_alert_enabled">Low glucose alert</string>
     <string name="high_alert_enabled">High glucose alert</string>
     <string name="no_data_alert_enabled">No data alert</string>
@@ -38,6 +52,7 @@
     <string name="start_monitoring">Start monitoring</string>
     <string name="stop_monitoring">Stop monitoring</string>
     <string name="monitoring_disabled">Disabled</string>
+    <string name="monitoring_status_label">Monitoring status</string>
     <string name="monitoring_connecting">Connecting…</string>
     <string name="monitoring_connected">Connected</string>
     <string name="monitoring_retrying">Retrying after a sync failure…</string>
@@ -75,6 +90,13 @@
         <item>30 minutes</item>
         <item>1 hour</item>
         <item>3 hours</item>
+    </string-array>
+
+    <string-array name="widget_click_actions">
+        <item>Diasync</item>
+        <item>Alerts</item>
+        <item>xDrip</item>
+        <item>None</item>
     </string-array>
 
     <string-array name="snooze_options">

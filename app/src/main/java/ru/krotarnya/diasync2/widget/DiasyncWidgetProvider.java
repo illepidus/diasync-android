@@ -9,6 +9,9 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.PowerManager;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.util.ArrayMap;
 import android.util.SizeF;
 import android.widget.RemoteViews;
@@ -16,12 +19,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import ru.krotarnya.diasync2.DiasyncApplication;
+import ru.krotarnya.diasync2.MainActivity;
+import ru.krotarnya.diasync2.navigation.PhoneScreen;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.settings.WidgetSettings;
+import ru.krotarnya.diasync2.settings.AppPreferences;
+import ru.krotarnya.diasync2.settings.WidgetClickAction;
 
 public final class DiasyncWidgetProvider extends AppWidgetProvider {
+    public static final String ACTION_WIDGET_TAP = "ru.krotarnya.diasync2.action.WIDGET_TAP";
     static final int MAX_PRESENTATION_POINTS = 256;
+    private static final Handler TAP_HANDLER = new Handler(Looper.getMainLooper());
+    private static final WidgetTapRouter TAP_ROUTER = new WidgetTapRouter();
 
     private final WidgetMinuteScheduler minuteScheduler = new WidgetMinuteScheduler();
     private final WidgetRemoteViewsFactory viewsFactory = new WidgetRemoteViewsFactory();
@@ -42,6 +52,10 @@ public final class DiasyncWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (ACTION_WIDGET_TAP.equals(intent.getAction())) {
+            routeTap(context);
+            return;
+        }
         if (WidgetMinuteScheduler.ACTION_MINUTE_TICK.equals(intent.getAction())) {
             if (hasWidgets(context)) {
                 PowerManager powerManager = context.getSystemService(PowerManager.class);
@@ -53,6 +67,41 @@ public final class DiasyncWidgetProvider extends AppWidgetProvider {
             return;
         }
         super.onReceive(context, intent);
+    }
+
+    private void routeTap(Context context) {
+        long tapAt = SystemClock.elapsedRealtime();
+        if (TAP_ROUTER.tap(tapAt) == WidgetTapRouter.Result.OPEN_ALERTS) {
+            open(context, new AppPreferences(context).loadWidgetDoubleClickAction());
+            return;
+        }
+        TAP_HANDLER.postDelayed(() -> {
+            if (TAP_ROUTER.consumeSingleTap(tapAt)) {
+                open(context, new AppPreferences(context).loadWidgetSingleClickAction());
+            }
+        }, WidgetTapRouter.DOUBLE_TAP_WINDOW_MILLIS);
+    }
+
+    private static void open(Context context, WidgetClickAction action) {
+        if (action == WidgetClickAction.NONE) {
+            return;
+        }
+        if (action == WidgetClickAction.XDRIP) {
+            Intent xdrip = context.getPackageManager().getLaunchIntentForPackage(
+                    "com.eveningoutpost.dexdrip");
+            if (xdrip != null) {
+                context.startActivity(xdrip.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                return;
+            }
+        }
+        PhoneScreen screen = action == WidgetClickAction.ALERTS
+                ? PhoneScreen.ALERTS
+                : PhoneScreen.STATUS;
+        context.startActivity(new Intent(context, MainActivity.class)
+                .putExtra(MainActivity.EXTRA_SCREEN, screen.name())
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP));
     }
 
     @Override

@@ -3,6 +3,7 @@ package ru.krotarnya.diasync2.wear;
 import android.content.Context;
 import android.content.SharedPreferences;
 import java.time.Instant;
+import ru.krotarnya.diasync2.presentation.DiagnosticEventLog;
 
 public final class WearSyncDiagnostics {
     public enum State {
@@ -17,9 +18,15 @@ public final class WearSyncDiagnostics {
     private static final String KEY_UPDATED_AT = "updated_at";
 
     private final SharedPreferences preferences;
+    private final DiagnosticEventLog eventLog;
 
     public WearSyncDiagnostics(Context context) {
+        this(context, null);
+    }
+
+    public WearSyncDiagnostics(Context context, DiagnosticEventLog eventLog) {
         preferences = context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
+        this.eventLog = eventLog;
     }
 
     public void record(State state, Instant at) {
@@ -27,6 +34,9 @@ public final class WearSyncDiagnostics {
                 .putString(KEY_STATE, state.name())
                 .putLong(KEY_UPDATED_AT, at.toEpochMilli())
                 .apply();
+        if (eventLog != null) {
+            eventLog.record("Wear", "Snapshot " + state.name(), at);
+        }
     }
 
     public State state() {

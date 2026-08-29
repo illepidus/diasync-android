@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import android.app.Application;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.view.View;
 import java.time.Duration;
@@ -19,6 +18,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.android.controller.ActivityController;
+import com.google.android.material.slider.Slider;
 import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.AppPreferences;
 import ru.krotarnya.diasync2.settings.SnoozeOption;
@@ -36,7 +36,10 @@ public class MainActivityAlertSettingsTest {
         assertFalse(((CheckBox) activity.findViewById(R.id.low_alert_enabled)).isChecked());
         assertFalse(((CheckBox) activity.findViewById(R.id.high_alert_enabled)).isChecked());
         assertFalse(((CheckBox) activity.findViewById(R.id.no_data_alert_enabled)).isChecked());
-        assertEquals(13, ((Spinner) activity.findViewById(R.id.snooze_duration)).getCount());
+        Slider slider = activity.findViewById(R.id.snooze_duration);
+        assertEquals(0.0f, slider.getValueFrom(), 0.0f);
+        assertEquals(12.0f, slider.getValueTo(), 0.0f);
+        assertEquals(1.0f, slider.getStepSize(), 0.0f);
     }
 
     @Test
@@ -45,7 +48,7 @@ public class MainActivityAlertSettingsTest {
         application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
         CheckBox low = activity.findViewById(R.id.low_alert_enabled);
-        Spinner duration = activity.findViewById(R.id.snooze_duration);
+        Slider duration = activity.findViewById(R.id.snooze_duration);
         Button toggle = activity.findViewById(R.id.snooze_toggle);
         TextView status = activity.findViewById(R.id.snooze_status);
         AppPreferences preferences = new AppPreferences(application);
@@ -53,7 +56,7 @@ public class MainActivityAlertSettingsTest {
         assertEquals(application.getString(R.string.snooze_alerts), toggle.getText().toString());
         assertEquals(View.GONE, status.getVisibility());
         low.performClick();
-        duration.setSelection(12);
+        duration.setValue(12.0f);
         Instant before = Instant.now();
         toggle.performClick();
 
@@ -77,14 +80,14 @@ public class MainActivityAlertSettingsTest {
         application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
         ActivityController<MainActivity> firstController =
                 Robolectric.buildActivity(MainActivity.class).setup();
-        Spinner firstSpinner = firstController.get().findViewById(R.id.snooze_duration);
+        Slider firstSlider = firstController.get().findViewById(R.id.snooze_duration);
 
-        firstSpinner.setSelection(9);
+        firstSlider.setValue(9.0f);
         firstController.pause().stop().destroy();
         MainActivity recreated = Robolectric.buildActivity(MainActivity.class).setup().get();
 
-        assertEquals(9, recreated.<Spinner>findViewById(R.id.snooze_duration)
-                .getSelectedItemPosition());
+        assertEquals(9.0f, recreated.<Slider>findViewById(R.id.snooze_duration)
+                .getValue(), 0.0f);
         assertEquals(
                 SnoozeOption.EIGHT_HOURS,
                 new AppPreferences(application).loadSnoozeOption());

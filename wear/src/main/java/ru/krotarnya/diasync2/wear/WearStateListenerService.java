@@ -2,6 +2,7 @@ package ru.krotarnya.diasync2.wear;
 
 import android.util.Log;
 import android.content.Intent;
+import java.time.Instant;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMapItem;
@@ -35,21 +36,19 @@ public final class WearStateListenerService extends WearableListenerService {
                         .getDataMap()
                         .getByteArray(PAYLOAD_KEY);
                 if (!repository.replaceIfValid(payload)) {
+                    new WearReceiveDiagnostics(this).rejected("Unsupported or invalid snapshot");
                     Log.w(TAG, "Rejected invalid state snapshot");
                     continue;
                 }
                 WearSnapshot snapshot = repository.load().orElseThrow();
+                new WearReceiveDiagnostics(this).accepted(Instant.now());
                 alertController.onSnapshot(snapshot);
                 DiasyncComplicationDataSourceService.requestUpdate(this);
                 sendBroadcast(new Intent(WearDiagnosticActivity.ACTION_STATE_UPDATED)
                         .setPackage(getPackageName()));
-                String latest = snapshot.points().isEmpty()
-                        ? "NO DATA"
-                        : Double.toString(snapshot.points().get(0).displayMgDl(
-                                snapshot.display().useCalibration()));
-                Log.i(TAG, "Stored state generated at " + snapshot.generatedAt()
-                        + ", latest=" + latest);
+                Log.i(TAG, "Stored valid state snapshot");
             } catch (RuntimeException exception) {
+                new WearReceiveDiagnostics(this).rejected("Unreadable snapshot");
                 Log.w(TAG, "Rejected unreadable state snapshot");
             }
         }

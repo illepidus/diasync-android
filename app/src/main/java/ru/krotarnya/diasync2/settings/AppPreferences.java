@@ -19,6 +19,8 @@ public final class AppPreferences {
     private static final String KEY_WIDGET_GRAPH_ZONES = "widget_graph_zones";
     private static final String KEY_WIDGET_GRAPH_LINES = "widget_graph_lines";
     private static final String KEY_WIDGET_TREND_ARROW = "widget_trend_arrow";
+    private static final String KEY_WIDGET_SINGLE_CLICK = "widget_single_click";
+    private static final String KEY_WIDGET_DOUBLE_CLICK = "widget_double_click";
     private static final String KEY_WATCH_GRAPH_WINDOW = "watch_graph_window";
     private static final String KEY_WATCH_GRAPH_ZONES = "watch_graph_zones";
     private static final String KEY_WATCH_GRAPH_LINES = "watch_graph_lines";
@@ -121,6 +123,29 @@ public final class AppPreferences {
                 .putBoolean(KEY_WIDGET_GRAPH_LINES, settings.graphLines())
                 .putBoolean(KEY_WIDGET_TREND_ARROW, settings.trendArrow())
                 .apply();
+    }
+
+    public WidgetClickAction loadWidgetSingleClickAction() {
+        return loadWidgetClickAction(KEY_WIDGET_SINGLE_CLICK, WidgetClickAction.DIASYNC);
+    }
+
+    public WidgetClickAction loadWidgetDoubleClickAction() {
+        return loadWidgetClickAction(KEY_WIDGET_DOUBLE_CLICK, WidgetClickAction.ALERTS);
+    }
+
+    public void saveWidgetClickActions(WidgetClickAction single, WidgetClickAction doubleClick) {
+        preferences.edit()
+                .putString(KEY_WIDGET_SINGLE_CLICK, single.name())
+                .putString(KEY_WIDGET_DOUBLE_CLICK, doubleClick.name())
+                .apply();
+    }
+
+    private WidgetClickAction loadWidgetClickAction(String key, WidgetClickAction fallback) {
+        try {
+            return WidgetClickAction.valueOf(preferences.getString(key, fallback.name()));
+        } catch (IllegalArgumentException exception) {
+            return fallback;
+        }
     }
 
     public WatchSettings loadWatchSettings() {

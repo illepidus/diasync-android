@@ -2,6 +2,8 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="brand_orange">#FFFFA500</color>
+    <color name="brand_black">#FF000000</color>
     <color name="widget_background">#E6141414</color>
     <color name="widget_low">#FFC30909</color>
     <color name="widget_normal">#FFFFFFFF</color>

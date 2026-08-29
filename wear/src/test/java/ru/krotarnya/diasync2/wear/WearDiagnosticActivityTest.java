@@ -46,7 +46,7 @@ public class WearDiagnosticActivityTest {
                 .resume()
                 .get();
         TextView value = activity.findViewById(R.id.wear_latest_value);
-        assertEquals("NO DATA", value.getText().toString());
+        assertEquals("NO SNAPSHOT", value.getText().toString());
         LastKnownWearStateRepository.create(activity).replaceIfValid(
                 new WearSnapshotCodec().encode(snapshot(126.0)));
 
@@ -54,7 +54,9 @@ public class WearDiagnosticActivityTest {
                 .setPackage(activity.getPackageName()));
         shadowOf(Looper.getMainLooper()).idle();
 
-        assertEquals("Latest: 7.0 mmol/L", value.getText().toString());
+        assertEquals("NO DATA", value.getText().toString());
+        assertEquals(true, activity.<TextView>findViewById(R.id.wear_snapshot_time)
+                .getText().toString().contains("7.0 mmol/L"));
     }
 
     private WearSnapshot snapshot(double value) {

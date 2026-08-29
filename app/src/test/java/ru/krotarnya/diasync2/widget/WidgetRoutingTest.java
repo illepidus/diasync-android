@@ -28,7 +28,6 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowAppWidgetManager;
 import ru.krotarnya.diasync2.DiasyncApplication;
-import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
 import ru.krotarnya.diasync2.settings.GraphWindow;
 
@@ -92,7 +91,7 @@ public class WidgetRoutingTest {
     }
 
     @Test
-    public void rootClickOpensStatusActivity() {
+    public void rootClickDispatchesTapToWidgetProvider() {
         Application application = RuntimeEnvironment.getApplication();
         WidgetState state = new WidgetState(
                 "5.6",
@@ -120,10 +119,12 @@ public class WidgetRoutingTest {
         assertNotNull(view.findViewById(R.id.widget_root));
         assertTrue(view.findViewById(R.id.widget_root).performClick());
 
-        Intent started = shadowOf(application).getNextStartedActivity();
+        List<Intent> broadcasts = shadowOf(application).getBroadcastIntents();
+        Intent started = broadcasts.get(broadcasts.size() - 1);
         assertEquals(
-                new ComponentName(application, MainActivity.class),
+                new ComponentName(application, DiasyncWidgetProvider.class),
                 started.getComponent());
+        assertEquals(DiasyncWidgetProvider.ACTION_WIDGET_TAP, started.getAction());
     }
 
     @Test

@@ -101,6 +101,21 @@ public class AppPreferencesTest {
     }
 
     @Test
+    public void widgetClickActionsHaveStableDefaultsAndPersist() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        AppPreferences preferences = new AppPreferences(application);
+
+        assertEquals(WidgetClickAction.DIASYNC, preferences.loadWidgetSingleClickAction());
+        assertEquals(WidgetClickAction.ALERTS, preferences.loadWidgetDoubleClickAction());
+
+        preferences.saveWidgetClickActions(WidgetClickAction.XDRIP, WidgetClickAction.NONE);
+        AppPreferences restarted = new AppPreferences(application);
+        assertEquals(WidgetClickAction.XDRIP, restarted.loadWidgetSingleClickAction());
+        assertEquals(WidgetClickAction.NONE, restarted.loadWidgetDoubleClickAction());
+    }
+
+    @Test
     public void migratesThenPersistsWatchSettingsIndependentlyFromWidget() {
         Application application = RuntimeEnvironment.getApplication();
         application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();

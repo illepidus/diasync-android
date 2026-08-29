@@ -1,9 +1,49 @@
 <resources>
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Diasync" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.Diasync" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/brand_orange</item>
+        <item name="colorOnPrimary">@color/brand_black</item>
+        <item name="colorSecondary">@color/brand_orange</item>
+        <item name="colorOnSecondary">@color/brand_black</item>
+        <item name="colorSurface">@color/brand_black</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/brand_black</item>
+        <item name="colorOnSurfaceVariant">@color/white</item>
+        <item name="android:colorBackground">@color/brand_black</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:windowBackground">@color/brand_black</item>
+        <item name="android:navigationBarColor">@color/brand_black</item>
+        <item name="android:statusBarColor">@color/brand_black</item>
+        <item name="materialButtonStyle">@style/Widget.Diasync.Button</item>
     </style>
 
     <style name="Theme.Diasync" parent="Base.Theme.Diasync" />
+
+    <style name="Widget.Diasync.Button" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/white</item>
+        <item name="backgroundTint">@color/brand_black</item>
+    </style>
+
+    <style name="Widget.Diasync.MenuButton" parent="Widget.Diasync.Button">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">start|center_vertical</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+        <item name="iconTint">@color/brand_orange</item>
+        <item name="iconPadding">16dp</item>
+        <item name="iconGravity">start</item>
+        <item name="iconSize">24dp</item>
+        <item name="android:textColor">@color/menu_text</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="Widget.Diasync.PrimaryAction" parent="Widget.Material3.Button">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textColor">@color/brand_black</item>
+        <item name="backgroundTint">@color/brand_orange</item>
+    </style>
 </resources>

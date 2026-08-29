@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Diasync.Wear" parent="android:style/Theme.DeviceDefault">
+        <item name="android:windowBackground">@color/brand_black</item>
+        <item name="android:colorBackground">@color/brand_black</item>
+        <item name="android:textColorPrimary">#FFFFFFFF</item>
+        <item name="android:textColorSecondary">#FFFFFFFF</item>
+        <item name="android:colorAccent">@color/brand_orange</item>
+        <item name="android:navigationBarColor">@color/brand_black</item>
+        <item name="android:statusBarColor">@color/brand_black</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

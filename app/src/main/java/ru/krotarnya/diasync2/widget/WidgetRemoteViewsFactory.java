@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
-import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
 
 final class WidgetRemoteViewsFactory {
@@ -58,7 +57,7 @@ final class WidgetRemoteViewsFactory {
         } else {
             views.setImageViewBitmap(R.id.widget_graph, graphBitmap);
         }
-        views.setOnClickPendingIntent(R.id.widget_root, openActivityIntent(context));
+        views.setOnClickPendingIntent(R.id.widget_root, tapIntent(context));
         return views;
     }
 
@@ -71,10 +70,10 @@ final class WidgetRemoteViewsFactory {
         };
     }
 
-    private PendingIntent openActivityIntent(Context context) {
-        Intent intent = new Intent(context, MainActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return PendingIntent.getActivity(
+    private PendingIntent tapIntent(Context context) {
+        Intent intent = new Intent(context, DiasyncWidgetProvider.class)
+                .setAction(DiasyncWidgetProvider.ACTION_WIDGET_TAP);
+        return PendingIntent.getBroadcast(
                 context,
                 0,
                 intent,

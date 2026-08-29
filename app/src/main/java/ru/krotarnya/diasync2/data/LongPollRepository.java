@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import ru.krotarnya.diasync2.data.api.ApiDataPointDto;
 import ru.krotarnya.diasync2.data.api.BootstrapHttpException;
 import ru.krotarnya.diasync2.data.api.BootstrapParseException;
@@ -23,6 +24,7 @@ public final class LongPollRepository {
     private final DataPointMapper mapper;
     private final Clock clock;
     private final AtomicReference<LongPollCall> activeCall = new AtomicReference<>();
+    private final Consumer<Instant> dataReceived;
 
     public LongPollRepository(
             LongPollDataSource dataSource,
@@ -30,10 +32,21 @@ public final class LongPollRepository {
             DataPointMapper mapper,
             Clock clock
     ) {
+        this(dataSource, dao, mapper, clock, ignored -> { });
+    }
+
+    public LongPollRepository(
+            LongPollDataSource dataSource,
+            BootstrapDao dao,
+            DataPointMapper mapper,
+            Clock clock,
+            Consumer<Instant> dataReceived
+    ) {
         this.dataSource = Objects.requireNonNull(dataSource);
         this.dao = Objects.requireNonNull(dao);
         this.mapper = Objects.requireNonNull(mapper);
         this.clock = Objects.requireNonNull(clock);
+        this.dataReceived = Objects.requireNonNull(dataReceived);
     }
 
     public LongPollResult poll(String baseUrl, String userId, Instant since) {
@@ -71,6 +84,7 @@ public final class LongPollRepository {
                             clock.instant().toString(),
                             null,
                             SyncSourceFingerprint.from(baseUrl)));
+            dataReceived.accept(clock.instant());
             return LongPollResult.data(maximumCursor);
         } catch (BootstrapHttpException exception) {
             return LongPollResult.of(LongPollResult.Kind.HTTP_ERROR);

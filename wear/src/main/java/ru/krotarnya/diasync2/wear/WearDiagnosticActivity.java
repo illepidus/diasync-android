@@ -7,11 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.widget.TextView;
-import java.util.Optional;
+import java.time.Clock;
 import ru.krotarnya.diasync2.R;
-import ru.krotarnya.diasync2.common.GlucoseUnit;
-import ru.krotarnya.diasync2.common.wear.WearGlucosePoint;
-import ru.krotarnya.diasync2.common.wear.WearSnapshot;
 
 public final class WearDiagnosticActivity extends Activity {
     public static final String ACTION_STATE_UPDATED =
@@ -52,26 +49,13 @@ public final class WearDiagnosticActivity extends Activity {
     }
 
     private void renderLastKnownState() {
-        render(LastKnownWearStateRepository.create(this).load());
-    }
-
-    private void render(Optional<WearSnapshot> state) {
-        TextView latestValue = findViewById(R.id.wear_latest_value);
-        TextView snapshotTime = findViewById(R.id.wear_snapshot_time);
-        if (state.isEmpty() || state.get().points().isEmpty()) {
-            latestValue.setText(R.string.wear_no_data);
-            snapshotTime.setText("");
-            return;
-        }
-        WearSnapshot snapshot = state.get();
-        WearGlucosePoint latest = snapshot.points().get(0);
-        GlucoseUnit unit = snapshot.display().unit();
-        latestValue.setText(getString(
-                R.string.wear_last_value,
-                unit.formatFromMgDl(latest.displayMgDl(snapshot.display().useCalibration())),
-                unit.symbol()));
-        snapshotTime.setText(getString(
-                R.string.wear_generated_at,
-                snapshot.generatedAt().toString()));
+        WearReceiveDiagnostics diagnostics = new WearReceiveDiagnostics(this);
+        WearDiagnosticState state = new WearDiagnosticPresenter(Clock.systemUTC()).present(
+                LastKnownWearStateRepository.create(this).load(), diagnostics.receivedAt(),
+                diagnostics.lastError(),
+                new SharedPreferencesWearAlertStateStore(this).read().dataPhase());
+        ((TextView) findViewById(R.id.wear_latest_value)).setText(state.headline());
+        ((TextView) findViewById(R.id.wear_snapshot_time)).setText(state.details());
+        ((TextView) findViewById(R.id.wear_last_error)).setText(state.error());
     }
 }

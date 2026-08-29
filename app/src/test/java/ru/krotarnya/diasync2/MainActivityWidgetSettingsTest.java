@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import com.google.android.material.slider.Slider;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,8 +86,8 @@ public class MainActivityWidgetSettingsTest {
         assertTrue(shadowOf(application).getBroadcastIntents().size() > afterUnitChange);
 
         int afterThresholdChange = shadowOf(application).getBroadcastIntents().size();
-        Spinner window = activity.findViewById(R.id.widget_graph_window);
-        window.setSelection(1);
+        Slider window = activity.findViewById(R.id.widget_graph_window);
+        window.setValue(1.0f);
         assertTrue(shadowOf(application).getBroadcastIntents().size() > afterThresholdChange);
 
         int afterWindowChange = shadowOf(application).getBroadcastIntents().size();
@@ -116,11 +117,11 @@ public class MainActivityWidgetSettingsTest {
         preferences.saveWatchSettings(WatchSettings.defaults());
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
 
-        Spinner watchWindow = activity.findViewById(R.id.watch_graph_window);
+        Slider watchWindow = activity.findViewById(R.id.watch_graph_window);
         CheckBox watchZones = activity.findViewById(R.id.watch_graph_zones);
         CheckBox watchLines = activity.findViewById(R.id.watch_graph_lines);
         CheckBox watchTrend = activity.findViewById(R.id.watch_trend_arrow);
-        watchWindow.setSelection(2);
+        watchWindow.setValue(2.0f);
         watchZones.performClick();
         watchLines.performClick();
         watchTrend.performClick();
