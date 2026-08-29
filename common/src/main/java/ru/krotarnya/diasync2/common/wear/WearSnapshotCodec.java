@@ -107,6 +107,7 @@ public final class WearSnapshotCodec {
         json.addProperty("eventId", event.eventId());
         json.addProperty("type", event.type().name());
         json.addProperty("measurementTimestamp", event.measurementTimestamp().toString());
+        json.addProperty("generatedAt", event.generatedAt().toString());
         json.addProperty("expiresAt", event.expiresAt().toString());
         return json;
     }
@@ -148,10 +149,16 @@ public final class WearSnapshotCodec {
     }
 
     private WearAlertEvent decodeEvent(JsonObject json) {
+        Instant measurementTimestamp = Instant.parse(
+                required(json, "measurementTimestamp").getAsString());
+        JsonElement generatedAt = json.get("generatedAt");
         return new WearAlertEvent(
                 required(json, "eventId").getAsString(),
                 AlertType.valueOf(required(json, "type").getAsString()),
-                Instant.parse(required(json, "measurementTimestamp").getAsString()),
+                measurementTimestamp,
+                generatedAt == null || generatedAt.isJsonNull()
+                        ? measurementTimestamp
+                        : Instant.parse(generatedAt.getAsString()),
                 Instant.parse(required(json, "expiresAt").getAsString()));
     }
 

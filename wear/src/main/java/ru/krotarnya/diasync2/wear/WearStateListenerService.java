@@ -14,11 +14,13 @@ public final class WearStateListenerService extends WearableListenerService {
     public static final String PAYLOAD_KEY = "snapshot_json";
 
     private LastKnownWearStateRepository repository;
+    private WearAlertController alertController;
 
     @Override
     public void onCreate() {
         super.onCreate();
         repository = LastKnownWearStateRepository.create(this);
+        alertController = WearAlertController.create(this);
     }
 
     @Override
@@ -37,6 +39,7 @@ public final class WearStateListenerService extends WearableListenerService {
                     continue;
                 }
                 WearSnapshot snapshot = repository.load().orElseThrow();
+                alertController.onSnapshot(snapshot);
                 DiasyncComplicationDataSourceService.requestUpdate(this);
                 sendBroadcast(new Intent(WearDiagnosticActivity.ACTION_STATE_UPDATED)
                         .setPackage(getPackageName()));

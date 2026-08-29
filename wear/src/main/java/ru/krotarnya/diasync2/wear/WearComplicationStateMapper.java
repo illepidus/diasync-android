@@ -59,6 +59,9 @@ final class WearComplicationStateMapper {
         }
 
         Duration age = Duration.between(latest.timestamp(), now);
+        if (age.compareTo(WearAlertEvaluator.NO_DATA_AFTER) >= 0) {
+            return error(WearComplicationState.Kind.NO_DATA, now, "NO DATA", "No glucose data");
+        }
         boolean stale = age.compareTo(STALE_AFTER) > 0;
         String value = new GlucoseValue(latestMgDl).format(display.unit());
         String trend = display.trendArrow() ? display.trend() : "";

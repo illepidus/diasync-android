@@ -33,6 +33,7 @@ public class WearSnapshotCodecTest {
                         + "\"noDataEnabled\":true,\"snoozedUntil\":\"1970-01-01T00:00:00Z\"},"
                         + "\"alertEvent\":{\"eventId\":\"LOW:2026-08-28T11:59:00Z\","
                         + "\"type\":\"LOW\",\"measurementTimestamp\":"
+                        + "\"2026-08-28T11:59:00Z\",\"generatedAt\":"
                         + "\"2026-08-28T11:59:00Z\",\"expiresAt\":"
                         + "\"2026-08-28T12:01:00Z\"}}",
                 json);
@@ -48,6 +49,7 @@ public class WearSnapshotCodecTest {
         assertEquals(180.0, decoded.display().highMgDl(), 0.0);
         assertEquals("↗", decoded.display().trend());
         assertEquals(NOW.minusSeconds(60), decoded.alertEvent().measurementTimestamp());
+        assertEquals(NOW.minusSeconds(60), decoded.alertEvent().generatedAt());
     }
 
     @Test
@@ -100,6 +102,7 @@ public class WearSnapshotCodecTest {
         assertTrue(event.shouldHandle(null, NOW));
         assertFalse(event.shouldHandle(event.eventId(), NOW));
         assertFalse(event.shouldHandle(null, event.expiresAt()));
+        assertFalse(event.shouldHandle(null, event.generatedAt().minusMillis(1)));
     }
 
     private WearSnapshot snapshot() {

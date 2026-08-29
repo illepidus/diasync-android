@@ -9,6 +9,7 @@ public record WearAlertEvent(
         String eventId,
         AlertType type,
         Instant measurementTimestamp,
+        Instant generatedAt,
         Instant expiresAt
 ) {
     public static final Duration DEFAULT_TTL = Duration.ofMinutes(2);
@@ -17,6 +18,7 @@ public record WearAlertEvent(
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(type);
         Objects.requireNonNull(measurementTimestamp);
+        Objects.requireNonNull(generatedAt);
         Objects.requireNonNull(expiresAt);
         if (eventId.isBlank() || eventId.length() > 100) {
             throw new IllegalArgumentException("Alert event id is invalid");
@@ -24,7 +26,7 @@ public record WearAlertEvent(
         if (type == AlertType.NO_DATA) {
             throw new IllegalArgumentException("NO DATA is evaluated on Wear");
         }
-        if (!expiresAt.isAfter(measurementTimestamp)) {
+        if (!expiresAt.isAfter(generatedAt)) {
             throw new IllegalArgumentException("Alert event expiry is invalid");
         }
     }
@@ -45,11 +47,14 @@ public record WearAlertEvent(
                 type.name() + ":" + measurementTimestamp,
                 type,
                 measurementTimestamp,
+                createdAt,
                 createdAt.plus(DEFAULT_TTL));
     }
 
     public boolean shouldHandle(String lastProcessedEventId, Instant now) {
         Objects.requireNonNull(now);
-        return !eventId.equals(lastProcessedEventId) && now.isBefore(expiresAt);
+        return !eventId.equals(lastProcessedEventId)
+                && !now.isBefore(generatedAt)
+                && now.isBefore(expiresAt);
     }
 }

@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
+import ru.krotarnya.diasync2.common.AlertType;
 import ru.krotarnya.diasync2.common.Calibration;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.common.GlucoseUnit;
 import ru.krotarnya.diasync2.common.GlucoseValue;
 import ru.krotarnya.diasync2.common.SensorPoint;
 import ru.krotarnya.diasync2.common.TrendCalculator;
+import ru.krotarnya.diasync2.common.wear.WearAlertEvent;
 import ru.krotarnya.diasync2.common.wear.WearSnapshot;
 import ru.krotarnya.diasync2.common.wear.WearSnapshotCodec;
 import ru.krotarnya.diasync2.settings.AlertSettings;
@@ -50,13 +52,18 @@ public class WearSnapshotBuilderTest {
                 false,
                 false,
                 true);
+        Instant snoozedUntil = NOW.plusSeconds(300);
+        WearAlertEvent event = WearAlertEvent.create(
+                AlertType.LOW,
+                NOW.minusSeconds(60),
+                NOW);
 
         WearSnapshot snapshot = builder.build(
                 configuration,
                 display,
                 new AlertSettings(true, false, true),
-                Instant.EPOCH,
-                null);
+                snoozedUntil,
+                event);
 
         assertEquals(
                 NOW.minus(WearSnapshot.MAX_GRAPH_WINDOW)
@@ -71,6 +78,11 @@ public class WearSnapshotBuilderTest {
         assertTrue(snapshot.display().useCalibration());
         assertFalse(snapshot.display().graphZones());
         assertEquals("⇈", snapshot.display().trend());
+        assertTrue(snapshot.alerts().lowEnabled());
+        assertTrue(snapshot.alerts().noDataEnabled());
+        assertEquals(snoozedUntil, snapshot.alerts().snoozedUntil());
+        assertEquals(event, snapshot.alertEvent());
+        assertEquals(NOW, snapshot.alertEvent().generatedAt());
         String json = new String(new WearSnapshotCodec().encode(snapshot), StandardCharsets.UTF_8);
         assertFalse(json.contains(configuration.userId()));
         assertFalse(json.contains(configuration.baseUrl()));

@@ -79,6 +79,22 @@ public class WearComplicationStateMapperTest {
     }
 
     @Test
+    public void noDataPresentationStartsAtFiveMinutes() {
+        WearComplicationState before = mapper.map(Optional.of(snapshot(
+                30,
+                "→",
+                List.of(new WearGlucosePoint(NOW.minusSeconds(299), 110.0, null, null)))));
+        WearComplicationState atBoundary = mapper.map(Optional.of(snapshot(
+                30,
+                "→",
+                List.of(new WearGlucosePoint(NOW.minusSeconds(300), 110.0, null, null)))));
+
+        assertEquals(WearComplicationState.Kind.STALE, before.kind());
+        assertEquals(WearComplicationState.Kind.NO_DATA, atBoundary.kind());
+        assertEquals("NO DATA", atBoundary.message());
+    }
+
+    @Test
     public void pointBeyondFutureToleranceMapsToVisibleError() {
         WearSnapshot future = snapshot(
                 NOW.plusSeconds(1),

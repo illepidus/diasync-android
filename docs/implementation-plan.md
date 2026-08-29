@@ -544,7 +544,7 @@ Manual: Watch 7 + обновлённый Watch 4, interactive + AOD screenshots.
 
 ## Slice 9 — Wear LOW/HIGH и локальный NO DATA
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
