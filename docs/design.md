@@ -567,12 +567,12 @@ Activity приложения является configuration/status UI, а не 
 Главный экран показывает краткий status и отдельные подразделы настроек, чтобы не
 смешивать все параметры в одном длинном списке:
 
-- connection: backend base URL, `userId`/token и monitoring;
+- connectivity: backend base URL, `userId`/token и monitoring;
 - glucose: unit, low/high и use calibration;
 - widget: graph period, zones, lines и trend arrow;
 - watch: graph period, zones, lines и trend arrow;
 - alerts: low/high/no-data, snooze и resume;
-- diagnostics: подробное состояние phone/Wear path без credential.
+- logs: логи приложения
 
 Минимальные настройки:
 
