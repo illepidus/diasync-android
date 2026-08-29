@@ -54,6 +54,11 @@ public final class SyncRunner implements Runnable {
             } else if (result.kind() == LongPollResult.Kind.EMPTY) {
                 backoff.reset();
                 changeState(SyncConnectionState.CONNECTED);
+            } else if (result.kind() == LongPollResult.Kind.INVALID_DATA) {
+                if (!retryAfterFailure()) {
+                    return;
+                }
+                since = reconcileUntilSuccessful();
             } else if (!retryAfterFailure()) {
                 return;
             }
@@ -66,8 +71,16 @@ public final class SyncRunner implements Runnable {
     }
 
     private Instant bootstrapUntilSuccessful() {
+        return bootstrapUntilSuccessful(false);
+    }
+
+    private Instant reconcileUntilSuccessful() {
+        return bootstrapUntilSuccessful(true);
+    }
+
+    private Instant bootstrapUntilSuccessful(boolean reconciliation) {
         while (!stopped.get()) {
-            BootstrapResult result = work.bootstrap();
+            BootstrapResult result = reconciliation ? work.reconcile() : work.bootstrap();
             if (stopped.get()) {
                 return null;
             }
@@ -87,10 +100,14 @@ public final class SyncRunner implements Runnable {
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean retryAfterFailure() {
-        changeState(SyncConnectionState.CONNECTING);
+        changeState(SyncConnectionState.RETRYING);
         try {
             sleeper.sleep(backoff.nextDelay());
-            return !stopped.get();
+            if (stopped.get()) {
+                return false;
+            }
+            changeState(SyncConnectionState.CONNECTING);
+            return true;
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             return false;

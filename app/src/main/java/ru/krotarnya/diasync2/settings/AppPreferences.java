@@ -233,9 +233,6 @@ public final class AppPreferences {
         if ("STOPPED".equals(savedState)) {
             return SyncConnectionState.DISABLED;
         }
-        if ("RETRYING".equals(savedState)) {
-            return SyncConnectionState.CONNECTING;
-        }
         try {
             return SyncConnectionState.valueOf(savedState);
         } catch (IllegalArgumentException exception) {

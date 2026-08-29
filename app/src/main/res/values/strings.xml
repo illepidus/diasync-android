@@ -40,6 +40,10 @@
     <string name="monitoring_disabled">Disabled</string>
     <string name="monitoring_connecting">Connecting…</string>
     <string name="monitoring_connected">Connected</string>
+    <string name="monitoring_retrying">Retrying after a sync failure…</string>
+    <string name="monitoring_blocked">Monitoring could not restart in the background. Open Diasync to resume.</string>
+    <string name="monitoring_restart_required_title">Diasync monitoring needs attention</string>
+    <string name="monitoring_restart_required_text">Open Diasync to resume continuous monitoring.</string>
     <string name="monitoring_permission_required">Notification permission is required for continuous monitoring.</string>
     <string name="monitoring_channel_name">Continuous monitoring</string>
     <string name="monitoring_channel_description">Ongoing glucose sync connection status</string>

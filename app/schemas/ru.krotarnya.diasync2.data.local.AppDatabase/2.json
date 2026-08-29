@@ -1,0 +1,155 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "994bbc570add7a30e76fbf4914462eba",
+    "entities": [
+      {
+        "tableName": "data_points",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `timestamp` TEXT NOT NULL, `timestamp_epoch_second` INTEGER NOT NULL, `timestamp_nano` INTEGER NOT NULL, `server_id` INTEGER, `update_timestamp` TEXT, `sensor_mg_dl` REAL, `sensor_id` TEXT, `calibration_slope` REAL, `calibration_intercept` REAL, `manual_mg_dl` REAL, `carbs_grams` REAL, `carbs_description` TEXT, PRIMARY KEY(`user_id`, `timestamp`))",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestampEpochSecond",
+            "columnName": "timestamp_epoch_second",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestampNano",
+            "columnName": "timestamp_nano",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverId",
+            "columnName": "server_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updateTimestamp",
+            "columnName": "update_timestamp",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sensorMgDl",
+            "columnName": "sensor_mg_dl",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "sensorId",
+            "columnName": "sensor_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "calibrationSlope",
+            "columnName": "calibration_slope",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "calibrationIntercept",
+            "columnName": "calibration_intercept",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "manualMgDl",
+            "columnName": "manual_mg_dl",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "carbsGrams",
+            "columnName": "carbs_grams",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "carbsDescription",
+            "columnName": "carbs_description",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "user_id",
+            "timestamp"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_data_points_user_id_timestamp",
+            "unique": false,
+            "columnNames": [
+              "user_id",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_data_points_user_id_timestamp` ON `${TABLE_NAME}` (`user_id`, `timestamp`)"
+          },
+          {
+            "name": "index_data_points_user_id_update_timestamp",
+            "unique": false,
+            "columnNames": [
+              "user_id",
+              "update_timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_data_points_user_id_update_timestamp` ON `${TABLE_NAME}` (`user_id`, `update_timestamp`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_id` TEXT NOT NULL, `cursor_update_timestamp` TEXT, `last_success_at` TEXT, `last_error` TEXT, `source_fingerprint` TEXT, PRIMARY KEY(`user_id`))",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursorUpdateTimestamp",
+            "columnName": "cursor_update_timestamp",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastSuccessAt",
+            "columnName": "last_success_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "last_error",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sourceFingerprint",
+            "columnName": "source_fingerprint",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "user_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '994bbc570add7a30e76fbf4914462eba')"
+    ]
+  }
+}

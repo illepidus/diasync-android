@@ -31,4 +31,18 @@ public class BackoffPolicyTest {
 
         assertEquals(Duration.ofMillis(500), policy.nextDelay());
     }
+
+    @Test
+    public void longDisconnectRemainsBoundedWithoutCollapsingIntoBusyLoop() {
+        BackoffPolicy policy = new BackoffPolicy(() -> 0.0);
+        Duration total = Duration.ZERO;
+
+        for (int index = 0; index < 1_000; index++) {
+            Duration delay = policy.nextDelay();
+            assertTrue(delay.compareTo(Duration.ofSeconds(30)) <= 0);
+            total = total.plus(delay);
+        }
+
+        assertTrue(total.compareTo(Duration.ofHours(8)) > 0);
+    }
 }

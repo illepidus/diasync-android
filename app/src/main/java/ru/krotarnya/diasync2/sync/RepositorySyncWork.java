@@ -33,6 +33,11 @@ public final class RepositorySyncWork implements SyncWork {
     }
 
     @Override
+    public BootstrapResult reconcile() {
+        return bootstrapRepository.reconcile(configuration.baseUrl(), configuration.userId());
+    }
+
+    @Override
     public LongPollResult poll(Instant since) {
         return longPollRepository.poll(
                 configuration.baseUrl(),

@@ -68,8 +68,10 @@ public class SyncRunnerTest {
                 List.of(
                         SyncConnectionState.CONNECTING,
                         SyncConnectionState.CONNECTED,
+                        SyncConnectionState.RETRYING,
                         SyncConnectionState.CONNECTING,
                         SyncConnectionState.CONNECTED,
+                        SyncConnectionState.RETRYING,
                         SyncConnectionState.CONNECTING),
                 listener.states);
     }
@@ -95,6 +97,22 @@ public class SyncRunnerTest {
 
         assertTrue(work.cancelled);
         assertEquals(0, work.pollCursors.size());
+    }
+
+    @Test
+    public void invalidLongPollPayloadBacksOffAndReconcilesBeforePollingAgain() {
+        FakeWork work = new FakeWork(
+                BootstrapResult.noData(INITIAL_SINCE),
+                LongPollResult.of(LongPollResult.Kind.INVALID_DATA),
+                LongPollResult.of(LongPollResult.Kind.CANCELLED));
+        work.reconciliationResult = BootstrapResult.noData(SERVER_CURSOR);
+        List<Duration> sleeps = new ArrayList<>();
+
+        runner(work, new RecordingListener(), sleeps).run();
+
+        assertEquals(1, work.reconciliations);
+        assertEquals(List.of(INITIAL_SINCE, SERVER_CURSOR), work.pollCursors);
+        assertEquals(List.of(Duration.ofMillis(500)), sleeps);
     }
 
     private SyncRunner runner(
@@ -129,6 +147,8 @@ public class SyncRunnerTest {
         private final Deque<LongPollResult> pollResults = new ArrayDeque<>();
         private final List<Instant> pollCursors = new ArrayList<>();
         private boolean cancelled;
+        private BootstrapResult reconciliationResult;
+        private int reconciliations;
 
         private FakeWork(BootstrapResult bootstrapResult, LongPollResult... pollResults) {
             this.bootstrapResult = bootstrapResult;
@@ -138,6 +158,12 @@ public class SyncRunnerTest {
         @Override
         public BootstrapResult bootstrap() {
             return bootstrapResult;
+        }
+
+        @Override
+        public BootstrapResult reconcile() {
+            reconciliations++;
+            return reconciliationResult == null ? bootstrapResult : reconciliationResult;
         }
 
         @Override

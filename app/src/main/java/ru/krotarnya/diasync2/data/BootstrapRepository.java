@@ -3,6 +3,7 @@ package ru.krotarnya.diasync2.data;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,10 +39,26 @@ public final class BootstrapRepository {
     }
 
     public BootstrapResult bootstrap(String baseUrl, String userId) {
+        return bootstrap(baseUrl, userId, false);
+    }
+
+    public BootstrapResult reconcile(String baseUrl, String userId) {
+        return bootstrap(baseUrl, userId, true);
+    }
+
+    private BootstrapResult bootstrap(
+            String baseUrl,
+            String userId,
+            boolean discardStoredCursor
+    ) {
         Instant to = clock.instant();
         Instant from = to.minus(BOOTSTRAP_WINDOW);
         try {
             SyncStateEntity previousState = dao.syncState(userId);
+            String sourceFingerprint = SyncSourceFingerprint.from(baseUrl);
+            Instant storedCursor = discardStoredCursor
+                    ? null
+                    : validStoredCursor(previousState, sourceFingerprint, userId);
             List<ApiDataPointDto> response = dataSource.getDataPoints(baseUrl, userId, from, to);
             List<DataPointEntity> entities = new ArrayList<>(response.size());
             Instant maximumUpdateTimestamp = null;
@@ -60,12 +77,13 @@ public final class BootstrapRepository {
                     entities,
                     new SyncStateEntity(
                             userId,
-                            previousState == null ? null : previousState.cursorUpdateTimestamp,
+                            storedCursor == null ? null : storedCursor.toString(),
                             to.toString(),
-                            null));
+                            null,
+                            sourceFingerprint));
             Instant initialPollSince;
-            if (previousState != null && previousState.cursorUpdateTimestamp != null) {
-                initialPollSince = Instant.parse(previousState.cursorUpdateTimestamp);
+            if (storedCursor != null) {
+                initialPollSince = storedCursor;
             } else {
                 initialPollSince = maximumUpdateTimestamp == null
                         ? from
@@ -84,10 +102,28 @@ public final class BootstrapRepository {
             return BootstrapResult.error(BootstrapResult.Kind.PARSE_ERROR);
         } catch (IOException exception) {
             return BootstrapResult.error(BootstrapResult.Kind.CONNECTION_ERROR);
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | DateTimeException exception) {
             return BootstrapResult.error(BootstrapResult.Kind.INVALID_DATA);
         } catch (RuntimeException exception) {
             return BootstrapResult.error(BootstrapResult.Kind.STORAGE_ERROR);
+        }
+    }
+
+    private Instant validStoredCursor(
+            SyncStateEntity state,
+            String sourceFingerprint,
+            String userId
+    ) {
+        if (state == null
+                || state.cursorUpdateTimestamp == null
+                || !sourceFingerprint.equals(state.sourceFingerprint)
+                || dao.count(userId) == 0) {
+            return null;
+        }
+        try {
+            return Instant.parse(state.cursorUpdateTimestamp);
+        } catch (DateTimeException exception) {
+            return null;
         }
     }
 

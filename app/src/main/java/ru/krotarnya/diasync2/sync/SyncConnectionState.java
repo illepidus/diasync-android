@@ -3,5 +3,7 @@ package ru.krotarnya.diasync2.sync;
 public enum SyncConnectionState {
     DISABLED,
     CONNECTING,
-    CONNECTED
+    CONNECTED,
+    RETRYING,
+    BLOCKED
 }

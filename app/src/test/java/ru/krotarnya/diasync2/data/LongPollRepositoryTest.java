@@ -65,6 +65,9 @@ public class LongPollRepositoryTest {
         assertEquals(
                 "2026-08-27T12:04:05Z",
                 database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
+        assertEquals(
+                SyncSourceFingerprint.from("https://example.test"),
+                database.bootstrapDao().syncState(USER_ID).sourceFingerprint);
     }
 
     @Test
@@ -77,6 +80,28 @@ public class LongPollRepositoryTest {
         ApiDataPointDto missingCursor = point("2026-08-27T12:04:00Z", null, 100.0);
 
         LongPollResult result = repository(List.of(missingCursor))
+                .poll("https://example.test", USER_ID, Instant.EPOCH);
+
+        assertEquals(LongPollResult.Kind.INVALID_DATA, result.kind());
+        assertEquals(0, database.bootstrapDao().count(USER_ID));
+        assertEquals(
+                "2026-08-27T12:00:00Z",
+                database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
+    }
+
+    @Test
+    public void malformedServerCursorIsInvalidDataAndDoesNotAdvanceExistingCursor() {
+        database.bootstrapDao().upsertSyncState(new SyncStateEntity(
+                USER_ID,
+                "2026-08-27T12:00:00Z",
+                NOW.minusSeconds(60).toString(),
+                null));
+        ApiDataPointDto malformed = point(
+                "2026-08-27T12:04:00Z",
+                "not-an-instant",
+                100.0);
+
+        LongPollResult result = repository(List.of(malformed))
                 .poll("https://example.test", USER_ID, Instant.EPOCH);
 
         assertEquals(LongPollResult.Kind.INVALID_DATA, result.kind());

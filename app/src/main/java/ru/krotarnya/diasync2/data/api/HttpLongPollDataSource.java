@@ -5,6 +5,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -21,10 +22,24 @@ public final class HttpLongPollDataSource implements LongPollDataSource {
 
     private final OkHttpClient httpClient;
     private final Gson gson;
+    private final int serverTimeoutMillis;
 
     public HttpLongPollDataSource(OkHttpClient httpClient, Gson gson) {
+        this(httpClient, gson, Duration.ofMillis(SERVER_TIMEOUT_MILLIS));
+    }
+
+    public HttpLongPollDataSource(
+            OkHttpClient httpClient,
+            Gson gson,
+            Duration serverTimeout
+    ) {
         this.httpClient = Objects.requireNonNull(httpClient);
         this.gson = Objects.requireNonNull(gson);
+        long timeoutMillis = Objects.requireNonNull(serverTimeout).toMillis();
+        if (timeoutMillis <= 0L || timeoutMillis > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Server timeout is out of range");
+        }
+        serverTimeoutMillis = (int) timeoutMillis;
     }
 
     @Override
@@ -37,7 +52,7 @@ public final class HttpLongPollDataSource implements LongPollDataSource {
                 .addPathSegments("api/v1/getDataPointsLongPoll")
                 .addQueryParameter("userId", userId)
                 .addQueryParameter("since", since.toString())
-                .addQueryParameter("timeoutMs", Integer.toString(SERVER_TIMEOUT_MILLIS))
+                .addQueryParameter("timeoutMs", Integer.toString(serverTimeoutMillis))
                 .build();
         Call call = httpClient.newCall(new Request.Builder().url(url).get().build());
         return new RealLongPollCall(call, gson);

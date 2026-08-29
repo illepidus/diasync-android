@@ -105,6 +105,21 @@ public class WearAlertEvaluatorTest {
         assertEquals(snoozedUntil, suppressed.nextCheckAt());
         assertEquals(AlertType.NO_DATA, resumed.vibration());
         assertNull(jumpedBack.vibration());
+        assertEquals(NOW.minusSeconds(60), jumpedBack.nextCheckAt());
+    }
+
+    @Test
+    public void farFuturePointGetsBoundedClockAnomalyRecheck() {
+        WearAlertEvaluation future = evaluatorAt(NOW).evaluate(
+                snapshot(
+                        NOW.plusSeconds(600),
+                        null,
+                        policy(false, false, true, Instant.EPOCH)),
+                WearAlertState.empty());
+
+        assertNull(future.vibration());
+        assertEquals(WearDataPhase.FRESH, future.state().dataPhase());
+        assertEquals(NOW.plusSeconds(60), future.nextCheckAt());
     }
 
     @Test
@@ -159,7 +174,7 @@ public class WearAlertEvaluatorTest {
     ) {
         return new WearSnapshot(
                 WearSnapshot.PROTOCOL_VERSION,
-                NOW,
+                latestTimestamp.isAfter(NOW) ? latestTimestamp : NOW,
                 List.of(new WearGlucosePoint(latestTimestamp, 110.0, null, null)),
                 new WearDisplayPolicy(
                         GlucoseUnit.MMOL_L, true, 70.0, 180.0, 30,

@@ -157,7 +157,7 @@ public class AppPreferencesTest {
                 .putString("sync_connection_state", "RETRYING")
                 .commit();
         assertEquals(
-                SyncConnectionState.CONNECTING,
+                SyncConnectionState.RETRYING,
                 new AppPreferences(application).syncConnectionState());
 
         application.getSharedPreferences("diasync_settings", 0)

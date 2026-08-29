@@ -1,13 +1,13 @@
 package ru.krotarnya.diasync2;
 
 import android.app.Application;
+import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
 import androidx.room.Room;
 import com.google.gson.Gson;
 import com.google.android.gms.wearable.Wearable;
 import java.time.Clock;
-import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
@@ -28,6 +28,7 @@ import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
 import ru.krotarnya.diasync2.sync.RepositorySyncWork;
 import ru.krotarnya.diasync2.sync.SyncWork;
+import ru.krotarnya.diasync2.sync.SyncTimeouts;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 import ru.krotarnya.diasync2.widget.WidgetPresenter;
 import ru.krotarnya.diasync2.wear.WearSnapshotBuilder;
@@ -54,7 +55,9 @@ public final class DiasyncApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        database = Room.databaseBuilder(this, AppDatabase.class, "diasync.db").build();
+        database = Room.databaseBuilder(this, AppDatabase.class, AppDatabase.NAME)
+                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .build();
         clock = Clock.systemUTC();
         bootstrapRepository = new BootstrapRepository(
                 new HttpBootstrapDataSource(new OkHttpClient(), new Gson()),
@@ -145,8 +148,10 @@ public final class DiasyncApplication extends Application {
     }
 
     public SyncWork createSyncWork(AppConfiguration configuration) {
+        boolean debug = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        SyncTimeouts timeouts = SyncTimeouts.forBuild(debug);
         OkHttpClient syncClient = new OkHttpClient.Builder()
-                .readTimeout(Duration.ofSeconds(90))
+                .readTimeout(timeouts.clientRead())
                 .build();
         DataPointMapper mapper = new DataPointMapper();
         return new RepositorySyncWork(
@@ -157,7 +162,10 @@ public final class DiasyncApplication extends Application {
                         mapper,
                         clock),
                 new LongPollRepository(
-                        new HttpLongPollDataSource(syncClient, new Gson()),
+                        new HttpLongPollDataSource(
+                                syncClient,
+                                new Gson(),
+                                timeouts.serverLongPoll()),
                         database.bootstrapDao(),
                         mapper,
                         clock),

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThrows;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.MediaType;
@@ -73,6 +74,25 @@ public class HttpLongPollDataSourceTest {
 
         assertThrows(IllegalArgumentException.class, () -> source.newCall(
                 "http://diasync.example", "demo", Instant.EPOCH));
+    }
+
+    @Test
+    public void acceptsShortDebugServerTimeout() throws Exception {
+        AtomicReference<Request> captured = new AtomicReference<>();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    captured.set(chain.request());
+                    return jsonResponse(chain.request(), 200, "[]");
+                })
+                .build();
+        HttpLongPollDataSource source = new HttpLongPollDataSource(
+                client,
+                new Gson(),
+                Duration.ofSeconds(10));
+
+        source.newCall("https://diasync.example", "demo", Instant.EPOCH).execute();
+
+        assertEquals("10000", captured.get().url().queryParameter("timeoutMs"));
     }
 
     private HttpLongPollDataSource source(ResponseFactory factory) {

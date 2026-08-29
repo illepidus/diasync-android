@@ -2,6 +2,7 @@ package ru.krotarnya.diasync2.data;
 
 import java.io.IOException;
 import java.time.Clock;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public final class LongPollRepository {
         LongPollCall call;
         try {
             call = dataSource.newCall(baseUrl, userId, since);
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException | DateTimeException exception) {
             return LongPollResult.of(LongPollResult.Kind.INVALID_DATA);
         }
         activeCall.set(call);
@@ -68,7 +69,8 @@ public final class LongPollRepository {
                             userId,
                             maximumCursor.toString(),
                             clock.instant().toString(),
-                            null));
+                            null,
+                            SyncSourceFingerprint.from(baseUrl)));
             return LongPollResult.data(maximumCursor);
         } catch (BootstrapHttpException exception) {
             return LongPollResult.of(LongPollResult.Kind.HTTP_ERROR);

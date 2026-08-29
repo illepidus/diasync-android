@@ -36,6 +36,7 @@ import ru.krotarnya.diasync2.settings.ThresholdDisplay;
 import ru.krotarnya.diasync2.settings.WatchSettings;
 import ru.krotarnya.diasync2.settings.WidgetSettings;
 import ru.krotarnya.diasync2.sync.MonitoringService;
+import ru.krotarnya.diasync2.sync.MonitoringRestartController;
 import ru.krotarnya.diasync2.sync.PhoneUpdateCoordinator;
 import ru.krotarnya.diasync2.sync.SyncConnectionState;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
@@ -111,7 +112,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             populateCredentials(configuration);
             loadLocal(configuration);
             if (application.preferences().monitoringEnabled()) {
-                MonitoringService.start(this);
+                MonitoringRestartController.restart(this);
             }
         }
         configureWidgetSettingsListeners();
@@ -579,6 +580,8 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
+            case RETRYING -> R.string.monitoring_retrying;
+            case BLOCKED -> R.string.monitoring_blocked;
         });
         monitoringToggle.setText(monitoringActive
                 ? R.string.stop_monitoring

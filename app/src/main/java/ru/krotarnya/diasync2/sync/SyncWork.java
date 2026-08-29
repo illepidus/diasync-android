@@ -7,6 +7,10 @@ import ru.krotarnya.diasync2.data.LongPollResult;
 public interface SyncWork {
     BootstrapResult bootstrap();
 
+    default BootstrapResult reconcile() {
+        return bootstrap();
+    }
+
     LongPollResult poll(Instant since);
 
     void cancelActiveCall();

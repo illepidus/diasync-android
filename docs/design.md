@@ -411,6 +411,12 @@ displayMgdl = rawMgdl * slope + intercept
 - раз в минуту при интерактивном экране для обновления возраста;
 - системный `updatePeriodMillis` остаётся редким fallback, а не основным механизмом.
 
+### Навигация
+
+- одиночное нажатие открывает главный status/settings screen;
+- двойное нажатие открывает сразу подменю настроек алертов;
+- переход из widget не меняет monitoring, snooze или alert settings сам по себе.
+
 ## 12. Phone alerts
 
 Поведение основано на старом `Alerter`.
@@ -558,6 +564,15 @@ Vibration patterns из старого приложения:
 ## 16. Settings и status UI
 
 Activity приложения является configuration/status UI, а не основным ежедневным экраном.
+Главный экран показывает краткий status и отдельные подразделы настроек, чтобы не
+смешивать все параметры в одном длинном списке:
+
+- connection: backend base URL, `userId`/token и monitoring;
+- glucose: unit, low/high и use calibration;
+- widget: graph period, zones, lines и trend arrow;
+- watch: graph period, zones, lines и trend arrow;
+- alerts: low/high/no-data, snooze и resume;
+- diagnostics: подробное состояние phone/Wear path без credential.
 
 Минимальные настройки:
 
@@ -588,6 +603,14 @@ Status показывает:
 - last data timestamp/age;
 - количество локальных точек в рабочем окне;
 - Wear connection/snapshot status без раскрытия credential.
+
+Диагностическая Activity на часах доступна из launcher и показывает:
+
+- наличие и версию последнего корректного snapshot;
+- время получения snapshot и возраст последней sensor point в часовом поясе пользователя;
+- последнее value/trend либо явное `NO DATA`;
+- текущие alert enabled/snooze и состояние локального NO DATA watchdog;
+- последнюю ошибку приёма/валидации без payload, backend URL, `userId` и других credential.
 
 ## 17. Ошибки и восстановление
 

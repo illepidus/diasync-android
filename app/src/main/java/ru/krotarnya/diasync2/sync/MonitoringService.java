@@ -107,6 +107,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
             stopMonitoring();
             return START_NOT_STICKY;
         }
+        MonitoringRestartController.cancelBlockedNotification(this);
         enterForeground(SyncConnectionState.CONNECTING);
         restartRunner(configuration.get());
         alertMinuteScheduler.schedule(this);
@@ -226,6 +227,8 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
             case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
+            case RETRYING -> R.string.monitoring_retrying;
+            case BLOCKED -> R.string.monitoring_blocked;
         });
         if (!includeLatestValue || configuration.isEmpty()) {
             return connection;

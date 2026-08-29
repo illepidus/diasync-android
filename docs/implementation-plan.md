@@ -20,16 +20,16 @@
 | FR-2 REST bootstrap | 1 |
 | FR-3 Continuous long poll | 3 |
 | FR-4 Atomic persistence/cursor | 1, 3 |
-| FR-5 Phone widget | 2, 4 |
+| FR-5 Phone widget | 2, 4, 11 |
 | FR-6 Phone alerts | 5 |
-| FR-7 Wear snapshot | 6 |
+| FR-7 Wear snapshot | 6, 11 |
 | FR-8 WFF | 7, 8 |
 | FR-9 Watch alerts | 9 |
 | FR-10 Recovery | 10 |
 | NFR-1 End-to-end latency | 3, 6, 10 |
 | NFR-2 No cursor/data loss | 1, 3, 10 |
 | NFR-3 No blocking main thread | каждый slice |
-| NFR-4 Credential isolation | 1, 6, 11 |
+| NFR-4 Credential isolation | 1, 6, 11, 12 |
 | NFR-5 Deterministic time tests | 1, 2, 5, 6, 9, 10 |
 
 ---
@@ -593,7 +593,7 @@ Manual обязательно: реальные vibration patterns и disconnect
 
 ## Slice 10 — reboot, reconnect и failure hardening
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
@@ -653,17 +653,71 @@ Manual: пройти failure matrix на телефоне и Watch 7; крити
 
 ---
 
-## Slice 11 — UX polish, install flow и первый личный release
+## Slice 11 — переработка UI телефона, часов и widget navigation
 
 Статус: `[ ]`
 
 ### Outcome
 
-Владелец может собрать, установить, настроить и обновить phone/Wear/WFF без знания внутренней структуры Gradle.
+Владелец быстро находит нужные настройки на телефоне, видит полезное состояние Wear path на
+часах и переходит к алертам двойным нажатием на widget.
 
 ### Scope
 
-- Финальный settings/status UI и validation.
+- Главный phone status/settings screen с кратким status и переходами в отдельные подменю:
+  connection, glucose, widget, watch, alerts и diagnostics.
+- Валидация полей в соответствующем подменю без изменения семантики существующих настроек.
+- Более содержательная launcher Activity на часах: snapshot/protocol status, received/data age,
+  latest value/trend, alert/snooze/NO DATA watchdog state и безопасная последняя ошибка.
+- Одиночное нажатие на widget по-прежнему открывает главный status/settings screen.
+- Двойное нажатие на widget открывает подменю alerts.
+- Тонкие Android components; navigation, gesture routing и presentation state тестируются в обычных Java-классах,
+  где это практично.
+
+### Acceptance criteria
+
+- Главный phone screen не показывает все настройки одним длинным списком; каждая группа открывается из
+  понятно названного подменю.
+- Все ранее доступные настройки сохранены и применяются с прежними defaults и side effects.
+- Back/up и process recreation возвращают в предсказуемое место без потери сохранённых настроек.
+- Wear Activity показывает явные no-snapshot, valid, stale/no-data и rejected-payload states, не раскрывая credential
+  и raw payload.
+- Одиночное и двойное нажатия на widget стабильно открывают разные целевые экраны и сами не меняют
+  monitoring/alert state.
+- UI остаётся читаемым на поддерживаемых phone sizes и круглых Wear экранах без обрезанных критичных
+  данных и controls.
+
+### Tests
+
+- Phone navigation/deep-link routing и validation state.
+- Wear diagnostic presentation states с injected `Clock`.
+- Widget single/double-tap routing, включая boundary окна двойного нажатия.
+
+### Проверки
+
+```bash
+./gradlew :common:test :app:testDebugUnitTest :wear:testDebugUnitTest :app:lintDebug :wear:lintDebug :app:assembleDebug :wear:assembleDebug
+```
+
+Manual: пройти все phone подменю, сверить Wear Activity для fresh/stale/no-data и проверить single/double tap на widget.
+
+### Не входит
+
+- Install/release flow, icons/previews, backup/restore и общий release acceptance pass — Slice 12.
+
+---
+
+## Slice 12 — install flow и первый личный release
+
+Статус: `[ ]`
+
+### Outcome
+
+Владелец может собрать, установить и обновить phone/Wear/WFF без знания внутренней структуры Gradle и
+получает проверенный первый личный release.
+
+### Scope
+
 - App icons/names/previews.
 - Release build configuration без premature obfuscation, если она мешает диагностике.
 - Документ `INSTALL.md` с точными adb-командами и device selection.

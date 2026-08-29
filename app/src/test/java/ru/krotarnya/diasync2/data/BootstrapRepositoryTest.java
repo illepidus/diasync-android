@@ -110,17 +110,77 @@ public class BootstrapRepositoryTest {
     @Test
     public void existingServerCursorSurvivesReconciliationBootstrap() {
         String cursor = "2026-08-27T11:55:00Z";
+        repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://example.test", USER_ID);
         database.bootstrapDao().upsertSyncState(new SyncStateEntity(
                 USER_ID,
                 cursor,
                 NOW.minusSeconds(60).toString(),
-                null));
+                null,
+                SyncSourceFingerprint.from("https://example.test")));
 
         BootstrapResult result = repository(new CapturingDataSource(List.of(sensorDto())))
                 .bootstrap("https://example.test", USER_ID);
 
         assertEquals(Instant.parse(cursor), result.initialPollSince());
         assertEquals(cursor, database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
+    }
+
+    @Test
+    public void malformedCursorIsReconciledFromBootstrapWithoutStorageLoop() {
+        repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://example.test", USER_ID);
+        database.bootstrapDao().upsertSyncState(new SyncStateEntity(
+                USER_ID,
+                "not-an-instant",
+                NOW.minusSeconds(60).toString(),
+                null,
+                SyncSourceFingerprint.from("https://example.test")));
+
+        BootstrapResult result = repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://example.test", USER_ID);
+
+        assertEquals(BootstrapResult.Kind.SUCCESS, result.kind());
+        assertEquals(Instant.parse("2026-08-27T11:58:01Z"), result.initialPollSince());
+        assertNull(database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
+    }
+
+    @Test
+    public void backendUrlChangeDropsOldCursorAndReconciles() {
+        repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://first.example", USER_ID);
+        database.bootstrapDao().upsertSyncState(new SyncStateEntity(
+                USER_ID,
+                "2026-08-27T11:59:30Z",
+                NOW.minusSeconds(60).toString(),
+                null,
+                SyncSourceFingerprint.from("https://first.example")));
+
+        BootstrapResult changed = repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://second.example", USER_ID);
+
+        assertEquals(Instant.parse("2026-08-27T11:58:01Z"), changed.initialPollSince());
+        assertEquals(
+                SyncSourceFingerprint.from("https://second.example"),
+                database.bootstrapDao().syncState(USER_ID).sourceFingerprint);
+    }
+
+    @Test
+    public void explicitReconciliationDiscardsOtherwiseValidCursor() {
+        repository(new CapturingDataSource(List.of(sensorDto())))
+                .bootstrap("https://example.test", USER_ID);
+        database.bootstrapDao().upsertSyncState(new SyncStateEntity(
+                USER_ID,
+                "2026-08-27T11:59:30Z",
+                NOW.minusSeconds(60).toString(),
+                null,
+                SyncSourceFingerprint.from("https://example.test")));
+
+        BootstrapResult result = repository(new CapturingDataSource(List.of(sensorDto())))
+                .reconcile("https://example.test", USER_ID);
+
+        assertEquals(Instant.parse("2026-08-27T11:58:01Z"), result.initialPollSince());
+        assertNull(database.bootstrapDao().syncState(USER_ID).cursorUpdateTimestamp);
     }
 
     private BootstrapRepository repository(BootstrapDataSource source) {

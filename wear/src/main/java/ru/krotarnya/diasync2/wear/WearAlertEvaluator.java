@@ -14,6 +14,8 @@ final class WearAlertEvaluator {
     static final Duration VISUAL_STALE_AFTER = Duration.ofSeconds(90);
     static final Duration NO_DATA_AFTER = Duration.ofMinutes(5);
     private static final Duration NO_DATA_REPEAT = Duration.ofMinutes(1);
+    private static final Duration FUTURE_TOLERANCE = Duration.ofMinutes(1);
+    private static final Duration CLOCK_ANOMALY_RECHECK = Duration.ofMinutes(1);
 
     private final Clock clock;
 
@@ -48,11 +50,17 @@ final class WearAlertEvaluator {
         Instant freshnessReference = snapshot.points().isEmpty()
                 ? snapshot.generatedAt()
                 : snapshot.points().get(0).timestamp();
+        boolean futureData = freshnessReference.isAfter(now.plus(FUTURE_TOLERANCE));
+        boolean clockMovedBehindThrottle = lastNoDataAt != null
+                && lastNoDataAt.isAfter(now.plus(FUTURE_TOLERANCE));
         WearDataPhase phase = phase(snapshot, freshnessReference, now);
-        boolean noData = !freshnessReference.plus(NO_DATA_AFTER).isAfter(now);
-        if (!noData) {
+        boolean noData = !futureData && !freshnessReference.plus(NO_DATA_AFTER).isAfter(now);
+        if (futureData || clockMovedBehindThrottle) {
+            nextCheckAt = earlier(nextCheckAt, now.plus(CLOCK_ANOMALY_RECHECK), now);
+        }
+        if (!noData && !clockMovedBehindThrottle) {
             lastNoDataAt = null;
-        } else if (policy.noDataEnabled()) {
+        } else if (noData && !clockMovedBehindThrottle && policy.noDataEnabled()) {
             if (policy.snoozedUntil().isAfter(now)) {
                 nextCheckAt = earlier(nextCheckAt, policy.snoozedUntil(), now);
             } else if (lastNoDataAt == null
@@ -64,24 +72,28 @@ final class WearAlertEvaluator {
             }
         }
 
-        if (snapshot.points().isEmpty() && !noData) {
-            nextCheckAt = earlier(
-                    nextCheckAt,
-                    freshnessReference.plus(NO_DATA_AFTER),
-                    now);
-        } else if (phase == WearDataPhase.FRESH && !snapshot.points().isEmpty()) {
-            nextCheckAt = earlier(
-                    nextCheckAt,
-                    freshnessReference.plus(VISUAL_STALE_AFTER).plusMillis(1),
-                    now);
-        } else if (phase == WearDataPhase.STALE) {
-            nextCheckAt = earlier(
-                    nextCheckAt,
-                    freshnessReference.plus(NO_DATA_AFTER),
-                    now);
-        } else if (noData && policy.noDataEnabled() && !policy.snoozedUntil().isAfter(now)) {
-            Instant repeatFrom = lastNoDataAt == null ? now : lastNoDataAt;
-            nextCheckAt = earlier(nextCheckAt, repeatFrom.plus(NO_DATA_REPEAT), now);
+        if (!futureData && !clockMovedBehindThrottle) {
+            if (snapshot.points().isEmpty() && !noData) {
+                nextCheckAt = earlier(
+                        nextCheckAt,
+                        freshnessReference.plus(NO_DATA_AFTER),
+                        now);
+            } else if (phase == WearDataPhase.FRESH && !snapshot.points().isEmpty()) {
+                nextCheckAt = earlier(
+                        nextCheckAt,
+                        freshnessReference.plus(VISUAL_STALE_AFTER).plusMillis(1),
+                        now);
+            } else if (phase == WearDataPhase.STALE) {
+                nextCheckAt = earlier(
+                        nextCheckAt,
+                        freshnessReference.plus(NO_DATA_AFTER),
+                        now);
+            } else if (noData
+                    && policy.noDataEnabled()
+                    && !policy.snoozedUntil().isAfter(now)) {
+                Instant repeatFrom = lastNoDataAt == null ? now : lastNoDataAt;
+                nextCheckAt = earlier(nextCheckAt, repeatFrom.plus(NO_DATA_REPEAT), now);
+            }
         }
 
         WearAlertState nextState = new WearAlertState(lastEventId, lastNoDataAt, phase);
@@ -93,6 +105,9 @@ final class WearAlertEvaluator {
     }
 
     private WearDataPhase phase(WearSnapshot snapshot, Instant latest, Instant now) {
+        if (latest.isAfter(now.plus(FUTURE_TOLERANCE))) {
+            return WearDataPhase.FRESH;
+        }
         if (snapshot.points().isEmpty() || !latest.plus(NO_DATA_AFTER).isAfter(now)) {
             return WearDataPhase.NO_DATA;
         }
