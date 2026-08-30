@@ -44,8 +44,8 @@ final class WearGraphLayoutCalculator {
         }
 
         float radius = Math.max(
-                1.5f,
-                Math.min(height * 0.025f, width * 100f / (state.graphWindowMinutes() * 60f)));
+                1.25f,
+                Math.min(height * 0.015f, width * 60f / (state.graphWindowMinutes() * 60f)));
 
         return new WearGraphLayout(
                 bounds,

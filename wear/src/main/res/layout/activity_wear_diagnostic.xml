@@ -3,44 +3,84 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/brand_black"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:paddingStart="28dp"
-    android:paddingTop="20dp"
-    android:paddingEnd="28dp"
-    android:paddingBottom="20dp">
-
-    <TextView
-        android:id="@+id/wear_latest_value"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/wear_no_data"
-        android:textColor="@color/brand_orange"
-        android:textSize="20sp" />
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="32dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="32dp"
+        android:paddingBottom="32dp">
 
-    <TextView
-        android:id="@+id/wear_snapshot_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:textColor="#FFFFFFFF"
-        android:textSize="12sp" />
+        <TextView
+            android:id="@+id/wear_latest_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="@string/wear_no_data"
+            android:textColor="@color/brand_orange"
+            android:textSize="22sp" />
 
-    <TextView
-        android:id="@+id/wear_last_error"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:textColor="@color/brand_orange"
-        android:textSize="12sp" />
+        <TextView
+            android:id="@+id/wear_snapshot_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:lineSpacingExtra="2dp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="16sp" />
 
-</LinearLayout>
+        <TextView
+            style="@style/WearDiagnosticSectionLabel"
+            android:layout_marginTop="18dp"
+            android:text="@string/wear_diagnostic_snapshot" />
+
+        <TextView
+            android:id="@+id/wear_snapshot_details"
+            style="@style/WearDiagnosticSectionBody" />
+
+        <TextView
+            style="@style/WearDiagnosticSectionLabel"
+            android:layout_marginTop="14dp"
+            android:text="@string/wear_diagnostic_display" />
+
+        <TextView
+            android:id="@+id/wear_display_details"
+            style="@style/WearDiagnosticSectionBody" />
+
+        <TextView
+            style="@style/WearDiagnosticSectionLabel"
+            android:layout_marginTop="14dp"
+            android:text="@string/wear_diagnostic_alerts" />
+
+        <TextView
+            android:id="@+id/wear_alert_details"
+            style="@style/WearDiagnosticSectionBody" />
+
+        <LinearLayout
+            android:id="@+id/wear_error_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/WearDiagnosticSectionLabel"
+                android:text="@string/wear_diagnostic_last_error"
+                android:textColor="#FFFF5252" />
+
+            <TextView
+                android:id="@+id/wear_last_error"
+                style="@style/WearDiagnosticSectionBody"
+                android:textColor="#FFFF8A80" />
+        </LinearLayout>
+
+    </LinearLayout>
 </ScrollView>

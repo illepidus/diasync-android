@@ -6,13 +6,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
 import android.widget.TextView;
 import java.time.Clock;
 import ru.krotarnya.diasync2.R;
 
 public final class WearDiagnosticActivity extends Activity {
+    private static final long REFRESH_INTERVAL_MILLIS = 1_000L;
     public static final String ACTION_STATE_UPDATED =
             "ru.krotarnya.diasync2.action.WEAR_STATE_UPDATED";
+
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshTicker = new Runnable() {
+        @Override
+        public void run() {
+            renderLastKnownState();
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MILLIS);
+        }
+    };
 
     private final BroadcastReceiver stateUpdatedReceiver = new BroadcastReceiver() {
         @Override
@@ -30,7 +43,14 @@ public final class WearDiagnosticActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        renderLastKnownState();
+        refreshHandler.removeCallbacks(refreshTicker);
+        refreshTicker.run();
+    }
+
+    @Override
+    protected void onPause() {
+        refreshHandler.removeCallbacks(refreshTicker);
+        super.onPause();
     }
 
     @Override
@@ -55,7 +75,12 @@ public final class WearDiagnosticActivity extends Activity {
                 diagnostics.lastError(),
                 new SharedPreferencesWearAlertStateStore(this).read().dataPhase());
         ((TextView) findViewById(R.id.wear_latest_value)).setText(state.headline());
-        ((TextView) findViewById(R.id.wear_snapshot_time)).setText(state.details());
+        ((TextView) findViewById(R.id.wear_snapshot_time)).setText(state.reading());
+        ((TextView) findViewById(R.id.wear_snapshot_details)).setText(state.snapshot());
+        ((TextView) findViewById(R.id.wear_display_details)).setText(state.display());
+        ((TextView) findViewById(R.id.wear_alert_details)).setText(state.alerts());
         ((TextView) findViewById(R.id.wear_last_error)).setText(state.error());
+        findViewById(R.id.wear_error_section).setVisibility(
+                state.error().isBlank() ? View.GONE : View.VISIBLE);
     }
 }

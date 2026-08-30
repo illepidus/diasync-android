@@ -12,4 +12,23 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:forceDarkAllowed">false</item>
     </style>
+
+    <style name="WearDiagnosticSectionLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:gravity">start</item>
+        <item name="android:textColor">@color/brand_orange</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="WearDiagnosticSectionBody">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">3dp</item>
+        <item name="android:gravity">start</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:textSize">14sp</item>
+    </style>
 </resources>

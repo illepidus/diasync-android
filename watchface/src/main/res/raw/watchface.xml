@@ -3,17 +3,17 @@
     <Metadata key="CLOCK_TYPE" value="DIGITAL" />
     <Metadata key="PREVIEW_TIME" value="14:48:00" />
     <Scene backgroundColor="#FF000000">
-        <DigitalClock height="88" width="330" x="60" y="25">
-            <TimeText format="hh:mm" height="88" hourFormat="24" width="330" x="0" y="0">
-                <Variant mode="AMBIENT" target="alpha" value="220" />
-                <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="68" />
+        <DigitalClock height="92" width="340" x="55" y="21">
+            <TimeText format="hh:mm" height="92" hourFormat="24" width="340" x="0" y="0">
+                <Variant mode="AMBIENT" target="alpha" value="0" />
+                <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="72" />
             </TimeText>
         </DigitalClock>
 
-        <PartText height="38" width="220" x="115" y="111">
-            <Variant mode="AMBIENT" target="alpha" value="190" />
+        <PartText height="36" width="220" x="115" y="111">
+            <Variant mode="AMBIENT" target="alpha" value="0" />
             <Text>
-                <Font color="#FFBDBDBD" family="SYNC_TO_DEVICE" size="24">
+                <Font color="#FFBDBDBD" family="SYNC_TO_DEVICE" size="22">
                     <Template>
                         <![CDATA[%s %s.%s]]>
                         <Parameter expression="[DAY_OF_WEEK_S]" />
@@ -31,10 +31,10 @@
                 <Expression name="batteryCritical"><![CDATA[[BATTERY_PERCENT] <= 15]]></Expression>
             </Expressions>
             <Compare expression="batteryCharging">
-                <PartText height="38" width="90" x="45" y="111">
-                    <Variant mode="AMBIENT" target="alpha" value="200" />
+                <PartText height="36" width="90" x="45" y="111">
+                    <Variant mode="AMBIENT" target="alpha" value="0" />
                     <Text align="START">
-                        <Font color="#FF00FF00" family="SYNC_TO_DEVICE" size="24">
+                        <Font color="#FF00FF00" family="SYNC_TO_DEVICE" size="22">
                             <Template><![CDATA[%d%%]]>
                                 <Parameter expression="[BATTERY_PERCENT]" />
                             </Template>
@@ -43,10 +43,10 @@
                 </PartText>
             </Compare>
             <Compare expression="batteryCritical">
-                <PartText height="38" width="90" x="45" y="111">
-                    <Variant mode="AMBIENT" target="alpha" value="200" />
+                <PartText height="36" width="90" x="45" y="111">
+                    <Variant mode="AMBIENT" target="alpha" value="0" />
                     <Text align="START">
-                        <Font color="#FFFF0000" family="SYNC_TO_DEVICE" size="24">
+                        <Font color="#FFFF0000" family="SYNC_TO_DEVICE" size="22">
                             <Template><![CDATA[%d%%]]>
                                 <Parameter expression="[BATTERY_PERCENT]" />
                             </Template>
@@ -55,10 +55,10 @@
                 </PartText>
             </Compare>
             <Default>
-                <PartText height="38" width="90" x="45" y="111">
-                    <Variant mode="AMBIENT" target="alpha" value="200" />
+                <PartText height="36" width="90" x="45" y="111">
+                    <Variant mode="AMBIENT" target="alpha" value="0" />
                     <Text align="START">
-                        <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="24">
+                        <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="22">
                             <Template><![CDATA[%d%%]]>
                                 <Parameter expression="[BATTERY_PERCENT]" />
                             </Template>
@@ -67,6 +67,38 @@
                 </PartText>
             </Default>
         </Condition>
+
+        <PartText height="36" width="90" x="315" y="111">
+            <Variant mode="AMBIENT" target="alpha" value="0" />
+            <Text align="END">
+                <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="22">
+                    <Template><![CDATA[%d]]>
+                        <Parameter expression="[STEP_COUNT]" />
+                    </Template>
+                </Font>
+            </Text>
+        </PartText>
+
+        <DigitalClock height="112" width="390" x="30" y="126">
+            <TimeText alpha="0" format="hh:mm" height="112" hourFormat="24" width="390" x="0" y="0">
+                <Variant mode="AMBIENT" target="alpha" value="255" />
+                <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="88" />
+            </TimeText>
+        </DigitalClock>
+
+        <PartText alpha="0" height="48" width="300" x="75" y="239">
+            <Variant mode="AMBIENT" target="alpha" value="220" />
+            <Text>
+                <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="30">
+                    <Template>
+                        <![CDATA[%s %s.%s]]>
+                        <Parameter expression="[DAY_OF_WEEK_S]" />
+                        <Parameter expression="[DAY_Z]" />
+                        <Parameter expression="[MONTH_Z]" />
+                    </Template>
+                </Font>
+            </Text>
+        </PartText>
 
         <ComplicationSlot displayName="glucose_complication_name"
             height="1"
@@ -86,7 +118,7 @@
             supportedTypes="LONG_TEXT EMPTY"
             width="360"
             x="45"
-            y="150">
+            y="158">
             <DefaultProviderPolicy defaultSystemProvider="EMPTY"
                 defaultSystemProviderType="EMPTY"
                 primaryProvider="ru.krotarnya.diasync2/ru.krotarnya.diasync2.wear.DiasyncComplicationDataSourceService"
@@ -97,42 +129,6 @@
                     <Variant mode="AMBIENT" target="alpha" value="0" />
                     <Image resource="[COMPLICATION.SMALL_IMAGE]" />
                 </PartImage>
-                <PartText alpha="0" height="235" width="360" x="0" y="0">
-                    <Variant mode="AMBIENT" target="alpha" value="255" />
-                    <Text>
-                        <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="60">
-                            <Template><![CDATA[%s]]>
-                                <Parameter expression="[COMPLICATION.TEXT]" />
-                            </Template>
-                        </Font>
-                    </Text>
-                </PartText>
-            </Complication>
-        </ComplicationSlot>
-
-        <ComplicationSlot displayName="glucose_status_complication_name"
-            height="38"
-            slotId="2"
-            supportedTypes="SHORT_TEXT EMPTY"
-            width="250"
-            x="100"
-            y="392">
-            <DefaultProviderPolicy defaultSystemProvider="EMPTY"
-                defaultSystemProviderType="EMPTY"
-                primaryProvider="ru.krotarnya.diasync2/ru.krotarnya.diasync2.wear.DiasyncComplicationDataSourceService"
-                primaryProviderType="SHORT_TEXT" />
-            <BoundingBox height="38" width="250" x="0" y="0" />
-            <Complication type="SHORT_TEXT">
-                <PartText height="38" width="250" x="0" y="0">
-                    <Variant mode="AMBIENT" target="alpha" value="220" />
-                    <Text>
-                        <Font color="#FFFFFFFF" family="SYNC_TO_DEVICE" size="23">
-                            <Template><![CDATA[%s]]>
-                                <Parameter expression="[COMPLICATION.TEXT]" />
-                            </Template>
-                        </Font>
-                    </Text>
-                </PartText>
             </Complication>
         </ComplicationSlot>
     </Scene>

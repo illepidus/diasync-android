@@ -710,7 +710,7 @@ Manual: пройти все phone подменю, сверить Wear Activity �
 
 ## Slice 12 — Watchface UI polish
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
@@ -721,9 +721,12 @@ Watchface получает завершённую визуальную иера�
 
 - Визуальная полировка существующего Watch Face Format: typography, spacing, alignment, colors и
   relative prominence элементов.
+- Уменьшение точек существующего Wear complication bitmap без изменения данных или graph semantics.
+- Визуальная переработка существующей Wear diagnostic Activity на уже доступных snapshot и watchdog
+  данных, без новых data paths.
 - Отдельная проверка active и ambient представлений на целевых размерах Watch 7 и Watch 4.
-- Сохранение текущей семантики value, unit, trend, graph, stale/no-data и complication data.
-- Только WFF resources; исполняемый код и новые data paths не добавляются.
+- Сохранение текущей семантики value, unit, trend, graph, stale/no-data и complication data в active.
+- Ambient показывает только время и дату и не отображает glucose или battery.
 
 ### Acceptance criteria
 
@@ -731,7 +734,11 @@ Watchface получает завершённую визуальную иера�
 - Вторичная информация не конкурирует с value и не обрезается на поддерживаемых круглых экранах.
 - Active mode соответствует принятой black/white/orange схеме приложения.
 - Ambient mode сохраняет достаточный контраст и не добавляет лишнюю подсветку пикселей.
+- Ambient mode не показывает glucose, graph, stale/no-data или battery.
+- Interactive показывает системное число шагов симметрично battery; ambient его скрывает.
 - Fresh, stale и no-data состояния визуально различимы без изменения их текущей логики.
+- Wear diagnostic Activity разборчиво показывает snapshot, reading/display, alert/watchdog и
+  rejected-payload diagnostics без credential или raw payload.
 
 ### Проверки
 
@@ -745,7 +752,7 @@ Watch 4 и убедиться, что критичные элементы не �
 ### Не входит
 
 - Изменение Wear payload, complication contract, alert logic или data freshness semantics.
-- Исполняемый код в `watchface`.
+- Исполняемый код в `watchface` или новые Wear data paths.
 - Install/release flow, icons/previews, backup/restore и общий release acceptance pass — Slice 13.
 
 ---

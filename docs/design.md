@@ -518,9 +518,9 @@ snapshot или изменения stale/no-data state.
 - trend;
 - stale/error text.
 
-Provider также отдаёт текстовый fallback. WFF получает bitmap как optional `SMALL_IMAGE` внутри
-`LONG_TEXT`: в interactive показывает bitmap, в ambient — текст из того же complication. Один слот
-для обоих режимов обязателен, потому что Samsung WFF runtime отбрасывает один из перекрывающихся
+Provider также отдаёт текстовый fallback для других watchface. WFF получает bitmap как optional
+`SMALL_IMAGE` внутри `LONG_TEXT` и показывает его только в interactive. Один слот используется для
+glucose presentation, потому что Samsung WFF runtime отбрасывает один из перекрывающихся
 complication slots. Отдельный `PHOTO_IMAGE` остаётся поддерживаемым provider для других watchface.
 
 ### Watchface presentation
@@ -528,14 +528,15 @@ complication slots. Отдельный `PHOTO_IMAGE` остаётся подде
 - время `HH:mm`;
 - дата `EE dd.MM`;
 - battery percent;
+- число шагов за текущий день по системному Wear OS sensor source в interactive;
 - charging — зелёный;
 - critical battery `<= 15%` — красный;
 - normal battery — белый;
 - black background;
 - visual stale после 90 секунд: показывать возраст в минутах;
 - payload отсутствует: `NO DATA`;
-- interactive и ambient layouts не должны расходиться по смыслу; ambient упрощает цвет/детали ради
-  энергопотребления.
+- ambient намеренно не показывает glucose, trend, graph, stale/no-data или battery: остаются только
+  крупное время и дата, чтобы сохранённый snapshot не воспринимался как актуальное измерение.
 
 ## 15. Watch alerts
 
@@ -607,7 +608,8 @@ Status показывает:
 Диагностическая Activity на часах доступна из launcher и показывает:
 
 - наличие и версию последнего корректного snapshot;
-- время получения snapshot и возраст последней sensor point в часовом поясе пользователя;
+- возраст генерации/получения snapshot и последней sensor point с обновлением раз в секунду, пока
+  Activity активна;
 - последнее value/trend либо явное `NO DATA`;
 - текущие alert enabled/snooze и состояние локального NO DATA watchdog;
 - последнюю ошибку приёма/валидации без payload, backend URL, `userId` и других credential.

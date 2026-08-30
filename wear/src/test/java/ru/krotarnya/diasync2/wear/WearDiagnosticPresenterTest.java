@@ -30,7 +30,18 @@ public final class WearDiagnosticPresenterTest {
         assertEquals("VALID", stateAt(NOW.minusSeconds(89)).headline());
         assertEquals("STALE", stateAt(NOW.minusSeconds(90)).headline());
         assertEquals("NO DATA", stateAt(NOW.minusSeconds(300)).headline());
-        assertTrue(stateAt(NOW.minusSeconds(30)).details().contains("Watchdog: FRESH"));
+        assertTrue(stateAt(NOW.minusSeconds(30)).alerts().contains("Watchdog: FRESH"));
+    }
+
+    @Test public void validSnapshotUsesLongFormDiagnosticSections() {
+        WearDiagnosticState state = stateAt(NOW.minusSeconds(15));
+
+        assertEquals("7.0 mmol/L →\nMeasured 15s ago", state.reading());
+        assertEquals("Protocol: 1\nGenerated: 0s ago\nReceived: 5s ago", state.snapshot());
+        assertTrue(state.display().contains("Time window: 30m\nPoints: 1\nUnit: mmol/L"));
+        assertTrue(state.display().contains("Calibration: on\nZones: on\nLines: off\nTrend: on"));
+        assertEquals("Low: off\nHigh: off\nNo data: on\nSnooze: off\nWatchdog: FRESH",
+                state.alerts());
     }
 
     private WearDiagnosticState stateAt(Instant pointTime) {
