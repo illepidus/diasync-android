@@ -498,8 +498,8 @@ complication slots. Отдельный `PHOTO_IMAGE` остаётся подде
 - black background;
 - visual stale после 90 секунд: показывать возраст в минутах;
 - payload отсутствует: `NO DATA`;
-- ambient намеренно не показывает glucose, trend, graph, stale/no-data или battery: остаются только
-  крупное время и дата, чтобы сохранённый snapshot не воспринимался как актуальное измерение.
+- ambient mode намеренно не показывает диабетических данных: невозможно гарантировать их
+  актуальность в этом режиме
 
 ## Watch alerts
 
