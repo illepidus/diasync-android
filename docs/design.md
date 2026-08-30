@@ -2,26 +2,13 @@
 
 Статус: базовая версия для начала реализации  
 Язык реализации: Java 17  
-Целевые устройства: Android-телефон, Galaxy Watch 7, обновлённый Galaxy Watch 4
+Целевые устройства: android телефоны, Galaxy Watch 4, Galaxy Watch 7
 
-## 1. Назначение документа
+## Назначение документа
 
-Этот документ фиксирует поведение и архитектурные решения Diasync Android v2. Он является основной
-технической спецификацией для Codex и человека, который принимает изменения.
+Этот документ фиксирует поведение и архитектурные решения Diasync Android v2.
 
-При конфликте источников действует следующий порядок:
-
-1. Явное текущее решение владельца проекта.
-2. Этот `design.md`.
-3. `implementation-plan.md`.
-4. Поведение `diasync-old` как референс пользовательского поведения.
-5. Текущая реализация `diasync-android`.
-6. Предпочтения конкретного разработчика или Codex.
-
-Старый проект используется как поведенческая спецификация и графический референс. Старые
-Android-механизмы и архитектура не копируются.
-
-## 2. Цели
+## Цели проекта
 
 Diasync должен:
 
@@ -31,39 +18,23 @@ Diasync должен:
 - передавать ограниченное окно данных с телефона на Wear OS через Wear Data Layer;
 - показывать на циферблате WFF время, дату, батарею часов, график, последнее значение, тренд и
   ошибки;
-- воспроизводить телефонные и часовые алерты с поведением, основанным на `diasync-old`;
+- воспроизводить алерты на часах и телефоне;
 - оставаться достаточно простой системой для личного использования и дальнейшей разработки
   небольшими vertical slices.
 
-## 3. Не-цели первой версии
-
-- GraphQL over WebSocket.
-- Прямое подключение часов к backend.
-- Поддержка Wear OS 3 и legacy `WatchFaceService`.
-- Публикация в Google Play и соответствующая продуктовая инфраструктура.
-- Несколько пользователей или профилей в одной установке.
-- Медицинская сертификация и позиционирование приложения как медицинского устройства.
-- Перенос PIP, запуска xDrip и прочих функций старого приложения, которые не входят в заявленный v2.
-- Универсальный SDK, «чистая архитектура» ради самой архитектуры или библиотечные абстракции на
-  случай гипотетического второго backend.
-- Загрузка точек на backend в первом read-path релизе. Возможный producer/master-сценарий
-  добавляется отдельным будущим vertical slice, не усложняя текущий consumer.
-
-## 4. Поддерживаемая платформа
+## Поддерживаемая платформа
 
 ### Телефон
 
 - `minSdk 26`.
 - `targetSdk 37`.
-- Java 17.
-- XML Views и `RemoteViews`; Compose и Kotlin не используются.
+- `Java 17`.
 
 ### Wear OS
 
 - `minSdk 33` для `wear` и `watchface`.
-- Java 17 в исполняемом `wear`.
-- Watch Face Format v1, который требует Wear OS 4 / API 33.
-- Galaxy Watch 4 поддерживается после обновления до Wear OS 4 или новее.
+- `Java 17` в исполняемом `wear`.
+- Watch Face Format v1.
 
 ### Распространение
 
@@ -72,7 +43,7 @@ Diasync должен:
 - Phone APK и Wear APK имеют один `applicationId`: `ru.krotarnya.diasync2`.
 - WFF устанавливается отдельным APK с `applicationId`: `ru.krotarnya.diasync2.watchface`.
 
-## 5. Структура Gradle-проекта
+## Структура Gradle-проекта
 
 ```text
 Diasync
@@ -85,9 +56,9 @@ Diasync
 Зависимости модулей:
 
 ```text
-app  ───────► common
-wear ───────► common
-watchface     без code dependency
+app  -> common
+wear -> common
+watchface -> none
 ```
 
 ### `common`
@@ -140,9 +111,9 @@ watchface     без code dependency
 - Батарея берётся из системного watch-battery complication.
 - Диабетическая область получает bitmap/text из complication provider модуля `wear`.
 
-## 6. Backend contract
+## Backend contract
 
-Backend: `illepidus/diasync-backend` (старый URL `diasync-server` перенаправляется на него).
+Backend: `https://github.com/illepidus/diasync-backend`.
 
 Используемый REST prefix:
 
@@ -202,7 +173,7 @@ DataPoint
 Первая версия UI строит основную линию по `sensorGlucose`. `manualGlucose` и `carbs` сохраняются
 сразу, даже если их визуализация появится позже.
 
-## 7. Локальная модель телефона
+## Локальная модель телефона
 
 Room database содержит как минимум:
 
@@ -236,7 +207,7 @@ Batch long poll применяется в одной Room-транзакции:
 
 Cursor нельзя продвигать до успешного commit. Повтор batch после падения безопасен благодаря upsert.
 
-## 8. Синхронизация телефона
+## Синхронизация телефона
 
 ### Foreground service
 
@@ -258,12 +229,8 @@ Notification является частью продукта и показыва�
 
 - что мониторинг активен;
 - последнее значение и возраст, если они есть;
-- состояние соединения: disabled / connecting / connected; `connected` означает, что bootstrap или
-  предыдущий long-poll round trip успешно завершился, при валидированной Android сети активен
-  следующий long poll; отсутствие сети, request error, backoff и повторная попытка до первого
-  успешного ответа показываются как `connecting`;
+- состояние соединения: disabled / connecting / connected;
 - действие для открытия настроек/статуса;
-- действие остановки мониторинга только если пользователь явно запросил такую возможность.
 
 ### Запуск
 
@@ -298,7 +265,7 @@ Bootstrap повторяется при смене backend URL/userId и мож�
   thread.
 - Локальное время никогда не заменяет server cursor после его получения.
 
-## 9. Распространение обновлений внутри телефона
+## Распространение обновлений внутри телефона
 
 После commit новых данных один application-level coordinator последовательно инициирует:
 
@@ -312,7 +279,7 @@ Bootstrap повторяется при смене backend URL/userId и мож�
 зависимости через небольшой composition root в `Application` и явно тестируемые интерфейсы там, где
 граница действительно нужна.
 
-## 10. Глюкоза, calibration и trend
+## Глюкоза, calibration и trend
 
 ### Единицы
 
@@ -338,8 +305,6 @@ displayMgdl = rawMgdl * slope + intercept
 
 ### Trend
 
-Поведение повторяет `diasync-old`:
-
 1. Найти последнюю sensor point.
 2. Взять предыдущие sensor points не старше 10 минут относительно неё.
 3. Вычислить их среднее.
@@ -358,7 +323,7 @@ displayMgdl = rawMgdl * slope + intercept
 
 При недостатке данных trend пустой.
 
-## 11. Phone widget
+## Phone widget
 
 Реализация: обычный `AppWidgetProvider`, XML `RemoteViews`, график как bitmap из Android Canvas.
 
@@ -417,9 +382,7 @@ displayMgdl = rawMgdl * slope + intercept
 - двойное нажатие открывает сразу подменю настроек алертов;
 - переход из widget не меняет monitoring, snooze или alert settings сам по себе.
 
-## 12. Phone alerts
-
-Поведение основано на старом `Alerter`.
+## Phone alerts
 
 ### Настройки
 
@@ -460,7 +423,7 @@ LOW > HIGH > NO DATA
 - отдельный notification channel для alert visibility/actions;
 - системные ограничения DND не обходятся скрытыми или привилегированными способами.
 
-## 13. Phone → Wear protocol
+## Phone → Wear protocol
 
 Телефон является единственным владельцем backend credentials. `userId` не передаётся на часы, потому
 что часы не обращаются к backend.
@@ -497,7 +460,7 @@ Alert event содержит measurement timestamp/type в `eventId`. Часы �
 event и не вибрируют повторно после process restart. Просроченное событие после долгого reconnect
 игнорируется.
 
-## 14. Wear persistence и complication
+## Wear persistence и complication
 
 ### Persistence
 
@@ -538,7 +501,7 @@ complication slots. Отдельный `PHOTO_IMAGE` остаётся подде
 - ambient намеренно не показывает glucose, trend, graph, stale/no-data или battery: остаются только
   крупное время и дата, чтобы сохранённый snapshot не воспринимался как актуальное измерение.
 
-## 15. Watch alerts
+## Watch alerts
 
 ### LOW/HIGH
 
@@ -562,7 +525,7 @@ Vibration patterns из старого приложения:
 - Повтор ограничивается примерно одним разом в минуту.
 - Появление свежих данных немедленно сбрасывает NO DATA state.
 
-## 16. Settings и status UI
+## Settings и status UI
 
 Activity приложения является configuration/status UI, а не основным ежедневным экраном.
 Главный экран показывает краткий status и отдельные подразделы настроек, чтобы не
@@ -614,7 +577,7 @@ Status показывает:
 - текущие alert enabled/snooze и состояние локального NO DATA watchdog;
 - последнюю ошибку приёма/валидации без payload, backend URL, `userId` и других credential.
 
-## 17. Ошибки и восстановление
+## Ошибки и восстановление
 
 | Событие                   | Поведение                                                              |
 |---------------------------|------------------------------------------------------------------------|
@@ -624,13 +587,13 @@ Status показывает:
 | Duplicate batch           | Безопасный Room upsert                                                 |
 | Process death             | `START_STICKY`, восстановить cursor и loop                             |
 | Reboot телефона           | boot receiver восстанавливает enabled monitoring                       |
-| Смена URL/userId          | Остановить loop, очистить/переключить active state, bootstrap заново   |
+| Смена URL/userId          | Остановить loop, очистить active state, bootstrap заново               |
 | Watch disconnected        | Телефон продолжает работу; последний Data Item догоняет часы           |
 | Reboot часов              | Загрузить persisted snapshot, показать stale, ждать Data Item          |
 | Повреждённый Wear payload | Отклонить; сохранить последнее корректное состояние                    |
 | Timestamp из будущего     | Явная ошибка presentation; не использовать как свежую нормальную точку |
 
-## 18. Privacy и security
+## Privacy и security
 
 - `userId` рассматривается как bearer secret.
 - Secret не попадает в логи, notification, widget, Wear payload, exception text или analytics.
@@ -641,14 +604,14 @@ Status показывает:
 - Логи содержат состояние и counts, но не значения медицинских данных и не credentials, если это не
   требуется для локальной отладки и явно не включено developer build.
 
-## 19. Наблюдаемость
+## Наблюдаемость
 
 - Короткие стабильные log tags по подсистемам: Sync, Db, Widget, Alert, WearSync, Complication.
 - Sync state доступен в UI и foreground notification.
 - Ошибка хранится как тип/короткое безопасное описание, а не полный потенциально секретный response.
 - Debug build может иметь действие «export diagnostics», но оно не входит в первые slices.
 
-## 20. Тестирование
+## Тестирование
 
 ### `common`
 
@@ -691,7 +654,7 @@ Status показывает:
 - watch disconnect/reconnect и watch reboot;
 - ambient/AOD.
 
-## 21. Проверяемые требования
+## Проверяемые требования
 
 | ID    | Требование                                                                                        |
 |-------|---------------------------------------------------------------------------------------------------|
@@ -710,22 +673,3 @@ Status показывает:
 | NFR-3 | Все blocking/network/render операции выполняются вне main thread                                  |
 | NFR-4 | Credentials не покидают телефон и не попадают в пользовательские surfaces/logs                    |
 | NFR-5 | Поведение времени, trend, alerts и serialization покрыто deterministic tests с injected `Clock`   |
-
-## 22. Блокирующие открытые вопросы
-
-На момент этой версии блокирующих продуктовых вопросов нет. Новые решения, которые меняют
-пользовательское поведение или границы модулей, сначала вносятся в этот документ, затем реализуются
-отдельным vertical slice.
-
-## 23. Референсы
-
-- Новый Android skeleton: <https://github.com/illepidus/diasync-android>
-- Backend: <https://github.com/illepidus/diasync-backend>
-- Старый widget: <https://github.com/illepidus/diasync-old/blob/master/mobile/src/main/java/ru/krotarnya/diasync/Libre2Widget.java>
-- Старый graph renderer: <https://github.com/illepidus/diasync-old/blob/master/mobile/src/main/java/ru/krotarnya/diasync/Libre2GraphBuilder.java>
-- Старый alert engine: <https://github.com/illepidus/diasync-old/blob/master/mobile/src/main/java/ru/krotarnya/diasync/Alerter.java>
-- Старый watch renderer: <https://github.com/illepidus/diasync-old/blob/master/wear/src/main/java/ru/krotarnya/diasync/WatchFaceRenderer.java>
-- Старый watch service: <https://github.com/illepidus/diasync-old/blob/master/wear/src/main/java/ru/krotarnya/diasync/service/MainWatchFaceService.java>
-- Android FGS timeouts: <https://developer.android.com/develop/background-work/services/fgs/timeout>
-- Android FGS types: <https://developer.android.com/develop/background-work/services/fgs/service-types>
-- Watch Face Format: <https://developer.android.com/training/wearables/wff>
