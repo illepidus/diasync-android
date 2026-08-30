@@ -34,19 +34,27 @@ public class AlertSoundPlayerTest {
     }
 
     @Test
-    public void releasesPlayerOnceAfterCompletionOrError() {
+    public void retainsPlayerUntilCompletionOrErrorThenReleasesOnce() {
         Application application = RuntimeEnvironment.getApplication();
         FakePlayer completed = new FakePlayer();
-        new AlertSoundPlayer(application, new RecordingFactory(completed)).play(AlertType.LOW);
+        AlertSoundPlayer completedSoundPlayer =
+                new AlertSoundPlayer(application, new RecordingFactory(completed));
+        completedSoundPlayer.play(AlertType.LOW);
+        assertEquals(1, completedSoundPlayer.activePlayerCount());
         completed.completion.run();
         completed.error.run();
         assertEquals(1, completed.releaseCount);
+        assertEquals(0, completedSoundPlayer.activePlayerCount());
 
         FakePlayer failed = new FakePlayer();
-        new AlertSoundPlayer(application, new RecordingFactory(failed)).play(AlertType.HIGH);
+        AlertSoundPlayer failedSoundPlayer =
+                new AlertSoundPlayer(application, new RecordingFactory(failed));
+        failedSoundPlayer.play(AlertType.HIGH);
+        assertEquals(1, failedSoundPlayer.activePlayerCount());
         failed.error.run();
         failed.completion.run();
         assertEquals(1, failed.releaseCount);
+        assertEquals(0, failedSoundPlayer.activePlayerCount());
     }
 
     @Test
@@ -55,9 +63,12 @@ public class AlertSoundPlayerTest {
         FakePlayer player = new FakePlayer();
         player.throwOnStart = true;
 
-        new AlertSoundPlayer(application, new RecordingFactory(player)).play(AlertType.NO_DATA);
+        AlertSoundPlayer soundPlayer =
+                new AlertSoundPlayer(application, new RecordingFactory(player));
+        soundPlayer.play(AlertType.NO_DATA);
 
         assertEquals(1, player.releaseCount);
+        assertEquals(0, soundPlayer.activePlayerCount());
     }
 
     private static final class RecordingFactory implements AlertSoundPlayer.PlayerFactory {

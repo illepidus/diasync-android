@@ -3,7 +3,10 @@ package ru.krotarnya.diasync2.alert;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import ru.krotarnya.diasync2.R;
 import ru.krotarnya.diasync2.common.AlertType;
@@ -27,6 +30,8 @@ public final class AlertSoundPlayer {
     private final Context context;
     private final PlayerFactory playerFactory;
     private final AudioAttributes audioAttributes;
+    private final Set<Player> activePlayers =
+            Collections.newSetFromMap(new IdentityHashMap<>());
 
     public AlertSoundPlayer(Context context) {
         this(context.getApplicationContext(), AlertSoundPlayer::createMediaPlayer);
@@ -46,19 +51,33 @@ public final class AlertSoundPlayer {
         if (player == null) {
             return;
         }
+        retain(player);
         AtomicBoolean released = new AtomicBoolean();
         Runnable release = () -> {
             if (released.compareAndSet(false, true)) {
+                forget(player);
                 player.release();
             }
         };
-        player.setOnCompletionListener(release);
-        player.setOnErrorListener(release);
         try {
+            player.setOnCompletionListener(release);
+            player.setOnErrorListener(release);
             player.start();
         } catch (RuntimeException exception) {
             release.run();
         }
+    }
+
+    synchronized int activePlayerCount() {
+        return activePlayers.size();
+    }
+
+    private synchronized void retain(Player player) {
+        activePlayers.add(player);
+    }
+
+    private synchronized void forget(Player player) {
+        activePlayers.remove(player);
     }
 
     private int resource(AlertType type) {
