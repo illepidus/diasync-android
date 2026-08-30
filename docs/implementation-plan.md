@@ -386,7 +386,7 @@ Manual: проиграть три звука, проверить snooze и notif
 
 ## Slice 6 — persistent phone → Wear state path
 
-Статус: `[ ]`
+Статус: `[x]`
 
 ### Outcome
 
