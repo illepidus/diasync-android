@@ -9,6 +9,7 @@ import android.content.Intent;
 import ru.krotarnya.diasync2.MainActivity;
 import ru.krotarnya.diasync2.R;
 import ru.krotarnya.diasync2.common.AlertType;
+import ru.krotarnya.diasync2.navigation.PhoneScreen;
 
 public final class AlertNotificationPublisher {
     static final String CHANNEL_ID = "glucose_alerts";
@@ -25,6 +26,7 @@ public final class AlertNotificationPublisher {
 
     public void show(AlertType type) {
         Intent intent = new Intent(context, MainActivity.class)
+                .putExtra(MainActivity.EXTRA_SCREEN, PhoneScreen.ALERTS.name())
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context,
