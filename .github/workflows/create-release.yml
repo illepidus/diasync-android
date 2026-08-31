@@ -6,6 +6,9 @@ on:
 permissions:
   contents: write
 
+env:
+  ANDROID_KEY_ALIAS: diasync
+
 concurrency:
   group: diasync-create-release
   cancel-in-progress: false
@@ -97,14 +100,14 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_ALIAS: ${{ env.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           umask 077
           for value in "$KEYSTORE_BASE64" "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD"; do
             if [[ -z "$value" ]]; then
-              echo "All Android signing secrets must be configured" >&2
+              echo "All Android signing settings must be configured" >&2
               exit 1
             fi
           done
@@ -116,7 +119,7 @@ jobs:
           DIASYNC_VERSION_CODE: ${{ steps.version.outputs.version_code }}
           DIASYNC_KEYSTORE_PATH: ${{ runner.temp }}/diasync-release.jks
           DIASYNC_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          DIASYNC_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          DIASYNC_KEY_ALIAS: ${{ env.ANDROID_KEY_ALIAS }}
           DIASYNC_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew --no-configuration-cache :app:assembleRelease :wear:assembleRelease :watchface:assembleRelease
 

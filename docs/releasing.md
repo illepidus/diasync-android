@@ -22,5 +22,4 @@
 
 * `ANDROID_KEYSTORE_BASE64`: release-keystore, закодированный в Base64 одной строкой;
 * `ANDROID_KEYSTORE_PASSWORD`: пароль от keystore;
-* `ANDROID_KEY_ALIAS`: alias ключа для подписи;
 * `ANDROID_KEY_PASSWORD`: пароль от ключа для подписи.
