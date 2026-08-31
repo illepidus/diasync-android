@@ -2,3 +2,13 @@
 plugins {
     alias(libs.plugins.android.application) apply false
 }
+
+ext {
+    diasyncVersionName = providers.environmentVariable("DIASYNC_VERSION_NAME")
+            .orElse("${providers.gradleProperty('diasyncReleaseMajor').get()}.0")
+            .get()
+    diasyncVersionCode = providers.environmentVariable("DIASYNC_VERSION_CODE")
+            .map { Integer.parseInt(it) }
+            .orElse(1)
+            .get()
+}

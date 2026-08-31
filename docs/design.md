@@ -42,6 +42,10 @@ Diasync должен:
 - Debug/release APK устанавливаются через Android Studio или `adb`.
 - Phone APK и Wear APK имеют один `applicationId`: `ru.krotarnya.diasync2`.
 - WFF устанавливается отдельным APK с `applicationId`: `ru.krotarnya.diasync2.watchface`.
+- Release version имеет формат `major.minor`: major хранится в `gradle.properties` и меняется
+  вручную, minor автоматически увеличивается по опубликованным Git tag текущего major.
+- Ручной GitHub Actions workflow создаёт ветку `diasync-release-major.minor`, выполняет все unit
+  tests, собирает три подписанных release APK и публикует их в GitHub Release `vmajor.minor`.
 
 ## Структура Gradle-проекта
 

@@ -17,8 +17,8 @@ android {
         applicationId "ru.krotarnya.diasync2.watchface"
         minSdk 33
         targetSdk 37
-        versionCode 1
-        versionName "1.0"
+        versionCode rootProject.ext.diasyncVersionCode
+        versionName rootProject.ext.diasyncVersionName
 
     }
 
@@ -34,3 +34,5 @@ android {
         }
     }
 }
+
+apply from: rootProject.file('gradle/release-signing.gradle')

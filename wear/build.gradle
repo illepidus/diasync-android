@@ -12,8 +12,8 @@ android {
         applicationId "ru.krotarnya.diasync2"
         minSdk 33
         targetSdk 37
-        versionCode 1
-        versionName "1.0"
+        versionCode rootProject.ext.diasyncVersionCode
+        versionName rootProject.ext.diasyncVersionName
 
     }
 
@@ -32,6 +32,8 @@ android {
         unitTests.includeAndroidResources = true
     }
 }
+
+apply from: rootProject.file('gradle/release-signing.gradle')
 
 dependencies {
     implementation project(':common')
