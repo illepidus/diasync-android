@@ -49,12 +49,16 @@ public class MainActivityAlertSettingsTest {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
         CheckBox low = activity.findViewById(R.id.low_alert_enabled);
         Slider duration = activity.findViewById(R.id.snooze_duration);
+        TextView durationLabel = activity.findViewById(R.id.snooze_duration_label);
         Button toggle = activity.findViewById(R.id.snooze_toggle);
         TextView status = activity.findViewById(R.id.snooze_status);
         AppPreferences preferences = new AppPreferences(application);
 
         assertEquals(application.getString(R.string.snooze_alerts), toggle.getText().toString());
-        assertEquals(View.GONE, status.getVisibility());
+        assertEquals(View.VISIBLE, status.getVisibility());
+        assertEquals(
+                application.getString(R.string.alerts_active),
+                status.getText().toString());
         low.performClick();
         duration.setValue(12.0f);
         Instant before = Instant.now();
@@ -65,13 +69,20 @@ public class MainActivityAlertSettingsTest {
         assertEquals(application.getString(R.string.resume_alerts), toggle.getText().toString());
         assertEquals(View.VISIBLE, status.getVisibility());
         assertTrue(status.getText().toString().matches(
-                "All alerts snoozed for 2[34]:[0-5][0-9]:[0-5][0-9]"));
+                "All alerts are snoozed for 2[34]:[0-5][0-9]:[0-5][0-9]"));
+        assertEquals(View.GONE, duration.getVisibility());
+        assertEquals(View.GONE, durationLabel.getVisibility());
 
         toggle.performClick();
 
         assertEquals(Instant.EPOCH, preferences.snoozedUntil());
         assertEquals(application.getString(R.string.snooze_alerts), toggle.getText().toString());
-        assertEquals(View.GONE, status.getVisibility());
+        assertEquals(View.VISIBLE, status.getVisibility());
+        assertEquals(
+                application.getString(R.string.alerts_active),
+                status.getText().toString());
+        assertEquals(View.VISIBLE, duration.getVisibility());
+        assertEquals(View.VISIBLE, durationLabel.getVisibility());
     }
 
     @Test
@@ -91,5 +102,25 @@ public class MainActivityAlertSettingsTest {
         assertEquals(
                 SnoozeOption.EIGHT_HOURS,
                 new AppPreferences(application).loadSnoozeOption());
+    }
+
+    @Test
+    public void activeSnoozeHidesDurationControlsAfterActivityRecreation() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        ActivityController<MainActivity> firstController =
+                Robolectric.buildActivity(MainActivity.class).setup();
+
+        firstController.get().<Button>findViewById(R.id.snooze_toggle).performClick();
+        firstController.pause().stop().destroy();
+        MainActivity recreated = Robolectric.buildActivity(MainActivity.class).setup().get();
+
+        assertEquals(View.GONE,
+                recreated.findViewById(R.id.snooze_duration).getVisibility());
+        assertEquals(View.GONE,
+                recreated.findViewById(R.id.snooze_duration_label).getVisibility());
+        assertEquals(
+                application.getString(R.string.resume_alerts),
+                recreated.<Button>findViewById(R.id.snooze_toggle).getText().toString());
     }
 }

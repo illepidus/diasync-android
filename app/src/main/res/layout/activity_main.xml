@@ -264,9 +264,10 @@
             android:padding="16dp">
 
             <TextView
+                android:id="@+id/snooze_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/snooze_alerts"
+                android:text="@string/alerts_active"
                 android:textColor="@color/brand_orange"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium" />
 
@@ -292,15 +293,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/snooze_alerts" />
-
-            <TextView
-                android:id="@+id/snooze_status"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:visibility="gone" />
         </LinearLayout>
 
         <CheckBox

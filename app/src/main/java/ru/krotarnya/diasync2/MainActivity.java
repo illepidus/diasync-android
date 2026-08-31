@@ -560,12 +560,15 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private boolean renderSnoozeCountdown() {
         Optional<String> remaining = snoozeCountdown.remaining(
                 application.preferences().snoozedUntil());
-        snoozeStatus.setVisibility(remaining.isPresent() ? View.VISIBLE : View.GONE);
-        remaining.ifPresent(value -> snoozeStatus.setText(
-                getString(R.string.alerts_snoozed_for, value)));
+        snoozeStatus.setText(remaining
+                .map(value -> getString(R.string.alerts_snoozed_for, value))
+                .orElseGet(() -> getString(R.string.alerts_active)));
         snoozeToggle.setText(remaining.isPresent()
                 ? R.string.resume_alerts
                 : R.string.snooze_alerts);
+        int durationVisibility = remaining.isPresent() ? View.GONE : View.VISIBLE;
+        snoozeDuration.setVisibility(durationVisibility);
+        snoozeDurationLabel.setVisibility(durationVisibility);
         return remaining.isPresent();
     }
 

@@ -40,9 +40,10 @@
     <string name="high_alert_enabled">High glucose alert</string>
     <string name="no_data_alert_enabled">No data alert</string>
     <string name="snooze_duration">Alert snooze duration</string>
-    <string name="snooze_alerts">Snooze all alerts</string>
+    <string name="snooze_alerts">Snooze</string>
     <string name="resume_alerts">Resume alerts</string>
-    <string name="alerts_snoozed_for">All alerts snoozed for %1$s</string>
+    <string name="alerts_active">Snooze all alerts for</string>
+    <string name="alerts_snoozed_for">All alerts are snoozed for %1$s</string>
     <string name="alert_channel_name">Glucose alerts</string>
     <string name="alert_channel_description">Low, high, and missing glucose data alerts</string>
     <string name="alert_low_title">LOW glucose</string>
