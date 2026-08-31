@@ -86,7 +86,7 @@ public class MainActivityAlertSettingsTest {
         assertEquals(application.getString(R.string.resume_alerts), toggle.getText().toString());
         assertEquals(View.VISIBLE, status.getVisibility());
         assertTrue(status.getText().toString().matches(
-                "All alerts are snoozed for 2[34]:[0-5][0-9]:[0-5][0-9]"));
+                "Phone alerts are snoozed for 2[34]:[0-5][0-9]:[0-5][0-9]"));
         assertEquals(View.GONE, duration.getVisibility());
         assertEquals(View.GONE, durationLabel.getVisibility());
 
