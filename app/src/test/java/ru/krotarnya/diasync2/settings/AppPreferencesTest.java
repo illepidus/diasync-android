@@ -26,7 +26,26 @@ public class AppPreferencesTest {
 
         assertEquals(AlertSettings.defaults(), preferences.loadAlertSettings());
         assertEquals(Instant.EPOCH, preferences.snoozedUntil());
+        assertTrue(preferences.snoozeWearAlerts());
         assertEquals(SnoozeOption.FIVE_MINUTES, preferences.loadSnoozeOption());
+    }
+
+    @Test
+    public void wearSnoozeIsEnabledByDefaultAndCanBeDisabledWithoutResumingPhoneAlerts() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        Instant snoozedUntil = Instant.parse("2026-08-28T13:00:00Z");
+        AppPreferences preferences = new AppPreferences(application);
+        preferences.snoozeUntil(snoozedUntil);
+
+        assertEquals(snoozedUntil, preferences.wearSnoozedUntil());
+
+        preferences.saveSnoozeWearAlerts(false);
+        AppPreferences restarted = new AppPreferences(application);
+
+        assertFalse(restarted.snoozeWearAlerts());
+        assertEquals(snoozedUntil, restarted.snoozedUntil());
+        assertEquals(Instant.EPOCH, restarted.wearSnoozedUntil());
     }
 
     @Test

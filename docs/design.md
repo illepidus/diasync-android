@@ -388,7 +388,9 @@ displayMgdl = rawMgdl * slope + intercept
 
 - LOW, HIGH и NO DATA включаются независимо;
 - все три выключены по умолчанию;
-- один общий persistent snooze;
+- один persistent phone snooze;
+- включённая по умолчанию настройка `Also snooze wear alerts` определяет, передаётся ли phone snooze
+  на часы; её отключение не возобновляет алерты на телефоне;
 - варианты snooze: 5, 10, 15, 20, 30 минут; 1, 2, 4, 6, 8, 10, 12, 24 часа;
 - есть ручной Resume.
 
@@ -444,7 +446,8 @@ LOW > HIGH > NO DATA
 - выбранное graph window;
 - calibration/display parameters;
 - рассчитанный trend;
-- alert configuration и `snoozedUntil`, нужные часовому watchdog;
+- alert configuration и `snoozedUntil`, нужные часовому watchdog; phone snooze передаётся в
+  `snoozedUntil` только при включённой настройке `Also snooze wear alerts`, иначе передаётся epoch;
 - optional fresh low/high alert event с устойчивым `eventId` и сроком годности.
 
 Snapshot передаётся через `DataClient` как urgent Data Item:

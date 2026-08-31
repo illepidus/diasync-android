@@ -101,6 +101,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private CheckBox lowAlertEnabled;
     private CheckBox highAlertEnabled;
     private CheckBox noDataAlertEnabled;
+    private CheckBox snoozeWearAlerts;
     private Slider snoozeDuration;
     private TextView snoozeDurationLabel;
     private Button snoozeToggle;
@@ -324,6 +325,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         lowAlertEnabled = findViewById(R.id.low_alert_enabled);
         highAlertEnabled = findViewById(R.id.high_alert_enabled);
         noDataAlertEnabled = findViewById(R.id.no_data_alert_enabled);
+        snoozeWearAlerts = findViewById(R.id.snooze_wear_alerts);
         snoozeDuration = findViewById(R.id.snooze_duration);
         snoozeDurationLabel = findViewById(R.id.snooze_duration_label);
         snoozeToggle = findViewById(R.id.snooze_toggle);
@@ -426,6 +428,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         lowAlertEnabled.setChecked(settings.lowEnabled());
         highAlertEnabled.setChecked(settings.highEnabled());
         noDataAlertEnabled.setChecked(settings.noDataEnabled());
+        snoozeWearAlerts.setChecked(application.preferences().snoozeWearAlerts());
         bindingAlertSettings = false;
     }
 
@@ -502,6 +505,13 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         lowAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
         highAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
         noDataAlertEnabled.setOnCheckedChangeListener((button, checked) -> persistAlertSettings());
+        snoozeWearAlerts.setOnCheckedChangeListener((button, checked) -> {
+            if (bindingAlertSettings) {
+                return;
+            }
+            application.preferences().saveSnoozeWearAlerts(checked);
+            application.publishWearState();
+        });
     }
 
     private void configureSnoozeSettingsListener() {

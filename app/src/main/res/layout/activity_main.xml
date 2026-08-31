@@ -286,6 +286,13 @@
                 android:layout_marginTop="8dp"
                 android:contentDescription="@string/snooze_duration" />
 
+            <CheckBox
+                android:id="@+id/snooze_wear_alerts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/snooze_wear_alerts" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/snooze_toggle"
                 style="@style/Widget.Diasync.PrimaryAction"

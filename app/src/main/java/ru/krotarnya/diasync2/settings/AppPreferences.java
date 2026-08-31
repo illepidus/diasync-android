@@ -31,6 +31,7 @@ public final class AppPreferences {
     private static final String KEY_HIGH_ALERT_ENABLED = "high_alert_enabled";
     private static final String KEY_NO_DATA_ALERT_ENABLED = "no_data_alert_enabled";
     private static final String KEY_SNOOZED_UNTIL = "snoozed_until";
+    private static final String KEY_SNOOZE_WEAR_ALERTS = "snooze_wear_alerts";
     private static final String KEY_LAST_ALERT_AT = "last_alert_at";
     private static final String KEY_SNOOZE_OPTION = "snooze_option";
 
@@ -216,8 +217,20 @@ public final class AppPreferences {
         preferences.edit().putString(KEY_SNOOZE_OPTION, option.name()).apply();
     }
 
+    public boolean snoozeWearAlerts() {
+        return preferences.getBoolean(KEY_SNOOZE_WEAR_ALERTS, true);
+    }
+
+    public void saveSnoozeWearAlerts(boolean enabled) {
+        preferences.edit().putBoolean(KEY_SNOOZE_WEAR_ALERTS, enabled).apply();
+    }
+
     public Instant snoozedUntil() {
         return Instant.ofEpochMilli(preferences.getLong(KEY_SNOOZED_UNTIL, 0L));
+    }
+
+    public Instant wearSnoozedUntil() {
+        return snoozeWearAlerts() ? snoozedUntil() : Instant.EPOCH;
     }
 
     public void snoozeUntil(Instant instant) {

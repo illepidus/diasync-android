@@ -63,7 +63,7 @@ public final class WearStatePublisher {
                         configuration.get(),
                         preferences.loadWatchSettings(),
                         preferences.loadAlertSettings(),
-                        preferences.snoozedUntil(),
+                        preferences.wearSnoozedUntil(),
                         event);
                 byte[] payload = codec.encode(snapshot);
                 PutDataRequest request = requestFactory.create(payload);

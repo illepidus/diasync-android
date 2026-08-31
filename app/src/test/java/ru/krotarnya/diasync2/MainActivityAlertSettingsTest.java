@@ -36,10 +36,27 @@ public class MainActivityAlertSettingsTest {
         assertFalse(((CheckBox) activity.findViewById(R.id.low_alert_enabled)).isChecked());
         assertFalse(((CheckBox) activity.findViewById(R.id.high_alert_enabled)).isChecked());
         assertFalse(((CheckBox) activity.findViewById(R.id.no_data_alert_enabled)).isChecked());
+        assertTrue(((CheckBox) activity.findViewById(R.id.snooze_wear_alerts)).isChecked());
         Slider slider = activity.findViewById(R.id.snooze_duration);
         assertEquals(0.0f, slider.getValueFrom(), 0.0f);
         assertEquals(12.0f, slider.getValueTo(), 0.0f);
         assertEquals(1.0f, slider.getStepSize(), 0.0f);
+    }
+
+    @Test
+    public void wearSnoozePreferencePersistsIndependentlyFromPhoneSnooze() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        ActivityController<MainActivity> controller =
+                Robolectric.buildActivity(MainActivity.class).setup();
+        CheckBox snoozeWearAlerts = controller.get().findViewById(R.id.snooze_wear_alerts);
+
+        snoozeWearAlerts.performClick();
+
+        assertFalse(new AppPreferences(application).snoozeWearAlerts());
+        controller.pause().stop().destroy();
+        MainActivity recreated = Robolectric.buildActivity(MainActivity.class).setup().get();
+        assertFalse(recreated.<CheckBox>findViewById(R.id.snooze_wear_alerts).isChecked());
     }
 
     @Test
