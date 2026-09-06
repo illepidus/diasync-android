@@ -46,6 +46,22 @@ public final class AlertEvaluator {
         return lastAlertAt;
     }
 
+    public boolean isStateActive(AlertType type, AlertReading latest, AlertPolicy policy) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(policy);
+        return switch (type) {
+            case LOW -> latest != null
+                    && policy.lowEnabled()
+                    && latest.mgDl() <= policy.lowMgDl();
+            case HIGH -> latest != null
+                    && policy.highEnabled()
+                    && latest.mgDl() >= policy.highMgDl();
+            case NO_DATA -> policy.noDataEnabled()
+                    && (latest == null
+                    || !latest.timestamp().plus(NO_DATA_INTERVAL).isAfter(clock.instant()));
+        };
+    }
+
     private AlertType candidate(
             AlertReading latest,
             AlertReading previous,

@@ -14,6 +14,8 @@ import ru.krotarnya.diasync2.navigation.PhoneScreen;
 public final class AlertNotificationPublisher {
     static final String CHANNEL_ID = "glucose_alerts";
     static final int NOTIFICATION_ID = 2001;
+    static final int NO_DATA_NOTIFICATION_ID = 2002;
+    static final int HIGH_NOTIFICATION_ID = 2003;
 
     private final Context context;
     private final NotificationManager notificationManager;
@@ -41,7 +43,11 @@ public final class AlertNotificationPublisher {
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setAutoCancel(true)
                 .build();
-        notificationManager.notify(NOTIFICATION_ID, notification);
+        notificationManager.notify(notificationId(type), notification);
+    }
+
+    public void hide(AlertType type) {
+        notificationManager.cancel(notificationId(type));
     }
 
     private void createChannel() {
@@ -59,6 +65,14 @@ public final class AlertNotificationPublisher {
             case LOW -> R.string.alert_low_title;
             case HIGH -> R.string.alert_high_title;
             case NO_DATA -> R.string.alert_no_data_title;
+        };
+    }
+
+    private int notificationId(AlertType type) {
+        return switch (type) {
+            case LOW -> NOTIFICATION_ID;
+            case HIGH -> HIGH_NOTIFICATION_ID;
+            case NO_DATA -> NO_DATA_NOTIFICATION_ID;
         };
     }
 }

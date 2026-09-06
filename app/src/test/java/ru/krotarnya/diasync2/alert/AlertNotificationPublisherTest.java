@@ -49,4 +49,61 @@ public class AlertNotificationPublisherTest {
                 PhoneScreen.ALERTS.name(),
                 intent.getStringExtra(MainActivity.EXTRA_SCREEN));
     }
+
+    @Test
+    public void hideGlucoseAlertKeepsNoDataNotification() {
+        Application application = RuntimeEnvironment.getApplication();
+        AlertNotificationPublisher publisher = new AlertNotificationPublisher(application);
+        NotificationManager manager = application.getSystemService(NotificationManager.class);
+
+        publisher.show(AlertType.LOW);
+        publisher.show(AlertType.NO_DATA);
+        publisher.hide(AlertType.LOW);
+
+        assertNull(shadowOf(manager).getNotification(AlertNotificationPublisher.NOTIFICATION_ID));
+        assertEquals(
+                contextTitle(application, AlertType.NO_DATA),
+                shadowOf(manager)
+                        .getNotification(AlertNotificationPublisher.NO_DATA_NOTIFICATION_ID)
+                        .extras
+                        .getString(Notification.EXTRA_TITLE));
+    }
+
+    @Test
+    public void hidingLowDoesNotHideHighNotification() {
+        Application application = RuntimeEnvironment.getApplication();
+        AlertNotificationPublisher publisher = new AlertNotificationPublisher(application);
+        NotificationManager manager = application.getSystemService(NotificationManager.class);
+
+        publisher.show(AlertType.LOW);
+        publisher.show(AlertType.HIGH);
+        publisher.hide(AlertType.LOW);
+
+        assertNull(shadowOf(manager).getNotification(AlertNotificationPublisher.NOTIFICATION_ID));
+        assertEquals(
+                application.getString(ru.krotarnya.diasync2.R.string.alert_high_title),
+                shadowOf(manager)
+                        .getNotification(AlertNotificationPublisher.HIGH_NOTIFICATION_ID)
+                        .extras
+                        .getString(Notification.EXTRA_TITLE));
+    }
+
+    @Test
+    public void hidesNoDataNotificationAfterRecovery() {
+        Application application = RuntimeEnvironment.getApplication();
+        AlertNotificationPublisher publisher = new AlertNotificationPublisher(application);
+        NotificationManager manager = application.getSystemService(NotificationManager.class);
+
+        publisher.show(AlertType.NO_DATA);
+        publisher.hide(AlertType.NO_DATA);
+
+        assertNull(shadowOf(manager)
+                .getNotification(AlertNotificationPublisher.NO_DATA_NOTIFICATION_ID));
+    }
+
+    private String contextTitle(Application application, AlertType type) {
+        return application.getString(type == AlertType.NO_DATA
+                ? ru.krotarnya.diasync2.R.string.alert_no_data_title
+                : ru.krotarnya.diasync2.R.string.alert_low_title);
+    }
 }

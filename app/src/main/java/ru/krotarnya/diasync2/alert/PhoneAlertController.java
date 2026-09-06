@@ -27,6 +27,7 @@ public final class PhoneAlertController {
     private final AlertEvaluator evaluator;
     private final Consumer<AlertType> soundPlayer;
     private final Consumer<AlertType> notificationPublisher;
+    private final Consumer<AlertType> notificationHider;
     private final AlertEventOutput eventOutput;
     private final Executor executor;
 
@@ -36,6 +37,7 @@ public final class PhoneAlertController {
             AlertEvaluator evaluator,
             Consumer<AlertType> soundPlayer,
             Consumer<AlertType> notificationPublisher,
+            Consumer<AlertType> notificationHider,
             AlertEventOutput eventOutput,
             Executor executor
     ) {
@@ -44,6 +46,7 @@ public final class PhoneAlertController {
         this.evaluator = Objects.requireNonNull(evaluator);
         this.soundPlayer = Objects.requireNonNull(soundPlayer);
         this.notificationPublisher = Objects.requireNonNull(notificationPublisher);
+        this.notificationHider = Objects.requireNonNull(notificationHider);
         this.eventOutput = Objects.requireNonNull(eventOutput);
         this.executor = Objects.requireNonNull(executor);
     }
@@ -58,9 +61,6 @@ public final class PhoneAlertController {
             return;
         }
         AlertSettings settings = preferences.loadAlertSettings();
-        if (!settings.lowEnabled() && !settings.highEnabled() && !settings.noDataEnabled()) {
-            return;
-        }
         WidgetSettings widgetSettings = preferences.loadWidgetSettings();
         List<DataPoint> points = dataSource.latestSensorPoints(
                 configuration.get().userId(),
@@ -77,6 +77,14 @@ public final class PhoneAlertController {
                 settings.noDataEnabled(),
                 widgetSettings.lowMgDl(),
                 widgetSettings.highMgDl());
+        for (AlertType type : AlertType.values()) {
+            if (!evaluator.isStateActive(type, latest, policy)) {
+                notificationHider.accept(type);
+            }
+        }
+        if (!settings.lowEnabled() && !settings.highEnabled() && !settings.noDataEnabled()) {
+            return;
+        }
         AlertDecision decision = evaluator.evaluate(
                 latest,
                 previous,

@@ -109,6 +109,19 @@ public class AlertEvaluatorTest {
         assertAlert(AlertType.NO_DATA, null, null, ALL_ENABLED);
     }
 
+    @Test
+    public void activeStateIgnoresRepeatRulesAndTracksRecovery() {
+        AlertReading lowWithoutWorsening = reading(60.0);
+        assertTrue(evaluator.isStateActive(AlertType.LOW, lowWithoutWorsening, ALL_ENABLED));
+        assertFalse(evaluator.isStateActive(AlertType.HIGH, lowWithoutWorsening, ALL_ENABLED));
+        assertFalse(evaluator.isStateActive(AlertType.NO_DATA, lowWithoutWorsening, ALL_ENABLED));
+
+        AlertReading staleNormal = readingAt(100.0, NOW.minus(Duration.ofMinutes(5)));
+        assertFalse(evaluator.isStateActive(AlertType.LOW, staleNormal, ALL_ENABLED));
+        assertFalse(evaluator.isStateActive(AlertType.HIGH, staleNormal, ALL_ENABLED));
+        assertTrue(evaluator.isStateActive(AlertType.NO_DATA, staleNormal, ALL_ENABLED));
+    }
+
     private AlertPolicy policy(boolean low, boolean high, boolean noData) {
         return new AlertPolicy(low, high, noData, 70.0, 180.0);
     }
