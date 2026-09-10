@@ -1,5 +1,7 @@
 package ru.krotarnya.diasync2.alert;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +32,7 @@ public final class PhoneAlertController {
     private final Consumer<AlertType> notificationHider;
     private final AlertEventOutput eventOutput;
     private final Executor executor;
+    private final Clock clock;
 
     public PhoneAlertController(
             AppPreferences preferences,
@@ -39,7 +42,8 @@ public final class PhoneAlertController {
             Consumer<AlertType> notificationPublisher,
             Consumer<AlertType> notificationHider,
             AlertEventOutput eventOutput,
-            Executor executor
+            Executor executor,
+            Clock clock
     ) {
         this.preferences = Objects.requireNonNull(preferences);
         this.dataSource = Objects.requireNonNull(dataSource);
@@ -49,6 +53,7 @@ public final class PhoneAlertController {
         this.notificationHider = Objects.requireNonNull(notificationHider);
         this.eventOutput = Objects.requireNonNull(eventOutput);
         this.executor = Objects.requireNonNull(executor);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     public void checkAsync() {
@@ -71,32 +76,46 @@ public final class PhoneAlertController {
         AlertReading previous = points.size() < 2
                 ? null
                 : reading(points.get(1), widgetSettings.useCalibration());
-        AlertPolicy policy = new AlertPolicy(
+        AlertPolicy phonePolicy = new AlertPolicy(
                 settings.lowEnabled(),
                 settings.highEnabled(),
                 settings.noDataEnabled(),
                 widgetSettings.lowMgDl(),
                 widgetSettings.highMgDl());
         for (AlertType type : AlertType.values()) {
-            if (!evaluator.isStateActive(type, latest, policy)) {
+            if (!evaluator.isStateActive(type, latest, phonePolicy)) {
                 notificationHider.accept(type);
             }
         }
         if (!settings.lowEnabled() && !settings.highEnabled() && !settings.noDataEnabled()) {
             return;
         }
+        Instant now = clock.instant();
+        Instant phoneSnoozedUntil = preferences.snoozedUntil();
+        boolean phoneSnoozed = phoneSnoozedUntil.isAfter(now);
+        boolean snoozeWearAlerts = preferences.snoozeWearAlerts();
+        AlertPolicy evaluationPolicy = phoneSnoozed && !snoozeWearAlerts
+                ? new AlertPolicy(
+                        settings.lowEnabled(),
+                        settings.highEnabled(),
+                        false,
+                        widgetSettings.lowMgDl(),
+                        widgetSettings.highMgDl())
+                : phonePolicy;
         AlertDecision decision = evaluator.evaluate(
                 latest,
                 previous,
-                policy,
-                preferences.snoozedUntil());
+                evaluationPolicy,
+                snoozeWearAlerts ? phoneSnoozedUntil : Instant.EPOCH);
         if (!decision.shouldAlert()) {
             return;
         }
         AlertType type = decision.type().orElseThrow();
         preferences.saveLastAlertAt(evaluator.lastAlertAt());
-        soundPlayer.accept(type);
-        notificationPublisher.accept(type);
+        if (!phoneSnoozed) {
+            soundPlayer.accept(type);
+            notificationPublisher.accept(type);
+        }
         if (type != AlertType.NO_DATA && latest != null) {
             eventOutput.onGlucoseAlert(type, latest.timestamp());
         }

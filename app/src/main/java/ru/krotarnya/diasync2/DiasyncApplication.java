@@ -103,7 +103,8 @@ public final class DiasyncApplication extends Application {
                 alertNotificationPublisher::show,
                 alertNotificationPublisher::hide,
                 wearStatePublisher::publishAlert,
-                alertExecutor);
+                alertExecutor,
+                clock);
         phoneUpdateCoordinator = new PhoneUpdateCoordinator(
                 this,
                 preferences,

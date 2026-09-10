@@ -511,6 +511,9 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             }
             application.preferences().saveSnoozeWearAlerts(checked);
             application.publishWearState();
+            if (!checked) {
+                application.phoneAlertController().checkAsync();
+            }
         });
     }
 

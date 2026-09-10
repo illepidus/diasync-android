@@ -96,6 +96,88 @@ public class PhoneAlertControllerTest {
     }
 
     @Test
+    public void phoneSnoozeDoesNotSuppressWearGlucoseAlertWhenWearSnoozeIsDisabled() {
+        preferences.saveAlertSettings(new AlertSettings(true, true, true));
+        preferences.snoozeUntil(NOW.plusSeconds(300));
+        preferences.saveSnoozeWearAlerts(false);
+        List<AlertType> sounds = new ArrayList<>();
+        List<AlertType> notifications = new ArrayList<>();
+        List<String> events = new ArrayList<>();
+        PhoneAlertController controller = controller(
+                List.of(point(60.0, NOW), point(65.0, NOW.minusSeconds(60))),
+                sounds,
+                notifications,
+                new ArrayList<>(),
+                (type, timestamp) -> events.add(type + ":" + timestamp));
+
+        controller.checkNow();
+
+        assertTrue(sounds.isEmpty());
+        assertTrue(notifications.isEmpty());
+        assertEquals(List.of("LOW:" + NOW), events);
+    }
+
+    @Test
+    public void phoneSnoozeDoesNotSuppressWearHighAlertWhenWearSnoozeIsDisabled() {
+        preferences.saveAlertSettings(new AlertSettings(true, true, true));
+        preferences.snoozeUntil(NOW.plusSeconds(300));
+        preferences.saveSnoozeWearAlerts(false);
+        List<AlertType> sounds = new ArrayList<>();
+        List<AlertType> notifications = new ArrayList<>();
+        List<String> events = new ArrayList<>();
+        PhoneAlertController controller = controller(
+                List.of(point(190.0, NOW), point(185.0, NOW.minusSeconds(60))),
+                sounds,
+                notifications,
+                new ArrayList<>(),
+                (type, timestamp) -> events.add(type + ":" + timestamp));
+
+        controller.checkNow();
+
+        assertTrue(sounds.isEmpty());
+        assertTrue(notifications.isEmpty());
+        assertEquals(List.of("HIGH:" + NOW), events);
+    }
+
+    @Test
+    public void phoneSnoozeSuppressesWearGlucoseAlertWhenWearSnoozeIsEnabled() {
+        preferences.saveAlertSettings(new AlertSettings(true, true, true));
+        preferences.snoozeUntil(NOW.plusSeconds(300));
+        List<AlertType> sounds = new ArrayList<>();
+        List<AlertType> notifications = new ArrayList<>();
+        List<String> events = new ArrayList<>();
+        PhoneAlertController controller = controller(
+                List.of(point(60.0, NOW), point(65.0, NOW.minusSeconds(60))),
+                sounds,
+                notifications,
+                new ArrayList<>(),
+                (type, timestamp) -> events.add(type + ":" + timestamp));
+
+        controller.checkNow();
+
+        assertTrue(sounds.isEmpty());
+        assertTrue(notifications.isEmpty());
+        assertTrue(events.isEmpty());
+    }
+
+    @Test
+    public void phoneSnoozeDoesNotEvaluateNoDataForWearBecauseWatchOwnsIt() {
+        preferences.saveAlertSettings(new AlertSettings(false, false, true));
+        preferences.snoozeUntil(NOW.plusSeconds(300));
+        preferences.saveSnoozeWearAlerts(false);
+        PhoneAlertController controller = controller(
+                List.of(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                (type, timestamp) -> { });
+
+        controller.checkNow();
+
+        assertEquals(Instant.EPOCH, preferences.lastAlertAt());
+    }
+
+    @Test
     public void normalReadingHidesPreviousGlucoseNotification() {
         preferences.saveAlertSettings(new AlertSettings(true, true, true));
         List<String> hiddenNotifications = new ArrayList<>();
@@ -142,7 +224,8 @@ public class PhoneAlertControllerTest {
                 notifications::add,
                 type -> hiddenNotifications.add(type.name()),
                 output,
-                Runnable::run);
+                Runnable::run,
+                Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     private DataPoint point(double mgDl, Instant timestamp) {
