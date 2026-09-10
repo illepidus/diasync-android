@@ -8,6 +8,7 @@ import static org.robolectric.Shadows.shadowOf;
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -105,6 +106,21 @@ public class MainActivityWidgetSettingsTest {
         assertEquals(GraphWindow.ONE_HOUR, saved.graphWindow());
         assertFalse(saved.graphZones());
         assertFalse(saved.trendArrow());
+    }
+
+    @Test
+    public void completingHighThresholdNormalizesValueAndClearsFocus() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+        EditText high = activity.findViewById(R.id.high_threshold);
+
+        high.requestFocus();
+        high.setText("10");
+        high.onEditorAction(EditorInfo.IME_ACTION_DONE);
+
+        assertEquals("10.0", high.getText().toString());
+        assertFalse(high.hasFocus());
     }
 
     @Test

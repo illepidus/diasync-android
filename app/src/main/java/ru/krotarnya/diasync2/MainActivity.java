@@ -13,6 +13,7 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -488,6 +489,13 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             if (!hasFocus) {
                 normalizeThresholdFieldsIfValid();
             }
+        });
+        highThreshold.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId != EditorInfo.IME_ACTION_DONE) {
+                return false;
+            }
+            highThreshold.clearFocus();
+            return false;
         });
     }
 

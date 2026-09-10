@@ -105,6 +105,7 @@
                 android:id="@+id/high_threshold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
                 android:importantForAutofill="no"
                 android:inputType="numberDecimal"
                 android:maxLines="1"
