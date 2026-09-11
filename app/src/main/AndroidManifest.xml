@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
+    <permission
+        android:name="ru.krotarnya.diasync2.permission.SEND_XDRIP_EVENT"
+        android:protectionLevel="signature" />
+
     <queries>
         <package android:name="com.eveningoutpost.dexdrip" />
     </queries>
@@ -53,6 +57,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".master.XdripEventReceiver"
+            android:exported="true"
+            android:permission="ru.krotarnya.diasync2.permission.SEND_XDRIP_EVENT">
+            <intent-filter>
+                <action android:name="ru.krotarnya.diasync2.action.XDRIP_EVENT" />
             </intent-filter>
         </receiver>
         <service

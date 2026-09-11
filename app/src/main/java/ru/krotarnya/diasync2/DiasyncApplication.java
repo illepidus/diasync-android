@@ -10,6 +10,10 @@ import com.google.android.gms.wearable.Wearable;
 import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import ru.krotarnya.diasync2.alert.AlertNotificationPublisher;
 import ru.krotarnya.diasync2.alert.AlertSoundPlayer;
@@ -38,6 +42,10 @@ import ru.krotarnya.diasync2.wear.WearDataRequestFactory;
 import ru.krotarnya.diasync2.wear.WearStatePublisher;
 import ru.krotarnya.diasync2.wear.WearSyncDiagnostics;
 import ru.krotarnya.diasync2.common.wear.WearSnapshotCodec;
+import ru.krotarnya.diasync2.common.master.XdripEventCodec;
+import ru.krotarnya.diasync2.master.MasterEventIngestor;
+import ru.krotarnya.diasync2.master.MasterEventRepository;
+import ru.krotarnya.diasync2.data.local.MasterEventDao;
 
 public final class DiasyncApplication extends Application {
     private BootstrapRepository bootstrapRepository;
@@ -56,12 +64,14 @@ public final class DiasyncApplication extends Application {
     private DataReceiptDiagnostics dataReceiptDiagnostics;
     private DiagnosticEventLog diagnosticEventLog;
     private WearSyncDiagnostics wearSyncDiagnostics;
+    private ThreadPoolExecutor masterIngestExecutor;
+    private MasterEventIngestor masterEventIngestor;
 
     @Override
     public void onCreate() {
         super.onCreate();
         database = Room.databaseBuilder(this, AppDatabase.class, AppDatabase.NAME)
-                .addMigrations(AppDatabase.MIGRATION_1_2)
+                .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
                 .build();
         clock = Clock.systemUTC();
         dataReceiptDiagnostics = new DataReceiptDiagnostics(this);
@@ -112,6 +122,24 @@ public final class DiasyncApplication extends Application {
                 wearStatePublisher::publishState,
                 diagnosticEventLog,
                 clock);
+        masterIngestExecutor = new ThreadPoolExecutor(
+                1,
+                1,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(32),
+                new ThreadPoolExecutor.AbortPolicy());
+        masterEventIngestor = new MasterEventIngestor(
+                preferences::monitoringEnabled,
+                preferences::load,
+                new XdripEventCodec(),
+                new MasterEventRepository(database.masterEventDao(), clock),
+                () -> {
+                    dataReceiptDiagnostics.record(clock.instant());
+                    phoneUpdateCoordinator.dataCommitted();
+                },
+                () -> { },
+                this::recordMasterIngestDiagnostic);
     }
 
     @Override
@@ -170,6 +198,22 @@ public final class DiasyncApplication extends Application {
 
     public WearSyncDiagnostics wearSyncDiagnostics() {
         return wearSyncDiagnostics;
+    }
+
+    public Executor masterIngestExecutor() {
+        return masterIngestExecutor;
+    }
+
+    public MasterEventIngestor masterEventIngestor() {
+        return masterEventIngestor;
+    }
+
+    public MasterEventDao masterEventDao() {
+        return database.masterEventDao();
+    }
+
+    public void recordMasterIngestDiagnostic(String code) {
+        diagnosticEventLog.record("Master ingest", code, clock.instant());
     }
 
     public SyncWork createSyncWork(AppConfiguration configuration) {

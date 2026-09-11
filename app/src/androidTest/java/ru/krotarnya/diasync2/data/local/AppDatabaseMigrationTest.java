@@ -49,4 +49,30 @@ public class AppDatabaseMigrationTest {
             org.junit.Assert.assertEquals(1, cursor.getInt(0));
         }
     }
+
+    @Test
+    public void migrate2To3PreservesExistingDataAndCreatesMasterOutbox() throws IOException {
+        SupportSQLiteDatabase versionTwo = helper.createDatabase(TEST_DATABASE, 2);
+        versionTwo.execSQL("INSERT INTO data_points ("
+                + "user_id, timestamp, timestamp_epoch_second, timestamp_nano, sensor_mg_dl"
+                + ") VALUES ('user-a', '2026-08-29T12:00:00Z', 1788004800, 0, 100.0)");
+        versionTwo.close();
+
+        SupportSQLiteDatabase migrated = helper.runMigrationsAndValidate(
+                TEST_DATABASE,
+                3,
+                true,
+                AppDatabase.MIGRATION_2_3);
+
+        try (android.database.Cursor cursor = migrated.query(
+                "SELECT COUNT(*) FROM data_points WHERE user_id = 'user-a'")) {
+            org.junit.Assert.assertTrue(cursor.moveToFirst());
+            org.junit.Assert.assertEquals(1, cursor.getInt(0));
+        }
+        try (android.database.Cursor cursor = migrated.query(
+                "SELECT COUNT(*) FROM master_events")) {
+            org.junit.Assert.assertTrue(cursor.moveToFirst());
+            org.junit.Assert.assertEquals(0, cursor.getInt(0));
+        }
+    }
 }
