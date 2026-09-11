@@ -177,6 +177,99 @@ DataPoint
 Первая версия UI строит основную линию по `sensorGlucose`. `manualGlucose` и `carbs` сохраняются
 сразу, даже если их визуализация появится позже.
 
+## Master mode и xDrip protocol
+
+Телефон поддерживает два взаимоисключающих mode:
+
+- `SLAVE` выполняет bootstrap и long poll из Diasync backend;
+- `MASTER` принимает локальные события из xDrip fork, сохраняет их в transactional outbox
+  и доставляет через `POST /api/v1/addDataPoints`.
+
+Одновременно активен ровно один data path. Mode, backend URL и `userId` можно менять только при
+остановленном monitoring и отсутствии недоставленных `PENDING`, `IN_FLIGHT` или `BLOCKED` master
+events. Иначе пользователь сначала выполняет retry либо отдельный destructive discard с явным
+подтверждением. Доставленные events, оставленные на retention для dedupe, переключению не мешают.
+
+### Transport и защита
+
+xDrip отправляет explicit broadcast:
+
+```text
+action:  ru.krotarnya.diasync2.action.XDRIP_EVENT
+package: ru.krotarnya.diasync2
+extra:   payload = UTF-8 JSON string
+```
+
+Diasync и xDrip fork подписываются одним release certificate. Exported receiver требует custom
+permission с `protectionLevel="signature"`. Payload не содержит backend URL, `userId` или других
+credentials.
+
+### Event schema v1
+
+Общие поля каждого event:
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "SENSOR:stable-xdrip-id",
+  "eventType": "SENSOR|MANUAL_GLUCOSE|CARBS",
+  "occurredAtEpochMillis": 1789027200000
+}
+```
+
+Event содержит ровно один subtype, соответствующий `eventType`:
+
+```json lines
+{"sensor":{"rawValue":123.0,"sensorId":"libre-sensor-id","calibration":{"slope":1.1,"intercept":-2.0}}}
+{"manualGlucose":{"mgdl":121.0}}
+{"carbs":{"grams":20.0,"description":"optional note"}}
+```
+
+Sensor event передаёт исходный raw value и calibration одной и той же сохранённой xDrip точки.
+Внутренние `calculated_value`, age adjustment, smoothing и график xDrip не передаются. Если
+calibration отсутствует, xDrip явно передаёт identity transform `slope=1`, `intercept=0`. Diasync
+хранит raw и calibration отдельно и применяет существующую настройку `use calibration`:
+
+```text
+displayMgdl = rawValue * slope + intercept
+```
+
+Calibration относится только к sensor glucose. Она запрещена для `MANUAL_GLUCOSE` и `CARBS`.
+
+Protocol limits:
+
+- UTF-8 payload не больше 8192 bytes; неизвестные поля отклоняются;
+- `eventId` — printable ASCII, максимум 128 characters, с обязательным непустым
+  `<eventType>:` prefix;
+- `sensorId` — printable ASCII, максимум 128 characters;
+- `carbs.description` — максимум 256 Unicode code points, без control characters;
+- timestamp — целое число Unix epoch milliseconds, не меньше нуля;
+- numeric values конечны: sensor raw `(0, 1000000]`, manual glucose `(0, 1000]` mg/dL,
+  carbs `(0, 1000]` grams, calibration slope `(0, 1000]`, absolute intercept `<= 1000000`.
+
+Canonical valid/invalid fixtures хранятся в
+`common/src/test/resources/xdrip-event-v1`. Diasync parser проверяет их в Slice 0; encoder tests
+нового xDrip fork-а обязаны точно воспроизвести UTF-8 JSON content valid fixtures без завершающего
+файлового перевода строки в Slice 4.
+
+Protocol v1 передаёт только create/insert events. Updates и deletes требуют отдельного контракта с
+revision/tombstone semantics и не имитируются nullable-полями.
+
+### Acceptance и delivery
+
+«Diasync принял event» означает, что одна Room-транзакция успешно сохранила/объединила local point и
+immutable outbox row. Получение broadcast или успешный parse сами по себе acceptance не являются.
+После validation event приводится к canonical JSON с фиксированным порядком полей; dedupe
+`payload_hash` вычисляется как SHA-256 canonical UTF-8 bytes, а не исходной строки broadcast.
+
+«Backend delivery подтверждена» означает, что Diasync получил HTTP success, проверил count,
+identity и content ответа, а затем транзакционно сохранил server metadata и перевёл outbox row в
+`DELIVERED`. Потерянный response ведёт к безопасному retry; backend upsert обеспечивает
+at-least-once delivery без duplicate logical point.
+
+Новый xDrip fork начинается от upstream `NightscoutFoundation/xDrip` commit
+`e1407ec9a8ab20bc3f56315daf8cfc8913e12735`, проверенного 2026-09-10.
+
 ## Локальная модель телефона
 
 Room database содержит как минимум:
@@ -636,6 +729,7 @@ Status показывает:
 - 5-minute NO DATA;
 - snooze persistence model;
 - Wear DTO round trip/version rejection.
+- xDrip event v1 golden fixtures, strict subtype/calibration validation и version rejection.
 
 ### `app`
 
@@ -680,6 +774,7 @@ Status показывает:
 | FR-8  | WFF показывает time/date/battery/glucose/trend/graph/errors                                       |
 | FR-9  | Wear воспроизводит LOW/HIGH и локально вычисляет NO DATA                                          |
 | FR-10 | Система восстанавливается после network loss, process death, reboot и Wear reconnect              |
+| FR-11 | Master mode принимает raw xDrip events и гарантированно доставляет committed outbox в backend     |
 | NFR-1 | При нормальной сети новая server point отражается на телефоне и часах не позднее 60 секунд        |
 | NFR-2 | Повтор batch или crash между получением и commit не теряет данные и не продвигает cursor ошибочно |
 | NFR-3 | Все blocking/network/render операции выполняются вне main thread                                  |

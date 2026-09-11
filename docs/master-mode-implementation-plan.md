@@ -1,7 +1,23 @@
 # Master mode — план реализации
 
-Статус: proposal
+Статус: approved design
 Дата исследования: 2026-09-10
+
+## Утверждённые продуктовые решения
+
+- Diasync и xDrip fork подписываются одним release certificate. Exported receiver защищается
+  custom permission с `protectionLevel="signature"`.
+- Mode, backend URL и `userId` разрешено менять только при остановленном monitoring и отсутствии
+  недоставленных master events. При наличии `PENDING`, `IN_FLIGHT` или `BLOCKED` rows пользователь
+  сначала доставляет их либо выполняет отдельный destructive discard с явным подтверждением.
+- Sensor event содержит исходный raw value конкретной сохранённой xDrip точки и calibration
+  `slope`/`intercept`. Внутренние `calculated_value`, smoothing и график xDrip не являются частью
+  контракта. Если calibration отсутствует, xDrip явно отправляет identity calibration
+  `slope=1`, `intercept=0`.
+- Calibration относится только к sensor glucose. Она бессмысленна и запрещена для
+  `MANUAL_GLUCOSE` и `CARBS`.
+- Protocol v1 передаёт только create/insert events. Edits и deletes остаются отдельным решением
+  Slice 7.
 
 ## Цель
 
@@ -51,9 +67,10 @@ Master mode не выполняет bootstrap или long poll. Slave mode не 
 
 ### xDrip upstream и существующий fork
 
-- На дату исследования upstream `NightscoutFoundation/xDrip` master: commit
-  `e1407ec9a8ab20bc3f56315daf8cfc8913e12735` от 2026-09-09. Перед началом реализации базу всё равно
-  надо обновить до актуального upstream SHA и зафиксировать этот SHA в PR/release notes.
+- На дату исследования и повторной проверки 2026-09-10 upstream
+  `NightscoutFoundation/xDrip` master: commit
+  `e1407ec9a8ab20bc3f56315daf8cfc8913e12735` от 2026-09-09. Это исходный SHA нового fork-а; он
+  фиксируется в PR/release notes.
 - Существующий `illepidus/xDrip` заканчивается commit
   `e715a3a6bd2eb003e0955ee1ec5ecf82be145c73` от 2024-09-29 и существенно отстал.
 - Старый patch меняет `LibreReceiver`, `BgReading` и `Libre2RawValue`, отправляет action
@@ -113,8 +130,12 @@ extra:   payload = UTF-8 JSON string
   "eventType": "SENSOR|MANUAL_GLUCOSE|CARBS",
   "occurredAtEpochMillis": 1789027200000,
   "sensor": {
-    "mgdl": 123.0,
-    "sensorId": "libre-sensor-id"
+    "rawValue": 123.0,
+    "sensorId": "libre-sensor-id",
+    "calibration": {
+      "slope": 1.1,
+      "intercept": -2.0
+    }
   },
   "manualGlucose": { "mgdl": 121.0 },
   "carbs": { "grams": 20.0, "description": "optional note" }
@@ -128,22 +149,48 @@ extra:   payload = UTF-8 JSON string
   попытку broadcast; namespace по type обязателен, потому что одна операция xDrip может использовать
   общий UUID для `BloodTest` и `Treatments`;
 - timestamp берётся из сохранённой xDrip entity, не из времени отправки intent;
-- все glucose values — mg/dL;
+- `sensor.rawValue` — исходное значение sensor reading до обработки xDrip;
+- sensor calibration всегда присутствует полной парой. При отсутствии calibration source отправляет
+  identity transform `slope=1`, `intercept=0`;
+- `manualGlucose.mgdl` — уже измеренная glucose в mg/dL и не имеет calibration;
+- carbs не имеет calibration;
 - invalid/unknown version отклоняется до записи в БД;
 - payload не содержит backend URL, `userId`, sync key и других credentials;
 - размер одного event мал и не приближается к Binder transaction limit;
 - fork отправляет только insert/create events в первом protocol version;
 - Diasync принимает event только когда сохранённые mode=`MASTER` и monitoring enabled.
 
-Для sensor event каноническим значением v1 предлагается считать принятый xDrip
-`BgReading.calculated_value`: это уже результат smoothing/calibration/sanity checks, который xDrip
-считает действительным. Не следует сочетать current Libre raw value с «последней» calibration, как
-делал старый fork.
+Diasync хранит raw value и calibration отдельно и применяет существующую настройку `use calibration`:
 
-Следствие: настройка Diasync `use calibration` применяется к backend/slave raw points, но не должна
-повторно калибровать master value. UI должен явно показывать это различие. Если нужно сохранять и raw,
-и processed xDrip values с возможностью переключения, сначала потребуется расширить backend
-`SensorGlucose`; текущая модель не умеет корректно представить оба значения.
+```text
+displayMgdl = rawValue * slope + intercept
+```
+
+При выключенной calibration отображается `rawValue`. Этот контракт сознательно не пытается
+воспроизвести `BgReading.calculated_value`, age adjustment, smoothing или график xDrip. Raw value и
+calibration должны относиться к одной конкретной сохранённой xDrip точке; нельзя брать calibration
+из отдельного запроса «последней» записи.
+
+### Protocol v1 schema и limits
+
+- JSON кодируется UTF-8; maximum payload size — 8192 bytes.
+- Неизвестные поля отклоняются, чтобы опечатки и непредусмотренные данные не влияли на durable hash.
+- `eventId` — printable ASCII без пробелов по краям, максимум 128 characters; prefix обязан точно
+  совпадать с `eventType` и после `:` должен быть непустой stable xDrip id.
+- `sensorId` — printable ASCII без пробелов по краям, максимум 128 characters.
+- `carbs.description` optional, без control characters и пробелов по краям, максимум 256 Unicode
+  code points.
+- `occurredAtEpochMillis` — целое число миллисекунд Unix epoch, не меньше нуля.
+- Все numeric values конечны. `sensor.rawValue` находится в `(0, 1000000]`, manual glucose —
+  `(0, 1000]` mg/dL, carbs — `(0, 1000]` grams, calibration slope — `(0, 1000]`, абсолютное
+  значение intercept не больше `1000000`.
+- Event содержит ровно один subtype, совпадающий с `eventType`. Sensor требует `rawValue`,
+  `sensorId` и полную calibration. Manual требует только `mgdl`. Carbs требует `grams` и optional
+  `description`.
+
+Canonical fixtures находятся в `common/src/test/resources/xdrip-event-v1`. Encoder xDrip fork-а
+должен точно воспроизводить UTF-8 JSON content valid fixtures без завершающего файлового перевода
+строки; Diasync parser должен принимать valid и отклонять invalid fixtures.
 
 ### 3. Защита exported receiver
 
@@ -154,13 +201,9 @@ Receiver должен быть manifest-declared, explicit-targeted и `exported
 3. завершает `PendingResult` в `finally`;
 4. не выполняет HTTP и тяжёлый presentation на broadcast thread.
 
-Предпочтительная защита — custom permission с `protectionLevel="signature"`. xDrip fork и Diasync
-release тогда должны подписываться одним ключом; xDrip объявляет `uses-permission`, а Diasync receiver
-требует permission. Это надёжнее, чем shared secret в extras, который можно извлечь из APK/runtime.
-
-Если APK нельзя подписывать одним сертификатом, остаётся explicit package + строгая валидация и
-опциональный локальный secret, но это слабее: package name сам по себе не удостоверяет отправителя.
-До реализации receiver нужно принять решение о release signing.
+Используется custom permission с `protectionLevel="signature"`. xDrip fork и Diasync release
+подписываются одним ключом; xDrip объявляет `uses-permission`, а Diasync receiver требует permission.
+Это надёжнее, чем shared secret в extras, который можно извлечь из APK/runtime.
 
 ### 4. Transactional inbox/outbox
 
@@ -186,6 +229,11 @@ master_events
 `destination_fingerprint` связывает event с конфигурацией, активной в момент приёма. Secret нельзя
 помещать в fingerprint или diagnostics. Сам `userId` уже хранится app-private в `data_points` и
 может быть частью app-private upload payload.
+
+После parse/validation event сериализуется в canonical JSON с фиксированным порядком полей.
+`payload_hash` — SHA-256 именно этих canonical UTF-8 bytes, а `payload_json` хранит тот же canonical
+JSON. Поэтому различия только в whitespace или порядке входных JSON fields не создают ложный
+eventId conflict.
 
 Одна Room-транзакция должна:
 
@@ -304,13 +352,15 @@ queue, чтобы не создавать две расходящиеся оче
 **Scope**
 
 - Зафиксировать этот план как approved design и обновить `docs/design.md`.
-- Утвердить signing model, mode-switch policy и processed-vs-raw glucose semantic.
-- Зафиксировать JSON schema v1, limits и golden fixtures для трёх event types.
+- Утвердить signing model, mode-switch policy и raw-plus-calibration glucose semantic.
+- Зафиксировать JSON schema v1 и limits, реализовать platform-independent codec/validator в
+  Diasync `common`, добавить golden fixtures для трёх event types.
 - Зафиксировать upstream xDrip SHA, от которого начинается fork.
 
 **Готово, когда**
 
-- одинаковые valid/invalid fixtures проходят parser tests в Diasync и encoder tests в xDrip;
+- canonical valid/invalid fixtures проходят parser tests в Diasync; encoder tests нового xDrip fork-а
+  в Slice 4 обязаны точно воспроизвести UTF-8 JSON content тех же valid fixtures;
 - нет неоднозначности, что означает «event принят» и когда доставка считается подтверждённой.
 
 ### Slice 1 — взаимоисключающие modes без master ingest
@@ -335,7 +385,7 @@ queue, чтобы не создавать две расходящиеся оче
 **Scope**
 
 - manifest receiver + signature permission;
-- JSON parser/validator;
+- интеграция готового `common` parser/validator в receiver;
 - Room migration с `master_events`;
 - atomic merge local point + inbox/outbox insert;
 - duplicate/hash-conflict handling;
@@ -461,9 +511,9 @@ commit, xDrip не узнает о потере intent. Гарантия нач�
 2. удалить pending — нарушить гарантию;
 3. заморозить pending до следующего master start — доставка не произойдёт при появлении интернета.
 
-Рекомендация: блокировать mode/backend/userId change, пока outbox не пуст; разрешать только retry или
-явный destructive discard с отдельным подтверждением. Это может мешать срочно включить slave mode при
-долгой недоступности backend, поэтому решение является продуктовым, а не только техническим.
+Принятое решение: блокировать mode/backend/userId change, пока есть недоставленные outbox rows;
+разрешать только retry или явный destructive discard с отдельным подтверждением. Доставленные rows,
+оставленные на retention для dedupe, переключению не мешают.
 
 ### Подпись fork-а влияет на установку и безопасность
 
@@ -475,8 +525,9 @@ Signature permission требует один signing certificate. Fork xDrip, п
 
 xDrip `BgReading.calculated_value` может включать smoothing, calibration и clamps; current Libre raw
 value — нет. Нельзя отправлять raw от одного события и calibration/latest BgReading от другого.
-Рекомендация для v1 — передавать processed accepted value как canonical mg/dL без повторной Diasync
-calibration. Для сохранения raw и processed нужен явный backend model change.
+Принятое решение для v1 — передавать raw sensor value и calibration одной и той же сохранённой точки.
+Diasync применяет `rawValue * slope + intercept`; при отсутствии calibration xDrip передаёт `(1, 0)`.
+Processed xDrip value и его график не передаются.
 
 ### Current backend identity ограничивает event model
 
