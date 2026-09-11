@@ -7,13 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import ru.krotarnya.diasync2.data.BootstrapResult;
 import ru.krotarnya.diasync2.data.LongPollResult;
 
-public final class SyncRunner implements Runnable {
-    public interface Listener {
-        void onStateChanged(SyncConnectionState state);
-
-        void onDataCommitted();
-    }
-
+public final class SyncRunner implements MonitoringRunner {
     public interface Sleeper {
         void sleep(Duration duration) throws InterruptedException;
     }
@@ -21,7 +15,7 @@ public final class SyncRunner implements Runnable {
     private final SyncWork work;
     private final BackoffPolicy backoff;
     private final Sleeper sleeper;
-    private final Listener listener;
+    private final MonitoringRunner.Listener listener;
     private final AtomicBoolean stopped = new AtomicBoolean();
     private SyncConnectionState lastState;
 
@@ -29,7 +23,7 @@ public final class SyncRunner implements Runnable {
             SyncWork work,
             BackoffPolicy backoff,
             Sleeper sleeper,
-            Listener listener
+            MonitoringRunner.Listener listener
     ) {
         this.work = Objects.requireNonNull(work);
         this.backoff = Objects.requireNonNull(backoff);
@@ -65,6 +59,7 @@ public final class SyncRunner implements Runnable {
         }
     }
 
+    @Override
     public void stop() {
         stopped.set(true);
         work.cancelActiveCall();

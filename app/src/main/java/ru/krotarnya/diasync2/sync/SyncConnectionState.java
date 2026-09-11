@@ -4,6 +4,7 @@ public enum SyncConnectionState {
     DISABLED,
     CONNECTING,
     CONNECTED,
+    WAITING_FOR_XDRIP,
     RETRYING,
     BLOCKED
 }

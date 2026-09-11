@@ -26,7 +26,7 @@ import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 
-public final class MonitoringService extends Service implements SyncRunner.Listener {
+public final class MonitoringService extends Service implements MonitoringRunner.Listener {
     public static final String ACTION_START = "ru.krotarnya.diasync2.action.START_MONITORING";
     public static final String ACTION_STOP = "ru.krotarnya.diasync2.action.STOP_MONITORING";
 
@@ -36,7 +36,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
     private DiasyncApplication application;
     private NotificationManager notificationManager;
     private ExecutorService executor;
-    private SyncRunner runner;
+    private MonitoringRunner runner;
     private Future<?> runnerFuture;
     private AlertMinuteScheduler alertMinuteScheduler;
     private ConnectivityManager connectivityManager;
@@ -143,10 +143,9 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
 
     private void restartRunner(AppConfiguration configuration) {
         cancelRunner();
-        runner = new SyncRunner(
-                application.createSyncWork(configuration),
-                new BackoffPolicy(Math::random),
-                duration -> Thread.sleep(duration.toMillis()),
+        runner = MonitoringRunnerFactory.create(
+                configuration.mode(),
+                () -> application.createSyncWork(configuration),
                 this);
         runnerFuture = executor.submit(runner);
     }
@@ -227,6 +226,7 @@ public final class MonitoringService extends Service implements SyncRunner.Liste
             case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
+            case WAITING_FOR_XDRIP -> R.string.monitoring_waiting_for_xdrip;
             case RETRYING -> R.string.monitoring_retrying;
             case BLOCKED -> R.string.monitoring_blocked;
         });

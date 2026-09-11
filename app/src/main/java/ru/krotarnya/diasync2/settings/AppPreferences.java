@@ -10,6 +10,7 @@ import ru.krotarnya.diasync2.sync.SyncConnectionState;
 public final class AppPreferences {
     private static final String FILE_NAME = "diasync_settings";
     private static final String KEY_BASE_URL = "base_url";
+    private static final String KEY_APP_MODE = "app_mode";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_UNIT = "unit";
     private static final String KEY_USE_CALIBRATION = "use_calibration";
@@ -49,6 +50,7 @@ public final class AppPreferences {
         }
         WidgetSettings widgetSettings = loadWidgetSettings();
         return Optional.of(new AppConfiguration(
+                loadMode(),
                 baseUrl,
                 userId,
                 widgetSettings.unit(),
@@ -59,6 +61,14 @@ public final class AppPreferences {
                 widgetSettings.graphZones(),
                 widgetSettings.graphLines(),
                 widgetSettings.trendArrow()));
+    }
+
+    public AppMode loadMode() {
+        try {
+            return AppMode.valueOf(preferences.getString(KEY_APP_MODE, AppMode.SLAVE.name()));
+        } catch (IllegalArgumentException exception) {
+            return AppMode.SLAVE;
+        }
     }
 
     public WidgetSettings loadWidgetSettings() {
@@ -100,6 +110,7 @@ public final class AppPreferences {
 
     public void save(AppConfiguration configuration) {
         preferences.edit()
+                .putString(KEY_APP_MODE, configuration.mode().name())
                 .putString(KEY_BASE_URL, configuration.baseUrl())
                 .putString(KEY_USER_ID, configuration.userId())
                 .putString(KEY_UNIT, configuration.unit().name())

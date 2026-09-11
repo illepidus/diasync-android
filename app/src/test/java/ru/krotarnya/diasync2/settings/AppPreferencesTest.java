@@ -19,6 +19,32 @@ import ru.krotarnya.diasync2.sync.SyncConnectionState;
 @Config(sdk = 35)
 public class AppPreferencesTest {
     @Test
+    public void existingInstallationDefaultsToSlaveAndPersistsSelectedMode() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();
+        AppPreferences preferences = new AppPreferences(application);
+
+        assertEquals(AppMode.SLAVE, preferences.loadMode());
+
+        preferences.save(new AppConfiguration(
+                AppMode.MASTER,
+                "https://example.test",
+                "secret",
+                GlucoseUnit.MMOL_L,
+                true,
+                70.0,
+                180.0,
+                GraphWindow.THIRTY_MINUTES,
+                true,
+                false,
+                true));
+
+        AppPreferences restarted = new AppPreferences(application);
+        assertEquals(AppMode.MASTER, restarted.loadMode());
+        assertEquals(AppMode.MASTER, restarted.load().orElseThrow().mode());
+    }
+
+    @Test
     public void alertDefaultsAreDisabledAndNotSnoozed() {
         Application application = RuntimeEnvironment.getApplication();
         application.getSharedPreferences("diasync_settings", 0).edit().clear().commit();

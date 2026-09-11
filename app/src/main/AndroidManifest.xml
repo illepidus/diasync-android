@@ -61,7 +61,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Continuous family glucose monitoring with server long polling" />
+                android:value="Continuous family glucose monitoring from Diasync backend or xDrip" />
         </service>
     </application>
 </manifest>

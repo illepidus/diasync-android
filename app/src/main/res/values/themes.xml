@@ -46,4 +46,12 @@
         <item name="android:textColor">@color/brand_black</item>
         <item name="backgroundTint">@color/brand_orange</item>
     </style>
+
+    <style name="Widget.Diasync.ModeButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:textColor">@color/mode_toggle_text</item>
+        <item name="backgroundTint">@color/mode_toggle_background</item>
+        <item name="strokeColor">@color/brand_orange</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
 </resources>

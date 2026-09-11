@@ -33,6 +33,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.slider.Slider;
 import com.google.android.gms.wearable.Wearable;
 import java.time.Duration;
@@ -49,6 +50,7 @@ import ru.krotarnya.diasync2.data.SyncDiagnosticsData;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.navigation.PhoneScreen;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
+import ru.krotarnya.diasync2.settings.AppMode;
 import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.ConfigurationValidator;
 import ru.krotarnya.diasync2.settings.GraphWindow;
@@ -79,6 +81,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     private final Runnable diagnosticsTicker = this::updateDiagnostics;
 
     private DiasyncApplication application;
+    private MaterialButtonToggleGroup appMode;
     private EditText backendUrl;
     private EditText userId;
     private Spinner unit;
@@ -143,6 +146,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         snoozeCountdown = new SnoozeCountdown(application.clock());
         bindViews();
         configureNavigation();
+        configureModeSelector();
         configureUnitSpinner();
         configureGraphWindowControls();
         configureWidgetClickActionMenus();
@@ -156,6 +160,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         populateWidgetClickActions();
         populateWatchSettings(application.preferences().loadWatchSettings());
         populateAlertSettings(application.preferences().loadAlertSettings());
+        populateMode(application.preferences().loadMode());
         Optional<AppConfiguration> saved = application.preferences().load();
         if (saved.isEmpty()) {
             render(application.statusPresenter().configurationMissing());
@@ -243,7 +248,8 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             case ALERTS -> R.string.alert_settings_title;
             case DIAGNOSTICS -> R.string.diagnostics_title;
         });
-        setVisible(screen == PhoneScreen.CONNECTION, R.id.backend_url_container, R.id.user_id_container,
+        setVisible(screen == PhoneScreen.CONNECTION, R.id.app_mode_container,
+                R.id.backend_url_container, R.id.user_id_container,
                 R.id.monitoring_status_panel, R.id.monitoring_toggle);
         setVisible(screen == PhoneScreen.GLUCOSE, R.id.glucose_unit,
                 R.id.low_threshold_container, R.id.high_threshold_container,
@@ -302,6 +308,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
     }
 
     private void bindViews() {
+        appMode = findViewById(R.id.app_mode);
         backendUrl = findViewById(R.id.backend_url);
         userId = findViewById(R.id.user_id);
         userId.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
@@ -350,6 +357,49 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         unit.setAdapter(adapter);
+    }
+
+    private void populateMode(AppMode mode) {
+        appMode.check(modeButtonId(mode));
+    }
+
+    private void configureModeSelector() {
+        View.OnTouchListener guard = (view, event) -> {
+            if (!monitoringActive) {
+                return false;
+            }
+            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                pulseStopMonitoring();
+            }
+            return true;
+        };
+        findViewById(R.id.mode_slave).setOnTouchListener(guard);
+        findViewById(R.id.mode_master).setOnTouchListener(guard);
+        View.OnClickListener accessibilityGuard = view -> {
+            if (monitoringActive) {
+                populateMode(application.preferences().loadMode());
+                pulseStopMonitoring();
+            }
+        };
+        findViewById(R.id.mode_slave).setOnClickListener(accessibilityGuard);
+        findViewById(R.id.mode_master).setOnClickListener(accessibilityGuard);
+    }
+
+    private void pulseStopMonitoring() {
+        monitoringToggle.animate().cancel();
+        monitoringToggle.setAlpha(1.0f);
+        monitoringToggle.animate()
+                .alpha(0.35f)
+                .setDuration(140L)
+                .withEndAction(() -> monitoringToggle.animate()
+                        .alpha(1.0f)
+                        .setDuration(220L)
+                        .start())
+                .start();
+    }
+
+    private int modeButtonId(AppMode mode) {
+        return mode == AppMode.MASTER ? R.id.mode_master : R.id.mode_slave;
     }
 
     private void configureGraphWindowControls() {
@@ -934,6 +984,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         try {
             requireValidThresholdInputs();
             configuration = configurationValidator.validate(
+                    selectedMode(),
                     backendUrl.getText().toString(),
                     userId.getText().toString(),
                     selectedUnit(),
@@ -1022,6 +1073,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             case DISABLED -> R.string.monitoring_disabled;
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
+            case WAITING_FOR_XDRIP -> R.string.monitoring_waiting_for_xdrip;
             case RETRYING -> R.string.monitoring_retrying;
             case BLOCKED -> R.string.monitoring_blocked;
         });
@@ -1029,6 +1081,18 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 ? R.string.stop_monitoring
                 : R.string.start_monitoring);
         monitoringToggle.setEnabled(true);
+        backendUrl.setEnabled(!monitoringActive);
+        userId.setEnabled(!monitoringActive);
+        if (!monitoringActive) {
+            monitoringToggle.animate().cancel();
+            monitoringToggle.setAlpha(1.0f);
+        }
+    }
+
+    private AppMode selectedMode() {
+        return appMode.getCheckedButtonId() == R.id.mode_master
+                ? AppMode.MASTER
+                : AppMode.SLAVE;
     }
 
     private GlucoseUnit selectedUnit() {

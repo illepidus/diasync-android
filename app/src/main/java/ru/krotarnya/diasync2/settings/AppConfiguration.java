@@ -7,6 +7,7 @@ public final class AppConfiguration {
     public static final double DEFAULT_LOW_MG_DL = 70.0;
     public static final double DEFAULT_HIGH_MG_DL = 180.0;
 
+    private final AppMode mode;
     private final String baseUrl;
     private final String userId;
     private final GlucoseUnit unit;
@@ -17,6 +18,32 @@ public final class AppConfiguration {
     private final boolean widgetGraphZones;
     private final boolean widgetGraphLines;
     private final boolean widgetTrendArrow;
+
+    public AppConfiguration(
+            AppMode mode,
+            String baseUrl,
+            String userId,
+            GlucoseUnit unit,
+            boolean useCalibration,
+            double lowMgDl,
+            double highMgDl,
+            GraphWindow widgetGraphWindow,
+            boolean widgetGraphZones,
+            boolean widgetGraphLines,
+            boolean widgetTrendArrow
+    ) {
+        this.mode = Objects.requireNonNull(mode);
+        this.baseUrl = Objects.requireNonNull(baseUrl);
+        this.userId = Objects.requireNonNull(userId);
+        this.unit = Objects.requireNonNull(unit);
+        this.useCalibration = useCalibration;
+        this.lowMgDl = lowMgDl;
+        this.highMgDl = highMgDl;
+        this.widgetGraphWindow = Objects.requireNonNull(widgetGraphWindow);
+        this.widgetGraphZones = widgetGraphZones;
+        this.widgetGraphLines = widgetGraphLines;
+        this.widgetTrendArrow = widgetTrendArrow;
+    }
 
     public AppConfiguration(
             String baseUrl,
@@ -30,16 +57,22 @@ public final class AppConfiguration {
             boolean widgetGraphLines,
             boolean widgetTrendArrow
     ) {
-        this.baseUrl = Objects.requireNonNull(baseUrl);
-        this.userId = Objects.requireNonNull(userId);
-        this.unit = Objects.requireNonNull(unit);
-        this.useCalibration = useCalibration;
-        this.lowMgDl = lowMgDl;
-        this.highMgDl = highMgDl;
-        this.widgetGraphWindow = Objects.requireNonNull(widgetGraphWindow);
-        this.widgetGraphZones = widgetGraphZones;
-        this.widgetGraphLines = widgetGraphLines;
-        this.widgetTrendArrow = widgetTrendArrow;
+        this(
+                AppMode.SLAVE,
+                baseUrl,
+                userId,
+                unit,
+                useCalibration,
+                lowMgDl,
+                highMgDl,
+                widgetGraphWindow,
+                widgetGraphZones,
+                widgetGraphLines,
+                widgetTrendArrow);
+    }
+
+    public AppMode mode() {
+        return mode;
     }
 
     public String baseUrl() {

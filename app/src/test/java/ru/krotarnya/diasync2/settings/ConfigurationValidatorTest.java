@@ -13,6 +13,7 @@ public class ConfigurationValidatorTest {
     @Test
     public void acceptsWidgetThresholdAndGraphSettings() {
         AppConfiguration configuration = validator.validate(
+                AppMode.MASTER,
                 "https://example.test",
                 "secret",
                 GlucoseUnit.MMOL_L,
@@ -25,6 +26,7 @@ public class ConfigurationValidatorTest {
                 false);
 
         assertEquals(75.0, configuration.lowMgDl(), 0.0);
+        assertEquals(AppMode.MASTER, configuration.mode());
         assertEquals(170.5, configuration.highMgDl(), 0.0);
         assertEquals(GraphWindow.ONE_HOUR, configuration.widgetGraphWindow());
         assertFalse(configuration.widgetTrendArrow());
@@ -33,6 +35,7 @@ public class ConfigurationValidatorTest {
     @Test
     public void rejectsReversedThresholds() {
         assertThrows(IllegalArgumentException.class, () -> validator.validate(
+                AppMode.SLAVE,
                 "https://example.test",
                 "secret",
                 GlucoseUnit.MMOL_L,

@@ -15,6 +15,9 @@
     <string name="backend_url">Backend HTTPS URL</string>
     <string name="default_backend_url" translatable="false">https://diasync.krotarnya.ru</string>
     <string name="user_id">User ID / token</string>
+    <string name="app_mode">Monitoring mode</string>
+    <string name="app_mode_slave">Slave</string>
+    <string name="app_mode_master">Master</string>
     <string name="glucose_unit">Glucose unit</string>
     <string name="use_calibration">Use calibration</string>
     <string name="low_threshold_mgdl">Low threshold (mg/dL)</string>
@@ -57,6 +60,7 @@
     <string name="monitoring_status_label">Monitoring status</string>
     <string name="monitoring_connecting">Connecting…</string>
     <string name="monitoring_connected">Connected</string>
+    <string name="monitoring_waiting_for_xdrip">Waiting for xDrip…</string>
     <string name="monitoring_retrying">Retrying after a sync failure…</string>
     <string name="monitoring_blocked">Monitoring could not restart in the background. Open Diasync to resume.</string>
     <string name="monitoring_restart_required_title">Diasync monitoring needs attention</string>

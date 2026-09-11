@@ -35,11 +35,53 @@
             <com.google.android.material.button.MaterialButton android:id="@+id/open_diagnostics" style="@style/Widget.Diasync.MenuButton" android:text="@string/diagnostics_title" app:icon="@drawable/ic_menu_diagnostics" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/app_mode_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_mode"
+                android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/app_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:checkedButton="@id/mode_slave"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/mode_slave"
+                    style="@style/Widget.Diasync.ModeButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/app_mode_slave" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/mode_master"
+                    style="@style/Widget.Diasync.ModeButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/app_mode_master" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        </LinearLayout>
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/backend_url_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:hint="@string/backend_url">
 
             <com.google.android.material.textfield.TextInputEditText

@@ -80,7 +80,7 @@ public class SyncRunnerTest {
     public void stopCancelsActiveWorkAndPreventsFurtherPolling() {
         FakeWork work = new FakeWork(BootstrapResult.noData(INITIAL_SINCE));
         SyncRunner[] holder = new SyncRunner[1];
-        SyncRunner.Listener listener = new SyncRunner.Listener() {
+        MonitoringRunner.Listener listener = new MonitoringRunner.Listener() {
             @Override
             public void onStateChanged(SyncConnectionState state) {
                 if (state == SyncConnectionState.CONNECTED) {
@@ -117,7 +117,7 @@ public class SyncRunnerTest {
 
     private SyncRunner runner(
             FakeWork work,
-            SyncRunner.Listener listener,
+            MonitoringRunner.Listener listener,
             List<Duration> sleeps
     ) {
         return new SyncRunner(
@@ -127,7 +127,7 @@ public class SyncRunnerTest {
                 listener);
     }
 
-    private static final class RecordingListener implements SyncRunner.Listener {
+    private static final class RecordingListener implements MonitoringRunner.Listener {
         private final List<SyncConnectionState> states = new ArrayList<>();
         private int commits;
 

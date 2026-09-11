@@ -5,6 +5,7 @@ import ru.krotarnya.diasync2.common.GlucoseUnit;
 
 public final class ConfigurationValidator {
     public AppConfiguration validate(
+            AppMode mode,
             String baseUrlInput,
             String userIdInput,
             GlucoseUnit unit,
@@ -31,6 +32,7 @@ public final class ConfigurationValidator {
             throw new IllegalArgumentException("Low threshold must be below high threshold");
         }
         return new AppConfiguration(
+                mode,
                 baseUrl,
                 userId,
                 unit,
