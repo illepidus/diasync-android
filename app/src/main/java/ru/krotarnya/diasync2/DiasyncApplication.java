@@ -25,6 +25,7 @@ import ru.krotarnya.diasync2.data.DataPointMapper;
 import ru.krotarnya.diasync2.data.api.HttpBootstrapDataSource;
 import ru.krotarnya.diasync2.data.LongPollRepository;
 import ru.krotarnya.diasync2.data.api.HttpLongPollDataSource;
+import ru.krotarnya.diasync2.data.api.HttpMasterUploadDataSource;
 import ru.krotarnya.diasync2.data.local.AppDatabase;
 import ru.krotarnya.diasync2.presentation.StatusPresenter;
 import ru.krotarnya.diasync2.presentation.DataReceiptDiagnostics;
@@ -45,6 +46,10 @@ import ru.krotarnya.diasync2.common.wear.WearSnapshotCodec;
 import ru.krotarnya.diasync2.common.master.XdripEventCodec;
 import ru.krotarnya.diasync2.master.MasterEventIngestor;
 import ru.krotarnya.diasync2.master.MasterEventRepository;
+import ru.krotarnya.diasync2.master.MasterOutboxDrainer;
+import ru.krotarnya.diasync2.master.MasterRetryDelay;
+import ru.krotarnya.diasync2.master.MasterUploadScheduler;
+import ru.krotarnya.diasync2.master.MasterUploadWork;
 import ru.krotarnya.diasync2.data.local.MasterEventDao;
 
 public final class DiasyncApplication extends Application {
@@ -66,6 +71,7 @@ public final class DiasyncApplication extends Application {
     private WearSyncDiagnostics wearSyncDiagnostics;
     private ThreadPoolExecutor masterIngestExecutor;
     private MasterEventIngestor masterEventIngestor;
+    private MasterOutboxDrainer masterOutboxDrainer;
 
     @Override
     public void onCreate() {
@@ -129,6 +135,13 @@ public final class DiasyncApplication extends Application {
                 TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(32),
                 new ThreadPoolExecutor.AbortPolicy());
+        OkHttpClient masterUploadClient = new OkHttpClient();
+        masterOutboxDrainer = new MasterOutboxDrainer(
+                database.masterEventDao(),
+                new HttpMasterUploadDataSource(masterUploadClient, new Gson()),
+                new XdripEventCodec(),
+                clock,
+                new MasterRetryDelay(Math::random));
         masterEventIngestor = new MasterEventIngestor(
                 preferences::monitoringEnabled,
                 preferences::load,
@@ -138,7 +151,7 @@ public final class DiasyncApplication extends Application {
                     dataReceiptDiagnostics.record(clock.instant());
                     phoneUpdateCoordinator.dataCommitted();
                 },
-                () -> { },
+                () -> MasterUploadScheduler.schedule(this),
                 this::recordMasterIngestDiagnostic);
     }
 
@@ -210,6 +223,32 @@ public final class DiasyncApplication extends Application {
 
     public MasterEventDao masterEventDao() {
         return database.masterEventDao();
+    }
+
+    public MasterOutboxDrainer masterOutboxDrainer() {
+        return masterOutboxDrainer;
+    }
+
+    public MasterUploadWork masterUploadWork() {
+        return new MasterUploadWork() {
+            @Override
+            public MasterOutboxDrainer.Result drainOnce(AppConfiguration configuration) {
+                MasterOutboxDrainer.Result result = masterOutboxDrainer.drainOnce(configuration);
+                recordMasterUploadResult(result);
+                return result;
+            }
+
+            @Override
+            public void cancelActiveCall() {
+                masterOutboxDrainer.cancelActiveCall();
+            }
+        };
+    }
+
+    public void recordMasterUploadResult(MasterOutboxDrainer.Result result) {
+        if (result.diagnosticCode() != null) {
+            diagnosticEventLog.record("Master upload", result.diagnosticCode(), clock.instant());
+        }
     }
 
     public void recordMasterIngestDiagnostic(String code) {

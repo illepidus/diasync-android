@@ -25,6 +25,7 @@ import ru.krotarnya.diasync2.alert.AlertMinuteScheduler;
 import ru.krotarnya.diasync2.common.DataPoint;
 import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
+import ru.krotarnya.diasync2.master.MasterUploadScheduler;
 
 public final class MonitoringService extends Service implements MonitoringRunner.Listener {
     public static final String ACTION_START = "ru.krotarnya.diasync2.action.START_MONITORING";
@@ -73,12 +74,14 @@ public final class MonitoringService extends Service implements MonitoringRunner
                         network.getNetworkHandle(),
                         isNetworkValidated(network));
                 updateNetworkValidation();
+                wakeMasterRunner();
             }
 
             @Override
             public void onLost(@NonNull Network network) {
                 networkTracker.onLost(network.getNetworkHandle());
                 updateNetworkValidation();
+                wakeMasterRunner();
             }
 
             @Override
@@ -90,6 +93,7 @@ public final class MonitoringService extends Service implements MonitoringRunner
                         network.getNetworkHandle(),
                         NetworkValidation.isValidated(capabilities));
                 updateNetworkValidation();
+                wakeMasterRunner();
             }
         };
         connectivityManager.registerDefaultNetworkCallback(networkCallback);
@@ -144,8 +148,10 @@ public final class MonitoringService extends Service implements MonitoringRunner
     private void restartRunner(AppConfiguration configuration) {
         cancelRunner();
         runner = MonitoringRunnerFactory.create(
-                configuration.mode(),
+                configuration,
                 () -> application.createSyncWork(configuration),
+                application::masterUploadWork,
+                networkTracker::isValidated,
                 this);
         runnerFuture = executor.submit(runner);
     }
@@ -166,6 +172,7 @@ public final class MonitoringService extends Service implements MonitoringRunner
         runnerState = SyncConnectionState.DISABLED;
         application.phoneUpdateCoordinator().stateChanged(runnerState);
         cancelRunner();
+        MasterUploadScheduler.schedule(this);
         alertMinuteScheduler.cancel(this);
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
@@ -227,6 +234,7 @@ public final class MonitoringService extends Service implements MonitoringRunner
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
             case WAITING_FOR_XDRIP -> R.string.monitoring_waiting_for_xdrip;
+            case UPLOADING -> R.string.monitoring_uploading;
             case RETRYING -> R.string.monitoring_retrying;
             case BLOCKED -> R.string.monitoring_blocked;
         });
@@ -271,5 +279,12 @@ public final class MonitoringService extends Service implements MonitoringRunner
                 networkTracker.isValidated());
         application.phoneUpdateCoordinator().stateChanged(effectiveState);
         notificationManager.notify(NOTIFICATION_ID, notification(effectiveState, true));
+    }
+
+    private void wakeMasterRunner() {
+        MonitoringRunner current = runner;
+        if (current instanceof MasterMonitoringRunner masterRunner) {
+            masterRunner.wake();
+        }
     }
 }

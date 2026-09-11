@@ -51,6 +51,9 @@ import ru.krotarnya.diasync2.presentation.StatusState;
 import ru.krotarnya.diasync2.navigation.PhoneScreen;
 import ru.krotarnya.diasync2.settings.AppConfiguration;
 import ru.krotarnya.diasync2.settings.AppMode;
+import ru.krotarnya.diasync2.master.MasterUploadScheduler;
+import ru.krotarnya.diasync2.master.MasterOutboxDrainer;
+import ru.krotarnya.diasync2.data.local.MasterEventDao;
 import ru.krotarnya.diasync2.settings.AlertSettings;
 import ru.krotarnya.diasync2.settings.ConfigurationValidator;
 import ru.krotarnya.diasync2.settings.GraphWindow;
@@ -840,7 +843,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 SyncDiagnosticsData data = application.bootstrapRepository()
                         .diagnostics(configuration.get().userId());
                 String dataText = diagnosticsDataText(data);
-                String syncText = diagnosticsSyncText(data);
+                String syncText = diagnosticsSyncText(data, configuration.get());
                 runOnUiThread(() -> {
                     diagnosticsData.setText(dataText);
                     diagnosticsSync.setText(syncText);
@@ -887,11 +890,33 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
                 + "\nData age: " + formatAge(measurement);
     }
 
-    private String diagnosticsSyncText(SyncDiagnosticsData data) {
+    private String diagnosticsSyncText(
+            SyncDiagnosticsData data,
+            AppConfiguration configuration
+    ) {
+        if (configuration.mode() == AppMode.MASTER) {
+            MasterEventDao dao = application.masterEventDao();
+            String lastError = dao.latestUndeliveredError();
+            return "State: " + application.preferences().syncConnectionState()
+                    + "\nLast xDrip event: "
+                    + formatInstant(parseInstant(dao.latestReceivedAt()))
+                    + "\nLast successful upload: "
+                    + formatInstant(parseInstant(dao.latestDeliveredAt()))
+                    + "\nUndelivered events: " + dao.countUndeliveredEvents()
+                    + "\nBlocked events: " + dao.countBlockedEvents()
+                    + "\nLast upload error: "
+                    + (lastError == null
+                            ? "None"
+                            : lastError);
+        }
         return "State: " + application.preferences().syncConnectionState()
                 + "\nLast successful response: " + formatInstant(data.lastSuccessAt())
                 + "\nCursor update time: " + formatInstant(data.cursorUpdateTimestamp())
                 + "\nLast error: " + (data.lastError() == null ? "None" : data.lastError());
+    }
+
+    private Instant parseInstant(String value) {
+        return value == null ? null : Instant.parse(value);
     }
 
     private void renderWearDiagnostics(List<com.google.android.gms.wearable.Node> nodes) {
@@ -1024,6 +1049,18 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
         render(application.statusPresenter().loading());
         application.preferences().setMonitoringEnabled(true);
         application.phoneUpdateCoordinator().stateChanged(SyncConnectionState.CONNECTING);
+        if (configuration.mode() == AppMode.MASTER) {
+            application.ioExecutor().execute(() -> {
+                int retried = application.masterOutboxDrainer().retryBlocked(configuration);
+                if (retried > 0) {
+                    application.recordMasterUploadResult(new MasterOutboxDrainer.Result(
+                            MasterOutboxDrainer.Kind.RETRY_SCHEDULED,
+                            retried,
+                            "MANUAL_RETRY"));
+                }
+                MasterUploadScheduler.schedule(this);
+            });
+        }
         MonitoringService.start(this);
     }
 
@@ -1074,6 +1111,7 @@ public final class MainActivity extends AppCompatActivity implements PhoneUpdate
             case CONNECTING -> R.string.monitoring_connecting;
             case CONNECTED -> R.string.monitoring_connected;
             case WAITING_FOR_XDRIP -> R.string.monitoring_waiting_for_xdrip;
+            case UPLOADING -> R.string.monitoring_uploading;
             case RETRYING -> R.string.monitoring_retrying;
             case BLOCKED -> R.string.monitoring_blocked;
         });
