@@ -232,8 +232,13 @@ public final class DiasyncApplication extends Application {
     public MasterUploadWork masterUploadWork() {
         return new MasterUploadWork() {
             @Override
-            public MasterOutboxDrainer.Result drainOnce(AppConfiguration configuration) {
-                MasterOutboxDrainer.Result result = masterOutboxDrainer.drainOnce(configuration);
+            public MasterOutboxDrainer.Result drainOnce(
+                    AppConfiguration configuration,
+                    Runnable onUploadStarted
+            ) {
+                MasterOutboxDrainer.Result result = masterOutboxDrainer.drainOnce(
+                        configuration,
+                        onUploadStarted);
                 recordMasterUploadResult(result);
                 return result;
             }

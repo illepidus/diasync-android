@@ -31,14 +31,6 @@ public final class PhoneUpdateCoordinator {
     public PhoneUpdateCoordinator(
             Context context,
             AppPreferences preferences,
-            Runnable alertCheck
-    ) {
-        this(context, preferences, alertCheck, () -> { });
-    }
-
-    public PhoneUpdateCoordinator(
-            Context context,
-            AppPreferences preferences,
             Runnable alertCheck,
             Runnable wearUpdate
     ) {
@@ -72,7 +64,6 @@ public final class PhoneUpdateCoordinator {
 
     public void stateChanged(SyncConnectionState state) {
         preferences.saveSyncConnectionState(state);
-        record("Sync", state.name());
         notifyListener(state, false);
     }
 

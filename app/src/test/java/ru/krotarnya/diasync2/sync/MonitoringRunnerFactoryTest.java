@@ -38,8 +38,8 @@ public class MonitoringRunnerFactoryTest {
         thread.start();
 
         assertTrue(listener.changed.await(1, TimeUnit.SECONDS));
-        assertTrue(listener.states.contains(SyncConnectionState.UPLOADING));
         assertTrue(listener.states.contains(SyncConnectionState.WAITING_FOR_XDRIP));
+        assertFalse(listener.states.contains(SyncConnectionState.UPLOADING));
         assertFalse(slaveWorkCreated.get());
 
         runner.stop();
@@ -70,7 +70,7 @@ public class MonitoringRunnerFactoryTest {
 
     private static final class RecordingListener implements MonitoringRunner.Listener {
         private final List<SyncConnectionState> states = new CopyOnWriteArrayList<>();
-        private final CountDownLatch changed = new CountDownLatch(2);
+        private final CountDownLatch changed = new CountDownLatch(1);
 
         @Override
         public void onStateChanged(SyncConnectionState state) {
@@ -108,7 +108,10 @@ public class MonitoringRunnerFactoryTest {
         private final AtomicBoolean cancelled = new AtomicBoolean();
 
         @Override
-        public MasterOutboxDrainer.Result drainOnce(AppConfiguration configuration) {
+        public MasterOutboxDrainer.Result drainOnce(
+                AppConfiguration configuration,
+                Runnable onUploadStarted
+        ) {
             return new MasterOutboxDrainer.Result(
                     MasterOutboxDrainer.Kind.IDLE,
                     0,

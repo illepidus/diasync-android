@@ -1,9 +1,11 @@
 package ru.krotarnya.diasync2.master;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import androidx.room.Room;
@@ -15,6 +17,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
@@ -78,6 +81,19 @@ public class MasterOutboxDrainerTest {
         assertEquals(Long.valueOf(100), point.serverId);
         assertEquals(NOW.plusSeconds(5).toString(), point.updateTimestamp);
         assertNotNull(dao.findEvent(event.eventId()).deliveredAt);
+    }
+
+    @Test
+    public void uploadStateStartsOnlyWhenAnEligibleBatchExists() {
+        AtomicBoolean uploadStarted = new AtomicBoolean();
+        MasterOutboxDrainer drainer = drainer(acknowledging());
+
+        drainer.drainOnce(configuration(), () -> uploadStarted.set(true));
+        assertFalse(uploadStarted.get());
+
+        accept(manual("MANUAL_GLUCOSE:a", 0L, 121.0));
+        drainer.drainOnce(configuration(), () -> uploadStarted.set(true));
+        assertTrue(uploadStarted.get());
     }
 
     @Test

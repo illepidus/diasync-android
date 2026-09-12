@@ -1,7 +1,7 @@
 # Master mode — план реализации
 
 Статус: approved design
-Дата исследования: 2026-09-10
+Дата исследования: 2026-09-10; Libre raw path уточнён после device validation 2026-09-12
 
 ## Утверждённые продуктовые решения
 
@@ -10,10 +10,10 @@
 - Mode, backend URL и `userId` разрешено менять только при остановленном monitoring и отсутствии
   недоставленных master events. При наличии `PENDING`, `IN_FLIGHT` или `BLOCKED` rows пользователь
   сначала доставляет их либо выполняет отдельный destructive discard с явным подтверждением.
-- Sensor event содержит исходный raw value конкретной сохранённой xDrip точки и calibration
-  `slope`/`intercept`. Внутренние `calculated_value`, smoothing и график xDrip не являются частью
-  контракта. Если calibration отсутствует, xDrip явно отправляет identity calibration
-  `slope=1`, `intercept=0`.
+- Sensor event для Libre содержит каждую успешно сохранённую минутную `Libre2RawValue` и snapshot
+  текущей calibration `slope`/`intercept`, взятый в том же processing step. Пятиминутный
+  `BgReading`, `calculated_value`, smoothing и график xDrip не являются частью контракта. Если
+  calibration отсутствует, xDrip явно отправляет identity calibration `slope=1`, `intercept=0`.
 - Calibration относится только к sensor glucose. Она бессмысленна и запрещена для
   `MANUAL_GLUCOSE` и `CARBS`.
 - Protocol v1 передаёт только create/insert events. Edits и deletes остаются отдельным решением
@@ -77,8 +77,9 @@ Master mode не выполняет bootstrap или long poll. Slave mode не 
   `com.eveningoutpost.dexdrip.diasync.libre2_bg` в старый package `ru.krotarnya.diasync`.
 - Старый patch сначала берёт raw Libre event, затем отдельно ищет последний `BgReading`. Значения,
   calibration и timestamps могут относиться к разным readings. Этот контракт не переносим.
-- В актуальном xDrip принятый Libre result представлен `BgReading`, ручной замер — `BloodTest`,
-  carbs — `Treatments`.
+- В актуальном xDrip каждый принятый Libre result сохраняется как `Libre2RawValue`, а отдельный
+  `BgReading` создаётся из сглаженного окна примерно раз в пять минут. Для Diasync sensor path
+  источником является `Libre2RawValue`; ручной замер представлен `BloodTest`, carbs — `Treatments`.
 - В xDrip уже есть общие broadcast-механизмы, но они настраиваемые, glucose-oriented и не дают
   надёжного отдельного события для каждого нового `BloodTest`/`Treatments`. Для требуемого контракта
   нужен небольшой dedicated patch fork-а.
@@ -145,9 +146,11 @@ extra:   payload = UTF-8 JSON string
 Правила контракта:
 
 - ровно один payload subtype соответствует `eventType`;
-- `eventId` — глобально уникальный `<eventType>:<stable xDrip UUID>`, не случайный UUID на каждую
-  попытку broadcast; namespace по type обязателен, потому что одна операция xDrip может использовать
-  общий UUID для `BloodTest` и `Treatments`;
+- `eventId` — глобально уникальный `<eventType>:<stable source id>`, не случайный UUID на каждую
+  попытку broadcast. Для Libre sensor source id — SHA-256 от `sensorId`, separator byte `0` и
+  decimal timestamp; повтор того же минутного raw event получает тот же id. Для `BloodTest` и
+  `Treatments` используется stable xDrip UUID. Namespace по type обязателен, потому что одна операция
+  xDrip может использовать общий UUID для `BloodTest` и `Treatments`;
 - timestamp берётся из сохранённой xDrip entity, не из времени отправки intent;
 - `sensor.rawValue` — исходное значение sensor reading до обработки xDrip;
 - sensor calibration всегда присутствует полной парой. При отсутствии calibration source отправляет
@@ -167,9 +170,9 @@ displayMgdl = rawValue * slope + intercept
 ```
 
 При выключенной calibration отображается `rawValue`. Этот контракт сознательно не пытается
-воспроизвести `BgReading.calculated_value`, age adjustment, smoothing или график xDrip. Raw value и
-calibration должны относиться к одной конкретной сохранённой xDrip точке; нельзя брать calibration
-из отдельного запроса «последней» записи.
+воспроизвести `BgReading.calculated_value`, age adjustment, smoothing или график xDrip. Raw value
+берётся из сохранённой `Libre2RawValue`, а calibration snapshot — непосредственно в том же
+`LibreReceiver` processing step; брать значения из отдельного latest `BgReading` нельзя.
 
 ### Protocol v1 schema и limits
 
@@ -330,9 +333,10 @@ Mode-aware status/notification показывают:
 
 ### Точки событий
 
-1. **Libre sensor glucose** — отправлять только после успешного создания принятого `BgReading` из
-   `LibreReceiver`, а не для каждого входного raw broadcast. Exporter получает конкретный
-   `BgReading` и sensor identity из того же processing path.
+1. **Libre sensor glucose** — отправлять каждую минутную raw-точку сразу после успешного
+   `Libre2RawValue.save()` в `LibreReceiver`, вне пятиминутного smoothing/dedup gate для
+   `BgReading`. Exporter получает конкретную `Libre2RawValue`, sensor identity и текущий calibration
+   snapshot из того же processing path. Повтор raw broadcast имеет тот же deterministic event id.
 2. **Manual glucose** — событие после успешного `BloodTest.create...`, только для действительно
    ручного source (`Manual Entry`). До patch-а проверить все актуальные manual-entry flows и добавить
    characterization tests, чтобы не экспортировать calibrations и Bluetooth meter records как
@@ -427,15 +431,16 @@ queue, чтобы не создавать две расходящиеся оче
 
 - свежая upstream base;
 - новый standalone Diasync encoder/exporter;
-- узкий hook из LibreReceiver processing после принятого `BgReading`;
+- узкий hook после `Libre2RawValue.save()`, вне пятиминутного `BgReading` smoothing gate;
 - explicit package/action и signature permission;
 - никаких backend credentials/settings в xDrip.
 
 **Проверки**
 
 - xDrip unit test golden fixture;
-- duplicate/raw events, которые xDrip не принимает как новый `BgReading`, не создают новые logical
-  Diasync events;
+- последовательные минутные raw events создают отдельные Diasync events;
+- duplicate raw event с тем же sensor id и timestamp получает тот же event id и не создаёт вторую
+  logical delivery в Diasync;
 - LibreReceiver остаётся функциональным без установленного Diasync;
 - xDrip build/lint и device Libre smoke test;
 - on-device end-to-end: Libre event появляется локально и затем на backend.
@@ -523,11 +528,11 @@ Signature permission требует один signing certificate. Fork xDrip, п
 
 ### Processed и raw Libre glucose — разные данные
 
-xDrip `BgReading.calculated_value` может включать smoothing, calibration и clamps; current Libre raw
-value — нет. Нельзя отправлять raw от одного события и calibration/latest BgReading от другого.
-Принятое решение для v1 — передавать raw sensor value и calibration одной и той же сохранённой точки.
-Diasync применяет `rawValue * slope + intercept`; при отсутствии calibration xDrip передаёт `(1, 0)`.
-Processed xDrip value и его график не передаются.
+xDrip `BgReading.calculated_value` может включать smoothing, calibration и clamps; минутная
+`Libre2RawValue.glucose` — нет. Принятое решение для v1 — передавать каждую сохранённую raw-точку и
+snapshot текущей valid calibration, захваченный в том же processing step, не обращаясь к latest
+`BgReading`. Diasync применяет `rawValue * slope + intercept`; при отсутствии calibration xDrip
+передаёт `(1, 0)`. Processed xDrip value и его график не передаются.
 
 ### Current backend identity ограничивает event model
 

@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.ArrayMap;
+import android.util.Log;
 import android.util.SizeF;
 import android.widget.RemoteViews;
 import java.util.List;
@@ -30,6 +31,7 @@ import ru.krotarnya.diasync2.settings.WidgetClickAction;
 public final class DiasyncWidgetProvider extends AppWidgetProvider {
     public static final String ACTION_WIDGET_TAP = "ru.krotarnya.diasync2.action.WIDGET_TAP";
     static final int MAX_PRESENTATION_POINTS = 256;
+    private static final String TAG = "DiasyncWidget";
     private static final Handler TAP_HANDLER = new Handler(Looper.getMainLooper());
     private static final WidgetTapRouter TAP_ROUTER = new WidgetTapRouter();
 
@@ -137,7 +139,11 @@ public final class DiasyncWidgetProvider extends AppWidgetProvider {
                 WidgetState state = loadState(application);
                 AppWidgetManager manager = AppWidgetManager.getInstance(context);
                 for (int appWidgetId : appWidgetIds) {
-                    updateWidget(context, manager, appWidgetId, state);
+                    try {
+                        updateWidget(context, manager, appWidgetId, state);
+                    } catch (IllegalArgumentException exception) {
+                        Log.e(TAG, "Widget update rejected by the launcher", exception);
+                    }
                 }
             } finally {
                 pendingResult.finish();

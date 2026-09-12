@@ -41,12 +41,19 @@ public class WidgetBitmapSizeTest {
     }
 
     @Test
-    public void preservesAspectRatioWhenWideBitmapExceedsPixelLimit() {
+    public void preservesAspectRatioWhenWideBitmapExceedsPixelBudget() {
         WidgetBitmapSize size = WidgetBitmapSize.exact(1200, 200, 2.0f);
 
-        assertEquals(WidgetBitmapSize.MAX_DIMENSION_PX, size.width());
-        assertEquals(171, size.height());
+        assertTrue((long) size.width() * size.height() <= WidgetBitmapSize.MAX_GRAPH_PIXELS);
         assertEquals(1200.0 / 200.0, (double) size.width() / size.height(), 0.02);
+    }
+
+    @Test
+    public void capsSquareBitmapByAreaInsteadOfOnlyItsLongestSide() {
+        WidgetBitmapSize size = WidgetBitmapSize.exact(600, 600, 2.0f);
+
+        assertTrue((long) size.width() * size.height() <= WidgetBitmapSize.MAX_GRAPH_PIXELS);
+        assertEquals(size.width(), size.height());
     }
 
     @Test

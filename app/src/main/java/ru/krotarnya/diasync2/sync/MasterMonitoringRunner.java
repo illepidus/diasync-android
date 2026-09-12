@@ -34,8 +34,9 @@ public final class MasterMonitoringRunner implements MonitoringRunner {
                 awaitSignal();
                 continue;
             }
-            listener.onStateChanged(SyncConnectionState.UPLOADING);
-            MasterOutboxDrainer.Result result = uploadWork.drainOnce(configuration);
+            MasterOutboxDrainer.Result result = uploadWork.drainOnce(
+                    configuration,
+                    () -> listener.onStateChanged(SyncConnectionState.UPLOADING));
             if (result.kind() == MasterOutboxDrainer.Kind.DELIVERED) {
                 continue;
             }

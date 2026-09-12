@@ -225,9 +225,11 @@ Event содержит ровно один subtype, соответствующи
 {"carbs":{"grams":20.0,"description":"optional note"}}
 ```
 
-Sensor event передаёт исходный raw value и calibration одной и той же сохранённой xDrip точки.
-Внутренние `calculated_value`, age adjustment, smoothing и график xDrip не передаются. Если
-calibration отсутствует, xDrip явно передаёт identity transform `slope=1`, `intercept=0`. Diasync
+Libre sensor event передаёт каждую успешно сохранённую минутную `Libre2RawValue.glucose` и snapshot
+текущей valid calibration, захваченный в том же `LibreReceiver` processing step. Пятиминутный
+`BgReading`, внутренние `calculated_value`, age adjustment, smoothing и график xDrip не передаются.
+Если calibration отсутствует, xDrip явно передаёт identity transform `slope=1`, `intercept=0`.
+Повтор raw event с теми же sensor id и timestamp получает тот же deterministic event id. Diasync
 хранит raw и calibration отдельно и применяет существующую настройку `use calibration`:
 
 ```text
@@ -423,6 +425,8 @@ displayMgdl = rawMgdl * slope + intercept
 ## Phone widget
 
 Реализация: обычный `AppWidgetProvider`, XML `RemoteViews`, график как bitmap из Android Canvas.
+Суммарный pixel budget всех responsive bitmap-вариантов в одном `RemoteViews` ограничен, чтобы
+частые обновления не превышали launcher/AppWidget Binder memory limit.
 
 ### Содержимое
 
@@ -713,6 +717,8 @@ Status показывает:
 
 - Короткие стабильные log tags по подсистемам: Sync, Db, Widget, Alert, WearSync, Complication.
 - Sync state доступен в UI и foreground notification.
+- Diagnostic event history хранит результаты и ошибки операций, но не периодические operational
+  states; текущие `WAITING_FOR_XDRIP`/`UPLOADING` показываются только как состояние monitoring.
 - Ошибка хранится как тип/короткое безопасное описание, а не полный потенциально секретный response.
 - Debug build может иметь действие «export diagnostics», но оно не входит в первые slices.
 

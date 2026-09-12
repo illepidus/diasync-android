@@ -133,6 +133,9 @@ public final class MonitoringService extends Service implements MonitoringRunner
 
     @Override
     public void onStateChanged(SyncConnectionState state) {
+        if (runnerState == state) {
+            return;
+        }
         runnerState = state;
         publishConnectionState();
     }

@@ -1,6 +1,7 @@
 package ru.krotarnya.diasync2.widget;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.appwidget.AppWidgetManager;
 import android.os.Bundle;
@@ -45,5 +46,24 @@ public class WidgetSizeOptionTest {
                         new SizeF(500.0f, 100.0f))));
 
         assertEquals(4, WidgetSizeOption.from(options, 1.0f).size());
+    }
+
+    @Test
+    public void sharesBitmapPixelBudgetAcrossResponsiveLayouts() {
+        Bundle options = new Bundle();
+        options.putParcelableArrayList(
+                AppWidgetManager.OPTION_APPWIDGET_SIZES,
+                new ArrayList<>(List.of(
+                        new SizeF(500.0f, 500.0f),
+                        new SizeF(600.0f, 500.0f),
+                        new SizeF(500.0f, 600.0f),
+                        new SizeF(600.0f, 600.0f))));
+
+        long totalPixels = WidgetSizeOption.from(options, 3.0f).stream()
+                .map(WidgetSizeOption::bitmapSize)
+                .mapToLong(size -> (long) size.width() * size.height())
+                .sum();
+
+        assertTrue(totalPixels <= WidgetBitmapSize.MAX_GRAPH_PIXELS);
     }
 }

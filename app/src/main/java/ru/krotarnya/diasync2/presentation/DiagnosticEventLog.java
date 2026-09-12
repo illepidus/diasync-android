@@ -28,7 +28,21 @@ public final class DiagnosticEventLog {
 
     public synchronized List<String> latest() {
         String stored = preferences.getString(KEY_EVENTS, "");
-        return stored.isEmpty() ? List.of() : List.of(stored.split(SEPARATOR, -1));
+        if (stored.isEmpty()) {
+            return List.of();
+        }
+        List<String> events = new ArrayList<>();
+        for (String event : stored.split(SEPARATOR, -1)) {
+            if (!isLegacyMasterLoopState(event)) {
+                events.add(event);
+            }
+        }
+        return List.copyOf(events);
+    }
+
+    private boolean isLegacyMasterLoopState(String event) {
+        return event.endsWith(" · Sync · WAITING_FOR_XDRIP")
+                || event.endsWith(" · Sync · UPLOADING");
     }
 
     private String safe(String value) {

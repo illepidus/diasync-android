@@ -19,7 +19,9 @@ record WidgetSizeOption(SizeF hostSize, WidgetBitmapSize bitmapSize) {
             return List.of();
         }
         Set<SizeF> unique = new LinkedHashSet<>(provided);
-        List<WidgetSizeOption> result = new ArrayList<>(Math.min(unique.size(), MAX_HOST_SIZES));
+        int optionCount = Math.min(unique.size(), MAX_HOST_SIZES);
+        int pixelBudgetPerOption = WidgetBitmapSize.MAX_GRAPH_PIXELS / optionCount;
+        List<WidgetSizeOption> result = new ArrayList<>(optionCount);
         for (SizeF size : unique) {
             if (result.size() == MAX_HOST_SIZES) {
                 break;
@@ -28,7 +30,11 @@ record WidgetSizeOption(SizeF hostSize, WidgetBitmapSize bitmapSize) {
             int heightDp = boundedDp(size.getHeight());
             result.add(new WidgetSizeOption(
                     size,
-                    WidgetBitmapSize.exact(widthDp, heightDp, density)));
+                    WidgetBitmapSize.exact(
+                            widthDp,
+                            heightDp,
+                            density,
+                            pixelBudgetPerOption)));
         }
         return List.copyOf(result);
     }

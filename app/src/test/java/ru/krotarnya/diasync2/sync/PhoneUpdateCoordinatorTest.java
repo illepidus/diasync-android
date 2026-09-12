@@ -8,6 +8,7 @@ import static org.robolectric.Shadows.shadowOf;
 import android.app.Application;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Looper;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowAppWidgetManager;
 import ru.krotarnya.diasync2.R;
+import ru.krotarnya.diasync2.presentation.DiagnosticEventLog;
 import ru.krotarnya.diasync2.settings.AppPreferences;
 import ru.krotarnya.diasync2.widget.DiasyncWidgetProvider;
 
@@ -70,6 +72,28 @@ public class PhoneUpdateCoordinatorTest {
 
         assertTrue(checked.get());
         assertTrue(wearUpdated.get());
+    }
+
+    @Test
+    public void connectionStatesUpdateCurrentStatusWithoutEnteringDiagnosticHistory() {
+        Application application = RuntimeEnvironment.getApplication();
+        application.getSharedPreferences("diagnostic_events", Context.MODE_PRIVATE)
+                .edit().clear().commit();
+        AppPreferences preferences = new AppPreferences(application);
+        DiagnosticEventLog eventLog = new DiagnosticEventLog(application);
+        PhoneUpdateCoordinator coordinator = new PhoneUpdateCoordinator(
+                application,
+                preferences,
+                () -> { },
+                () -> { },
+                eventLog,
+                java.time.Clock.systemUTC());
+
+        coordinator.stateChanged(SyncConnectionState.UPLOADING);
+        coordinator.stateChanged(SyncConnectionState.WAITING_FOR_XDRIP);
+
+        assertEquals(SyncConnectionState.WAITING_FOR_XDRIP, preferences.syncConnectionState());
+        assertTrue(eventLog.latest().isEmpty());
     }
 
     private static final class RecordingListener implements PhoneUpdateCoordinator.Listener {

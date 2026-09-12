@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 record WidgetBitmapSize(int width, int height, int widthDp, int heightDp) {
     static final int MAX_DIMENSION_PX = 1024;
+    static final int MAX_GRAPH_PIXELS = 150_000;
     private static final int DEFAULT_WIDTH_DP = 180;
     private static final int DEFAULT_HEIGHT_DP = 110;
 
@@ -31,7 +32,16 @@ record WidgetBitmapSize(int width, int height, int widthDp, int heightDp) {
     }
 
     static WidgetBitmapSize exact(int widthDp, int heightDp, float density) {
-        return scaled(widthDp, heightDp, density);
+        return scaled(widthDp, heightDp, density, MAX_GRAPH_PIXELS);
+    }
+
+    static WidgetBitmapSize exact(
+            int widthDp,
+            int heightDp,
+            float density,
+            int maxPixels
+    ) {
+        return scaled(widthDp, heightDp, density, maxPixels);
     }
 
     private static int option(Bundle options, String primary, String fallback, int defaultValue) {
@@ -59,16 +69,25 @@ record WidgetBitmapSize(int width, int height, int widthDp, int heightDp) {
     }
 
     private static WidgetBitmapSize scaled(int widthDp, int heightDp, float density) {
+        return scaled(widthDp, heightDp, density, MAX_GRAPH_PIXELS);
+    }
+
+    private static WidgetBitmapSize scaled(
+            int widthDp,
+            int heightDp,
+            float density,
+            int maxPixels
+    ) {
         int safeWidthDp = widthDp > 0 ? widthDp : 1;
         int safeHeightDp = heightDp > 0 ? heightDp : 1;
         float safeDensity = Float.isFinite(density) && density > 0.0f ? density : 0.1f;
         double rawWidth = (double) safeWidthDp * safeDensity;
         double rawHeight = (double) safeHeightDp * safeDensity;
-        double scale = Math.min(
-                1.0,
-                MAX_DIMENSION_PX / Math.max(rawWidth, rawHeight));
-        int width = (int) Math.max(1, Math.round(rawWidth * scale));
-        int height = (int) Math.max(1, Math.round(rawHeight * scale));
+        double dimensionScale = MAX_DIMENSION_PX / Math.max(rawWidth, rawHeight);
+        double areaScale = Math.sqrt(Math.max(1, maxPixels) / (rawWidth * rawHeight));
+        double scale = Math.min(1.0, Math.min(dimensionScale, areaScale));
+        int width = (int) Math.max(1, Math.floor(rawWidth * scale));
+        int height = (int) Math.max(1, Math.floor(rawHeight * scale));
         return new WidgetBitmapSize(width, height, widthDp, heightDp);
     }
 }

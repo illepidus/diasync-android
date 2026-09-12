@@ -58,8 +58,12 @@ public final class MasterOutboxDrainer implements MasterUploadWork {
     }
 
     @Override
-    public synchronized Result drainOnce(AppConfiguration configuration) {
+    public synchronized Result drainOnce(
+            AppConfiguration configuration,
+            Runnable onUploadStarted
+    ) {
         Objects.requireNonNull(configuration);
+        Objects.requireNonNull(onUploadStarted);
         Instant now = clock.instant();
         String leaseUntil = now.plus(LEASE_DURATION).toString();
         List<MasterEventEntity> batch = dao.claimEligible(
@@ -77,6 +81,7 @@ public final class MasterOutboxDrainer implements MasterUploadWork {
                     ? new Result(Kind.BLOCKED, 0, null)
                     : Result.idle();
         }
+        onUploadStarted.run();
         try {
             return upload(configuration, batch, leaseUntil);
         } catch (IOException exception) {
